@@ -42,6 +42,8 @@ public class SchoolService {
         info.setPostalAddress(req.getPostalAddress());
         info.setPhysicalAddress(req.getPhysicalAddress());
         info.setWebsite(req.getWebsite());
+        info.setHasBranch(req.isHasBranch());
+        info.setHasDepartment(req.isHasDepartment());
         return schoolInfoRepo.save(info);
     }
 

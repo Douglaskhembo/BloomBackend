@@ -32,4 +32,6 @@ public class SchoolInfo extends BaseEntity {
     private String physicalAddress;
     private String website;
     private String logoUrl;
+    private boolean hasBranch;
+    private boolean hasDepartment;
 }

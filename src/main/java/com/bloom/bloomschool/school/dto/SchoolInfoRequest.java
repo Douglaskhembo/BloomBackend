@@ -19,5 +19,7 @@ public class SchoolInfoRequest {
     private String postalAddress;
     private String physicalAddress;
     private String website;
+    private boolean hasBranch;
+    private boolean hasDepartment;
 }
 
