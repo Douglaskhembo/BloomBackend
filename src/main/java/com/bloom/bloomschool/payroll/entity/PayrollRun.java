@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "payroll_runs")
+@Table(name = "bloom_sch_payroll_runs")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class PayrollRun extends BaseEntity {
 

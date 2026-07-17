@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "school_info")
+@Table(name = "bloom_sch_school_info")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class SchoolInfo extends BaseEntity {
 

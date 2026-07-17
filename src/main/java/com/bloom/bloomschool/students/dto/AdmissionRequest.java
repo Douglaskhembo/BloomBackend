@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.students.dto;
 
 import com.bloom.bloomschool.students.entity.Admission;
+import com.bloom.bloomschool.students.util.Stage;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -23,5 +24,5 @@ public class AdmissionRequest {
     private String parentRelationship;
     private String parentPhone;
     private String parentEmail;
-    private Admission.Stage stage;
+    private Stage stage;
 }

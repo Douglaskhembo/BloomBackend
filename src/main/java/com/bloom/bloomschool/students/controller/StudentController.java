@@ -6,6 +6,7 @@ import com.bloom.bloomschool.students.dto.StudentRequest;
 import com.bloom.bloomschool.students.entity.Admission;
 import com.bloom.bloomschool.students.entity.Student;
 import com.bloom.bloomschool.students.service.StudentService;
+import com.bloom.bloomschool.students.util.Stage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -71,7 +72,7 @@ public class StudentController {
     }
 
     @PatchMapping("/admissions/{id}/stage")
-    public ResponseEntity<ApiResponse<?>> updateStage(@PathVariable Long id, @RequestParam Admission.Stage stage) {
+    public ResponseEntity<ApiResponse<?>> updateStage(@PathVariable Long id, @RequestParam Stage stage) {
         return ResponseEntity.ok(ApiResponse.ok("Stage updated", studentService.updateAdmissionStage(id, stage)));
     }
 

@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "nhif_tiers")
+@Table(name = "bloom_sch_nhif_tiers")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class NhifTier extends BaseEntity {
 

@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "leave_requests")
+@Table(name = "bloom_sch_leave_requests")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class LeaveRequest extends BaseEntity {
 

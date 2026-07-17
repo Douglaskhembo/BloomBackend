@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "staff_bio_data")
+@Table(name = "bloom_sch_staff_bio_data")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class StaffBioData extends BaseEntity {
 

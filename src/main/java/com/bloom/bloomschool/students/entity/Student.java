@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "students")
+@Table(name = "bloom_sch_students")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Student extends BaseEntity {
 

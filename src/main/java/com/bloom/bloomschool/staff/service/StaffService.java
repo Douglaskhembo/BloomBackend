@@ -3,6 +3,8 @@ package com.bloom.bloomschool.staff.service;
 import com.bloom.bloomschool.staff.dto.StaffRequest;
 import com.bloom.bloomschool.staff.entity.Staff;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
+import com.bloom.bloomschool.staff.util.StaffType;
+import com.bloom.bloomschool.staff.util.Status;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -50,7 +52,7 @@ public class StaffService {
     }
 
     @Transactional
-    public Staff updateStatus(Long id, Staff.Status status) {
+    public Staff updateStatus(Long id, Status status) {
         Staff s = getById(id);
         s.setStatus(status);
         return staffRepo.save(s);
@@ -61,8 +63,8 @@ public class StaffService {
         staffRepo.deleteById(id);
     }
 
-    private String generateStaffId(Staff.StaffType type) {
-        String prefix = type == Staff.StaffType.TEACHING ? "TCH" : "SUP";
+    private String generateStaffId(StaffType type) {
+        String prefix = type == StaffType.TEACHING ? "TCH" : "SUP";
         long count = staffRepo.countByStaffType(type);
         return prefix + "-" + String.format("%03d", count + 1);
     }

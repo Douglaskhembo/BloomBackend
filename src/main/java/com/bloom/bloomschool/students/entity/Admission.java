@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.students.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.students.util.Stage;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,7 +9,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "admissions")
+@Table(name = "bloom_sch_admissions")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Admission extends BaseEntity {
 
@@ -47,12 +48,4 @@ public class Admission extends BaseEntity {
     @Builder.Default
     private Stage stage = Stage.APPLICATION_REVIEW;
 
-    public enum Stage {
-        APPLICATION_REVIEW,
-        INTERVIEW_SCHEDULED,
-        OFFER_SENT,
-        FEE_PAYMENT,
-        ENROLLED,
-        REJECTED
-    }
 }

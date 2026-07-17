@@ -1,6 +1,8 @@
 package com.bloom.bloomschool.staff.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.staff.util.StaffType;
+import com.bloom.bloomschool.staff.util.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,7 +10,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "staff")
+@Table(name = "bloom_sch_staff")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Staff extends BaseEntity {
 
@@ -63,7 +65,4 @@ public class Staff extends BaseEntity {
     private String emergencyContactName;
     private String emergencyContactPhone;
     private String emergencyContactRelationship;
-
-    public enum StaffType { TEACHING, SUPPORT }
-    public enum Status { ACTIVE, ON_LEAVE, RESIGNED, SUSPENDED }
 }

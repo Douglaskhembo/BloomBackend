@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "branches")
+@Table(name = "bloom_sch_branches")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Branch extends BaseEntity {
 
@@ -37,14 +37,14 @@ public class Branch extends BaseEntity {
     private Status status = Status.ACTIVE;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "branch_departments",
+    @JoinTable(name = "bloom_sch_branch_departments",
             joinColumns = @JoinColumn(name = "branch_id"),
             inverseJoinColumns = @JoinColumn(name = "department_id"))
     @Builder.Default
     private Set<Department> departments = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "branch_grade_levels",
+    @JoinTable(name = "bloom_sch_branch_grade_levels",
             joinColumns = @JoinColumn(name = "branch_id"),
             inverseJoinColumns = @JoinColumn(name = "grade_level_id"))
     @Builder.Default

@@ -7,7 +7,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Data @NoArgsConstructor @AllArgsConstructor @Entity @Table(name = "bloom_sys_module") @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "bloom_sch_module")
+@Builder
 public class SysModule {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -6,6 +6,7 @@ import com.bloom.bloomschool.students.entity.Admission;
 import com.bloom.bloomschool.students.entity.Student;
 import com.bloom.bloomschool.students.repository.AdmissionRepository;
 import com.bloom.bloomschool.students.repository.StudentRepository;
+import com.bloom.bloomschool.students.util.Stage;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -75,17 +76,17 @@ public class StudentService {
         String appId = "APP-" + String.format("%03d", count + 1);
         Admission a = buildAdmission(new Admission(), req);
         a.setApplicationId(appId);
-        a.setStage(Admission.Stage.APPLICATION_REVIEW);
+        a.setStage(Stage.APPLICATION_REVIEW);
         return admissionRepo.save(a);
     }
 
     @Transactional
-    public Admission updateAdmissionStage(Long id, Admission.Stage stage) {
+    public Admission updateAdmissionStage(Long id, Stage stage) {
         Admission a = getAdmissionById(id);
         a.setStage(stage);
         admissionRepo.save(a);
 
-        if (stage == Admission.Stage.ENROLLED) {
+        if (stage == Stage.ENROLLED) {
             enrollStudent(a);
         }
         return a;

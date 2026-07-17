@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "paye_bands")
+@Table(name = "bloom_sch_paye_bands")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class PayeBand extends BaseEntity {
 

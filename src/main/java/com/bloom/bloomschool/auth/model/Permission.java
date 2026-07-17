@@ -6,7 +6,12 @@ import lombok.*;
 
 import java.util.UUID;
 
-@Data @NoArgsConstructor @AllArgsConstructor @Entity @Table(name = "bloom_sys_permission") @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "bloom_sch_permission")
+@Builder
 public class Permission {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

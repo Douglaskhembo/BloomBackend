@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "leave_types")
+@Table(name = "bloom_sch_leave_types")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class LeaveType extends BaseEntity {
 

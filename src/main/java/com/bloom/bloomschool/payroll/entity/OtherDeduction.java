@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "other_deductions")
+@Table(name = "bloom_sch_other_deductions")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class OtherDeduction extends BaseEntity {
 

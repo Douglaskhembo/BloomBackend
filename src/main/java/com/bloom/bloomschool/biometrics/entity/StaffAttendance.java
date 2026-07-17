@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "staff_attendance",
+@Table(name = "bloom_sch_staff_attendance",
         indexes = {
                 @Index(name = "idx_staff_att_staff", columnList = "staff_id"),
                 @Index(name = "idx_staff_att_date",  columnList = "attendance_date")

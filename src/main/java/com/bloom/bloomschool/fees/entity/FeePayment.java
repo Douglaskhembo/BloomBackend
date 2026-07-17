@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "fee_payments")
+@Table(name = "bloom_sch_fee_payments")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class FeePayment extends BaseEntity {
 

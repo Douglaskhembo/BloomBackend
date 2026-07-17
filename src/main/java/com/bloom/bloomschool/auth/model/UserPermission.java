@@ -10,7 +10,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "bloom_sys_user_permissions")
+@Table(name = "bloom_sch_user_permissions")
 public class UserPermission {
 
     @Id

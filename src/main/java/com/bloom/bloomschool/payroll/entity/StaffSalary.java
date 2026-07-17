@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name = "staff_salaries")
+@Table(name = "bloom_sch_staff_salaries")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class StaffSalary extends BaseEntity {
 
@@ -29,7 +29,7 @@ public class StaffSalary extends BaseEntity {
 
     // allowanceTypeId -> amount
     @ElementCollection
-    @CollectionTable(name = "staff_salary_allowances", joinColumns = @JoinColumn(name = "staff_salary_id"))
+    @CollectionTable(name = "bloom_sch_staff_salary_allowances", joinColumns = @JoinColumn(name = "staff_salary_id"))
     @MapKeyColumn(name = "allowance_type_id")
     @Column(name = "amount")
     @Builder.Default
@@ -37,7 +37,7 @@ public class StaffSalary extends BaseEntity {
 
     // otherDeductionId -> amount
     @ElementCollection
-    @CollectionTable(name = "staff_salary_deductions", joinColumns = @JoinColumn(name = "staff_salary_id"))
+    @CollectionTable(name = "bloom_sch_staff_salary_deductions", joinColumns = @JoinColumn(name = "staff_salary_id"))
     @MapKeyColumn(name = "deduction_type_id")
     @Column(name = "amount")
     @Builder.Default

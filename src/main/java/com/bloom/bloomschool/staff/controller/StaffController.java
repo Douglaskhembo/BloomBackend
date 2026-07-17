@@ -4,6 +4,7 @@ import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.staff.dto.StaffRequest;
 import com.bloom.bloomschool.staff.entity.Staff;
 import com.bloom.bloomschool.staff.service.StaffService;
+import com.bloom.bloomschool.staff.util.Status;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,7 +40,7 @@ public class StaffController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable Long id, @RequestParam Staff.Status status) {
+    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable Long id, @RequestParam Status status) {
         return ResponseEntity.ok(ApiResponse.ok("Status updated", staffService.updateStatus(id, status)));
     }
 

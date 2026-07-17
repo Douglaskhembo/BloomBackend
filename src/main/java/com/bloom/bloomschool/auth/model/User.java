@@ -8,7 +8,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Data @NoArgsConstructor @AllArgsConstructor @Entity @Table(name = "bloom_sys_users") @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "bloom_sch_users")
+@Builder
 public class User {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,7 +58,7 @@ public class User {
     private String profileRef;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "bloom_sys_user_roles",
+    @JoinTable(name = "bloom_sch_user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     @Builder.Default
