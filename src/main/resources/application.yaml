@@ -1,3 +1,48 @@
 spring:
   application:
     name: BloomSchool
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bloomschool_db
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:pass}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 9093
+  servlet:
+    context-path: /api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  jwt:
+    # Base64-encoded secret — override via JWT_SECRET env var in production
+    secret: ${JWT_SECRET:Ymxvb21zY2hvb2wtc3VwZXItc2VjcmV0LWtleS1jaGFuZ2UtaW4tcHJvZHVjdGlvbi0yMDI1}
+    expiration-ms: ${JWT_EXPIRY:86400000}
+
+logging:
+  level:
+    com.bloom.bloomschool: DEBUG
+    org.springframework.web: INFO
