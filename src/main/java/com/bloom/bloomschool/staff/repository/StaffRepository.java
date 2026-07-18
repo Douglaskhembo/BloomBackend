@@ -19,6 +19,6 @@ public interface StaffRepository extends JpaRepository<Staff, Long> {
     long countByStaffType(StaffType staffType);
     long countByStatus(Status status);
 
-    @Query("SELECT s FROM Staff s WHERE LOWER(CONCAT(s.firstName,' ',s.lastName,' ',s.staffId)) LIKE LOWER(CONCAT('%',:q,'%'))")
+    @Query("SELECT s FROM Staff s WHERE LOWER(CONCAT(s.firstName,' ',s.lastName,' ',COALESCE(s.staffId,''))) LIKE LOWER(CONCAT('%',:q,'%'))")
     List<Staff> search(String q);
 }

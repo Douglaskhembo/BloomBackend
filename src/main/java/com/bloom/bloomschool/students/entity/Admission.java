@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.students.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.school.entity.GradeLevel;
 import com.bloom.bloomschool.students.util.Stage;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,6 +38,13 @@ public class Admission extends BaseEntity {
     private String medicalNotes;
     private String grade;
     private String stream;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_level_id")
+    private GradeLevel gradeLevel;
+
+    @OneToOne(mappedBy = "admission", fetch = FetchType.LAZY)
+    private Student student;
 
     private String parentName;
     private String parentRelationship;

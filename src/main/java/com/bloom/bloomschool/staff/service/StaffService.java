@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +25,8 @@ public class StaffService {
         return staffRepo.findAll();
     }
 
-    public Staff getById(Long id) {
-        return staffRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Staff not found"));
+    public Staff getByUuid(UUID uuid) {
+        return staffRepo.findByUuid(uuid).orElseThrow(() -> new EntityNotFoundException("Staff not found"));
     }
 
     public Staff getByStaffId(String staffId) {
@@ -39,32 +40,31 @@ public class StaffService {
         if (req.getIdNumber() != null && staffRepo.existsByIdNumber(req.getIdNumber()))
             throw new IllegalArgumentException("ID number already registered");
 
-        String staffId = generateStaffId(req.getStaffType());
         Staff s = buildStaff(new Staff(), req);
-        s.setStaffId(staffId);
+        s.setStaffId(generateStaffId(req.getStaffType()));
         return staffRepo.save(s);
     }
 
     @Transactional
-    public Staff update(Long id, StaffRequest req) {
-        Staff s = getById(id);
-        return staffRepo.save(buildStaff(s, req));
+    public Staff update(UUID uuid, StaffRequest req) {
+        return staffRepo.save(buildStaff(getByUuid(uuid), req));
     }
 
     @Transactional
-    public Staff updateStatus(Long id, Status status) {
-        Staff s = getById(id);
+    public Staff updateStatus(UUID uuid, Status status) {
+        Staff s = getByUuid(uuid);
         s.setStatus(status);
         return staffRepo.save(s);
     }
 
     @Transactional
-    public void delete(Long id) {
-        staffRepo.deleteById(id);
+    public void delete(UUID uuid) {
+        Staff s = getByUuid(uuid);
+        staffRepo.deleteById(s.getId());
     }
 
     private String generateStaffId(StaffType type) {
-        String prefix = type == StaffType.TEACHING ? "TCH" : "SUP";
+        String prefix = type == StaffType.TEACHING ? "TCH" : type == StaffType.ADMIN ? "ADM" : "NTC";
         long count = staffRepo.countByStaffType(type);
         return prefix + "-" + String.format("%03d", count + 1);
     }
@@ -80,6 +80,11 @@ public class StaffService {
         s.setAddress(req.getAddress());
         s.setPracticeNumber(req.getPracticeNumber());
         s.setStaffType(req.getStaffType());
+        s.setEmploymentType(req.getEmploymentType());
+        s.setContractPeriodMonths(
+            (req.getEmploymentType() == com.bloom.bloomschool.staff.util.EmploymentType.PERMANENT)
+                ? null : req.getContractPeriodMonths()
+        );
         s.setSubject(req.getSubject());
         s.setGrade(req.getGrade());
         s.setQualification(req.getQualification());

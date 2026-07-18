@@ -1,6 +1,6 @@
 package com.bloom.bloomschool.staff.dto;
 
-import com.bloom.bloomschool.staff.entity.Staff;
+import com.bloom.bloomschool.staff.util.EmploymentType;
 import com.bloom.bloomschool.staff.util.StaffType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,6 +24,8 @@ public class StaffRequest {
     private String address;
     private String practiceNumber;
     @NotNull private StaffType staffType;
+    @NotNull private EmploymentType employmentType;
+    private Integer contractPeriodMonths;
     private String subject;
     private String grade;
     private String qualification;

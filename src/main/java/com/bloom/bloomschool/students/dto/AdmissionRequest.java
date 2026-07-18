@@ -20,6 +20,7 @@ public class AdmissionRequest {
     private String medicalNotes;
     @NotBlank private String grade;
     private String stream;
+    private UUID gradeLevelUuid;
     private String parentName;
     private String parentRelationship;
     private String parentPhone;

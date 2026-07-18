@@ -2,7 +2,6 @@ package com.bloom.bloomschool.staff.controller;
 
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.staff.dto.StaffRequest;
-import com.bloom.bloomschool.staff.entity.Staff;
 import com.bloom.bloomschool.staff.service.StaffService;
 import com.bloom.bloomschool.staff.util.Status;
 import jakarta.validation.Valid;
@@ -10,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/staff")
@@ -23,9 +24,9 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.ok(staffService.getAll(search)));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok(staffService.getById(id)));
+    @GetMapping("/{uuid}")
+    public ResponseEntity<ApiResponse<?>> getByUuid(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(staffService.getByUuid(uuid)));
     }
 
     @PostMapping
@@ -34,19 +35,19 @@ public class StaffController {
                 .body(ApiResponse.ok("Staff created", staffService.create(req)));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Long id, @Valid @RequestBody StaffRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Staff updated", staffService.update(id, req)));
+    @PutMapping("/{uuid}")
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable UUID uuid, @Valid @RequestBody StaffRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Staff updated", staffService.update(uuid, req)));
     }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable Long id, @RequestParam Status status) {
-        return ResponseEntity.ok(ApiResponse.ok("Status updated", staffService.updateStatus(id, status)));
+    @PatchMapping("/{uuid}/status")
+    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable UUID uuid, @RequestParam Status status) {
+        return ResponseEntity.ok(ApiResponse.ok("Status updated", staffService.updateStatus(uuid, status)));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> delete(@PathVariable Long id) {
-        staffService.delete(id);
+    @DeleteMapping("/{uuid}")
+    public ResponseEntity<ApiResponse<?>> delete(@PathVariable UUID uuid) {
+        staffService.delete(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Staff deleted"));
     }
 }

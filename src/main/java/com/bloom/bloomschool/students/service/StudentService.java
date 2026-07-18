@@ -1,5 +1,7 @@
 package com.bloom.bloomschool.students.service;
 
+import com.bloom.bloomschool.school.entity.GradeLevel;
+import com.bloom.bloomschool.school.repository.GradeLevelRepository;
 import com.bloom.bloomschool.students.dto.AdmissionRequest;
 import com.bloom.bloomschool.students.dto.StudentRequest;
 import com.bloom.bloomschool.students.entity.Admission;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Year;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class StudentService {
 
     private final StudentRepository studentRepo;
     private final AdmissionRepository admissionRepo;
+    private final GradeLevelRepository gradeLevelRepo;
 
     // ── Students ─────────────────────────────────────────────────────────────
 
@@ -30,34 +34,33 @@ public class StudentService {
         return studentRepo.findAll();
     }
 
-    public Student getById(Long id) {
-        return studentRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Student not found"));
+    public Student getByUuid(UUID uuid) {
+        return studentRepo.findByUuid(uuid).orElseThrow(() -> new EntityNotFoundException("Student not found"));
     }
 
     @Transactional
     public Student create(StudentRequest req) {
-        String admNo = generateAdmissionNumber();
         Student s = buildStudent(new Student(), req);
-        s.setAdmissionNumber(admNo);
+        s.setAdmissionNumber(generateAdmissionNumber());
         return studentRepo.save(s);
     }
 
     @Transactional
-    public Student update(Long id, StudentRequest req) {
-        Student s = getById(id);
-        return studentRepo.save(buildStudent(s, req));
+    public Student update(UUID uuid, StudentRequest req) {
+        return studentRepo.save(buildStudent(getByUuid(uuid), req));
     }
 
     @Transactional
-    public Student updateStatus(Long id, Student.Status status) {
-        Student s = getById(id);
+    public Student updateStatus(UUID uuid, Student.Status status) {
+        Student s = getByUuid(uuid);
         s.setStatus(status);
         return studentRepo.save(s);
     }
 
     @Transactional
-    public void delete(Long id) {
-        studentRepo.deleteById(id);
+    public void delete(UUID uuid) {
+        Student s = getByUuid(uuid);
+        studentRepo.deleteById(s.getId());
     }
 
     // ── Admissions ───────────────────────────────────────────────────────────
@@ -66,49 +69,44 @@ public class StudentService {
         return admissionRepo.findAll();
     }
 
-    public Admission getAdmissionById(Long id) {
-        return admissionRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Application not found"));
+    public Admission getAdmissionByUuid(UUID uuid) {
+        return admissionRepo.findByUuid(uuid).orElseThrow(() -> new EntityNotFoundException("Application not found"));
     }
 
     @Transactional
     public Admission createAdmission(AdmissionRequest req) {
         long count = admissionRepo.count();
-        String appId = "APP-" + String.format("%03d", count + 1);
         Admission a = buildAdmission(new Admission(), req);
-        a.setApplicationId(appId);
+        a.setApplicationId("APP-" + String.format("%03d", count + 1));
         a.setStage(Stage.APPLICATION_REVIEW);
         return admissionRepo.save(a);
     }
 
     @Transactional
-    public Admission updateAdmissionStage(Long id, Stage stage) {
-        Admission a = getAdmissionById(id);
+    public Admission updateAdmissionStage(UUID uuid, Stage stage) {
+        Admission a = getAdmissionByUuid(uuid);
         a.setStage(stage);
         admissionRepo.save(a);
-
-        if (stage == Stage.ENROLLED) {
-            enrollStudent(a);
-        }
+        if (stage == Stage.ENROLLED) enrollStudent(a);
         return a;
     }
 
     @Transactional
-    public Admission updateAdmission(Long id, AdmissionRequest req) {
-        Admission a = getAdmissionById(id);
-        return admissionRepo.save(buildAdmission(a, req));
+    public Admission updateAdmission(UUID uuid, AdmissionRequest req) {
+        return admissionRepo.save(buildAdmission(getAdmissionByUuid(uuid), req));
     }
 
     @Transactional
-    public void deleteAdmission(Long id) {
-        admissionRepo.deleteById(id);
+    public void deleteAdmission(UUID uuid) {
+        Admission a = getAdmissionByUuid(uuid);
+        admissionRepo.deleteById(a.getId());
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private void enrollStudent(Admission a) {
-        String admNo = generateAdmissionNumber();
         Student s = Student.builder()
-                .admissionNumber(admNo)
+                .admissionNumber(generateAdmissionNumber())
                 .firstName(a.getFirstName())
                 .lastName(a.getLastName())
                 .gender(a.getGender())
@@ -117,9 +115,11 @@ public class StudentService {
                 .medicalNotes(a.getMedicalNotes())
                 .grade(a.getGrade())
                 .stream(a.getStream())
+                .gradeLevel(a.getGradeLevel())
                 .parentName(a.getParentName())
                 .parentPhone(a.getParentPhone())
                 .parentEmail(a.getParentEmail())
+                .admission(a)
                 .status(Student.Status.ACTIVE)
                 .build();
         studentRepo.save(s);
@@ -131,6 +131,11 @@ public class StudentService {
         return year + "/" + String.format("%04d", count + 1);
     }
 
+    private GradeLevel resolveGradeLevel(UUID gradeLevelUuid) {
+        if (gradeLevelUuid == null) return null;
+        return gradeLevelRepo.findByUuid(gradeLevelUuid).orElse(null);
+    }
+
     private Student buildStudent(Student s, StudentRequest req) {
         s.setFirstName(req.getFirstName());
         s.setLastName(req.getLastName());
@@ -140,6 +145,7 @@ public class StudentService {
         s.setMedicalNotes(req.getMedicalNotes());
         s.setGrade(req.getGrade());
         s.setStream(req.getStream());
+        s.setGradeLevel(resolveGradeLevel(req.getGradeLevelUuid()));
         s.setParentName(req.getParentName());
         s.setParentPhone(req.getParentPhone());
         s.setParentEmail(req.getParentEmail());
@@ -156,6 +162,7 @@ public class StudentService {
         a.setMedicalNotes(req.getMedicalNotes());
         a.setGrade(req.getGrade());
         a.setStream(req.getStream());
+        a.setGradeLevel(resolveGradeLevel(req.getGradeLevelUuid()));
         a.setParentName(req.getParentName());
         a.setParentRelationship(req.getParentRelationship());
         a.setParentPhone(req.getParentPhone());

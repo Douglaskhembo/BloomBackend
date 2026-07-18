@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.staff.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.staff.util.EmploymentType;
 import com.bloom.bloomschool.staff.util.StaffType;
 import com.bloom.bloomschool.staff.util.Status;
 import jakarta.persistence.*;
@@ -65,4 +66,9 @@ public class Staff extends BaseEntity {
     private String emergencyContactName;
     private String emergencyContactPhone;
     private String emergencyContactRelationship;
+
+    @Enumerated(EnumType.STRING)
+    private EmploymentType employmentType;
+
+    private Integer contractPeriodMonths;
 }

@@ -3,7 +3,6 @@ package com.bloom.bloomschool.students.controller;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.students.dto.AdmissionRequest;
 import com.bloom.bloomschool.students.dto.StudentRequest;
-import com.bloom.bloomschool.students.entity.Admission;
 import com.bloom.bloomschool.students.entity.Student;
 import com.bloom.bloomschool.students.service.StudentService;
 import com.bloom.bloomschool.students.util.Stage;
@@ -12,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,9 +27,9 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.ok(studentService.getAll(search)));
     }
 
-    @GetMapping("/students/{id}")
-    public ResponseEntity<ApiResponse<?>> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok(studentService.getById(id)));
+    @GetMapping("/students/{uuid}")
+    public ResponseEntity<ApiResponse<?>> getByUuid(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(studentService.getByUuid(uuid)));
     }
 
     @PostMapping("/students")
@@ -37,19 +38,19 @@ public class StudentController {
                 .body(ApiResponse.ok("Student created", studentService.create(req)));
     }
 
-    @PutMapping("/students/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Long id, @Valid @RequestBody StudentRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Student updated", studentService.update(id, req)));
+    @PutMapping("/students/{uuid}")
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable UUID uuid, @Valid @RequestBody StudentRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Student updated", studentService.update(uuid, req)));
     }
 
-    @PatchMapping("/students/{id}/status")
-    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable Long id, @RequestParam Student.Status status) {
-        return ResponseEntity.ok(ApiResponse.ok("Status updated", studentService.updateStatus(id, status)));
+    @PatchMapping("/students/{uuid}/status")
+    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable UUID uuid, @RequestParam Student.Status status) {
+        return ResponseEntity.ok(ApiResponse.ok("Status updated", studentService.updateStatus(uuid, status)));
     }
 
-    @DeleteMapping("/students/{id}")
-    public ResponseEntity<ApiResponse<?>> delete(@PathVariable Long id) {
-        studentService.delete(id);
+    @DeleteMapping("/students/{uuid}")
+    public ResponseEntity<ApiResponse<?>> delete(@PathVariable UUID uuid) {
+        studentService.delete(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Student deleted"));
     }
 
@@ -60,9 +61,9 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.ok(studentService.getAllAdmissions()));
     }
 
-    @GetMapping("/admissions/{id}")
-    public ResponseEntity<ApiResponse<?>> getAdmission(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok(studentService.getAdmissionById(id)));
+    @GetMapping("/admissions/{uuid}")
+    public ResponseEntity<ApiResponse<?>> getAdmission(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(studentService.getAdmissionByUuid(uuid)));
     }
 
     @PostMapping("/admissions")
@@ -71,19 +72,19 @@ public class StudentController {
                 .body(ApiResponse.ok("Application submitted", studentService.createAdmission(req)));
     }
 
-    @PatchMapping("/admissions/{id}/stage")
-    public ResponseEntity<ApiResponse<?>> updateStage(@PathVariable Long id, @RequestParam Stage stage) {
-        return ResponseEntity.ok(ApiResponse.ok("Stage updated", studentService.updateAdmissionStage(id, stage)));
+    @PatchMapping("/admissions/{uuid}/stage")
+    public ResponseEntity<ApiResponse<?>> updateStage(@PathVariable UUID uuid, @RequestParam Stage stage) {
+        return ResponseEntity.ok(ApiResponse.ok("Stage updated", studentService.updateAdmissionStage(uuid, stage)));
     }
 
-    @PutMapping("/admissions/{id}")
-    public ResponseEntity<ApiResponse<?>> updateAdmission(@PathVariable Long id, @Valid @RequestBody AdmissionRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Application updated", studentService.updateAdmission(id, req)));
+    @PutMapping("/admissions/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateAdmission(@PathVariable UUID uuid, @Valid @RequestBody AdmissionRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Application updated", studentService.updateAdmission(uuid, req)));
     }
 
-    @DeleteMapping("/admissions/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteAdmission(@PathVariable Long id) {
-        studentService.deleteAdmission(id);
+    @DeleteMapping("/admissions/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteAdmission(@PathVariable UUID uuid) {
+        studentService.deleteAdmission(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Application deleted"));
     }
 }

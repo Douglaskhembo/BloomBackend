@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +31,7 @@ public class SchoolService {
 
     @Transactional
     public SchoolInfo saveSchoolInfo(SchoolInfoRequest req) {
-        SchoolInfo info = schoolInfoRepo.findAll().stream().findFirst()
-                .orElse(new SchoolInfo());
+        SchoolInfo info = schoolInfoRepo.findAll().stream().findFirst().orElse(new SchoolInfo());
         info.setName(req.getName());
         info.setRegistrationNumber(req.getRegistrationNumber());
         info.setEmail(req.getEmail());
@@ -57,17 +56,16 @@ public class SchoolService {
     public GradeLevel createGradeLevel(GradeLevelRequest req) {
         if (gradeLevelRepo.existsByName(req.getName()))
             throw new IllegalArgumentException("Grade level '" + req.getName() + "' already exists");
-        GradeLevel g = GradeLevel.builder()
+        return gradeLevelRepo.save(GradeLevel.builder()
                 .name(req.getName())
                 .displayOrder(req.getDisplayOrder())
                 .streams(req.getStreams())
-                .build();
-        return gradeLevelRepo.save(g);
+                .build());
     }
 
     @Transactional
-    public GradeLevel updateGradeLevel(Long id, GradeLevelRequest req) {
-        GradeLevel g = gradeLevelRepo.findById(id)
+    public GradeLevel updateGradeLevel(UUID uuid, GradeLevelRequest req) {
+        GradeLevel g = gradeLevelRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Grade level not found"));
         g.setName(req.getName());
         g.setDisplayOrder(req.getDisplayOrder());
@@ -76,16 +74,18 @@ public class SchoolService {
     }
 
     @Transactional
-    public void toggleGradeLevelStatus(Long id) {
-        GradeLevel g = gradeLevelRepo.findById(id)
+    public void toggleGradeLevelStatus(UUID uuid) {
+        GradeLevel g = gradeLevelRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Grade level not found"));
         g.setStatus(g.getStatus() == GradeLevel.Status.ACTIVE ? GradeLevel.Status.INACTIVE : GradeLevel.Status.ACTIVE);
         gradeLevelRepo.save(g);
     }
 
     @Transactional
-    public void deleteGradeLevel(Long id) {
-        gradeLevelRepo.deleteById(id);
+    public void deleteGradeLevel(UUID uuid) {
+        GradeLevel g = gradeLevelRepo.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Grade level not found"));
+        gradeLevelRepo.deleteById(g.getId());
     }
 
     // ── Departments ──────────────────────────────────────────────────────────
@@ -98,17 +98,16 @@ public class SchoolService {
     public Department createDepartment(DepartmentRequest req) {
         if (departmentRepo.existsByCode(req.getCode()))
             throw new IllegalArgumentException("Department code '" + req.getCode() + "' already exists");
-        Department d = Department.builder()
+        return departmentRepo.save(Department.builder()
                 .name(req.getName())
                 .code(req.getCode().toUpperCase())
                 .head(req.getHead())
-                .build();
-        return departmentRepo.save(d);
+                .build());
     }
 
     @Transactional
-    public Department updateDepartment(Long id, DepartmentRequest req) {
-        Department d = departmentRepo.findById(id)
+    public Department updateDepartment(UUID uuid, DepartmentRequest req) {
+        Department d = departmentRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Department not found"));
         d.setName(req.getName());
         d.setCode(req.getCode().toUpperCase());
@@ -117,16 +116,18 @@ public class SchoolService {
     }
 
     @Transactional
-    public void toggleDepartmentStatus(Long id) {
-        Department d = departmentRepo.findById(id)
+    public void toggleDepartmentStatus(UUID uuid) {
+        Department d = departmentRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Department not found"));
         d.setStatus(d.getStatus() == Department.Status.ACTIVE ? Department.Status.INACTIVE : Department.Status.ACTIVE);
         departmentRepo.save(d);
     }
 
     @Transactional
-    public void deleteDepartment(Long id) {
-        departmentRepo.deleteById(id);
+    public void deleteDepartment(UUID uuid) {
+        Department d = departmentRepo.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Department not found"));
+        departmentRepo.deleteById(d.getId());
     }
 
     // ── Branches ─────────────────────────────────────────────────────────────
@@ -135,8 +136,8 @@ public class SchoolService {
         return branchRepo.findAll();
     }
 
-    public Branch getBranch(Long id) {
-        return branchRepo.findById(id)
+    public Branch getBranch(UUID uuid) {
+        return branchRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Branch not found"));
     }
 
@@ -155,9 +156,8 @@ public class SchoolService {
     }
 
     @Transactional
-    public Branch updateBranch(Long id, BranchRequest req) {
-        Branch b = branchRepo.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Branch not found"));
+    public Branch updateBranch(UUID uuid, BranchRequest req) {
+        Branch b = getBranch(uuid);
         b.setName(req.getName());
         b.setCode(req.getCode().toUpperCase());
         b.setLocation(req.getLocation());
@@ -167,26 +167,22 @@ public class SchoolService {
     }
 
     @Transactional
-    public void toggleBranchStatus(Long id) {
-        Branch b = branchRepo.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Branch not found"));
+    public void toggleBranchStatus(UUID uuid) {
+        Branch b = getBranch(uuid);
         b.setStatus(b.getStatus() == Branch.Status.ACTIVE ? Branch.Status.INACTIVE : Branch.Status.ACTIVE);
         branchRepo.save(b);
     }
 
     @Transactional
-    public void deleteBranch(Long id) {
-        branchRepo.deleteById(id);
+    public void deleteBranch(UUID uuid) {
+        Branch b = getBranch(uuid);
+        branchRepo.deleteById(b.getId());
     }
 
     private void applyBranchAssignments(Branch b, BranchRequest req) {
-        if (req.getDepartmentIds() != null) {
-            Set<Department> depts = new HashSet<>(departmentRepo.findAllById(req.getDepartmentIds()));
-            b.setDepartments(depts);
-        }
-        if (req.getGradeLevelIds() != null) {
-            Set<GradeLevel> grades = new HashSet<>(gradeLevelRepo.findAllById(req.getGradeLevelIds()));
-            b.setGradeLevels(grades);
-        }
+        if (req.getDepartmentUuids() != null)
+            b.setDepartments(new HashSet<>(departmentRepo.findAllByUuidIn(req.getDepartmentUuids())));
+        if (req.getGradeLevelUuids() != null)
+            b.setGradeLevels(new HashSet<>(gradeLevelRepo.findAllByUuidIn(req.getGradeLevelUuids())));
     }
 }

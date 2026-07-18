@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/school")
 @RequiredArgsConstructor
@@ -41,20 +43,20 @@ public class SchoolController {
                 .body(ApiResponse.ok("Grade level created", schoolService.createGradeLevel(req)));
     }
 
-    @PutMapping("/grade-levels/{id}")
-    public ResponseEntity<ApiResponse<?>> updateGradeLevel(@PathVariable Long id, @Valid @RequestBody GradeLevelRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Grade level updated", schoolService.updateGradeLevel(id, req)));
+    @PutMapping("/grade-levels/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateGradeLevel(@PathVariable UUID uuid, @Valid @RequestBody GradeLevelRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Grade level updated", schoolService.updateGradeLevel(uuid, req)));
     }
 
-    @PatchMapping("/grade-levels/{id}/toggle-status")
-    public ResponseEntity<ApiResponse<?>> toggleGradeLevel(@PathVariable Long id) {
-        schoolService.toggleGradeLevelStatus(id);
+    @PatchMapping("/grade-levels/{uuid}/toggle-status")
+    public ResponseEntity<ApiResponse<?>> toggleGradeLevel(@PathVariable UUID uuid) {
+        schoolService.toggleGradeLevelStatus(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Status toggled"));
     }
 
-    @DeleteMapping("/grade-levels/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteGradeLevel(@PathVariable Long id) {
-        schoolService.deleteGradeLevel(id);
+    @DeleteMapping("/grade-levels/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteGradeLevel(@PathVariable UUID uuid) {
+        schoolService.deleteGradeLevel(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Grade level deleted"));
     }
 
@@ -71,20 +73,20 @@ public class SchoolController {
                 .body(ApiResponse.ok("Department created", schoolService.createDepartment(req)));
     }
 
-    @PutMapping("/departments/{id}")
-    public ResponseEntity<ApiResponse<?>> updateDepartment(@PathVariable Long id, @Valid @RequestBody DepartmentRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Department updated", schoolService.updateDepartment(id, req)));
+    @PutMapping("/departments/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateDepartment(@PathVariable UUID uuid, @Valid @RequestBody DepartmentRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Department updated", schoolService.updateDepartment(uuid, req)));
     }
 
-    @PatchMapping("/departments/{id}/toggle-status")
-    public ResponseEntity<ApiResponse<?>> toggleDepartment(@PathVariable Long id) {
-        schoolService.toggleDepartmentStatus(id);
+    @PatchMapping("/departments/{uuid}/toggle-status")
+    public ResponseEntity<ApiResponse<?>> toggleDepartment(@PathVariable UUID uuid) {
+        schoolService.toggleDepartmentStatus(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Status toggled"));
     }
 
-    @DeleteMapping("/departments/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteDepartment(@PathVariable Long id) {
-        schoolService.deleteDepartment(id);
+    @DeleteMapping("/departments/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteDepartment(@PathVariable UUID uuid) {
+        schoolService.deleteDepartment(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Department deleted"));
     }
 
@@ -95,9 +97,9 @@ public class SchoolController {
         return ResponseEntity.ok(ApiResponse.ok(schoolService.getAllBranches()));
     }
 
-    @GetMapping("/branches/{id}")
-    public ResponseEntity<ApiResponse<?>> getBranch(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok(schoolService.getBranch(id)));
+    @GetMapping("/branches/{uuid}")
+    public ResponseEntity<ApiResponse<?>> getBranch(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(schoolService.getBranch(uuid)));
     }
 
     @PostMapping("/branches")
@@ -106,20 +108,20 @@ public class SchoolController {
                 .body(ApiResponse.ok("Branch created", schoolService.createBranch(req)));
     }
 
-    @PutMapping("/branches/{id}")
-    public ResponseEntity<ApiResponse<?>> updateBranch(@PathVariable Long id, @Valid @RequestBody BranchRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Branch updated", schoolService.updateBranch(id, req)));
+    @PutMapping("/branches/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateBranch(@PathVariable UUID uuid, @Valid @RequestBody BranchRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Branch updated", schoolService.updateBranch(uuid, req)));
     }
 
-    @PatchMapping("/branches/{id}/toggle-status")
-    public ResponseEntity<ApiResponse<?>> toggleBranch(@PathVariable Long id) {
-        schoolService.toggleBranchStatus(id);
+    @PatchMapping("/branches/{uuid}/toggle-status")
+    public ResponseEntity<ApiResponse<?>> toggleBranch(@PathVariable UUID uuid) {
+        schoolService.toggleBranchStatus(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Status toggled"));
     }
 
-    @DeleteMapping("/branches/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteBranch(@PathVariable Long id) {
-        schoolService.deleteBranch(id);
+    @DeleteMapping("/branches/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteBranch(@PathVariable UUID uuid) {
+        schoolService.deleteBranch(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Branch deleted"));
     }
 }

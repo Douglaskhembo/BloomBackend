@@ -14,6 +14,6 @@ public class BranchRequest {
     private UUID uuid;
     private String location;
     private String phone;
-    private Set<Long> departmentIds;
-    private Set<Long> gradeLevelIds;
+    private Set<UUID> departmentUuids;
+    private Set<UUID> gradeLevelUuids;
 }
