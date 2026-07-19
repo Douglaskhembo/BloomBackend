@@ -35,6 +35,12 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.ok("Leave type updated", leaveService.updateLeaveType(id, req)));
     }
 
+    @PatchMapping("/leave-types/{id}/toggle-status")
+    public ResponseEntity<ApiResponse<?>> toggleLeaveType(@PathVariable Long id) {
+        leaveService.toggleLeaveTypeStatus(id);
+        return ResponseEntity.ok(ApiResponse.ok("Status toggled"));
+    }
+
     @DeleteMapping("/leave-types/{id}")
     public ResponseEntity<ApiResponse<?>> deleteLeaveType(@PathVariable Long id) {
         leaveService.deleteLeaveType(id);
@@ -47,6 +53,11 @@ public class LeaveController {
     public ResponseEntity<ApiResponse<?>> getRequests(@RequestParam(required = false) String staffId) {
         if (staffId != null) return ResponseEntity.ok(ApiResponse.ok(leaveService.getRequestsByStaff(staffId)));
         return ResponseEntity.ok(ApiResponse.ok(leaveService.getAllRequests()));
+    }
+
+    @GetMapping("/leave-requests/balance")
+    public ResponseEntity<ApiResponse<?>> getBalances(@RequestParam String staffId) {
+        return ResponseEntity.ok(ApiResponse.ok(leaveService.getBalances(staffId)));
     }
 
     @PostMapping("/leave-requests")

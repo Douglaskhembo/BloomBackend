@@ -4,6 +4,8 @@ import com.bloom.bloomschool.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,4 +29,16 @@ public class LeaveType extends BaseEntity {
     private boolean requiresApproval;
     @Builder.Default
     private boolean active = true;
+
+    @Builder.Default
+    private boolean paid = true;
+
+    @Builder.Default
+    private boolean requiresDocument = false;
+
+    @ElementCollection
+    @CollectionTable(name = "bloom_sch_leave_type_documents", joinColumns = @JoinColumn(name = "leave_type_id"))
+    @Column(name = "document_type")
+    @Builder.Default
+    private List<String> documentTypes = new ArrayList<>();
 }

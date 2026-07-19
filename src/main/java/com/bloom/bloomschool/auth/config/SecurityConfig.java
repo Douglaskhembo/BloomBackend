@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.auth.config;
 
+import com.bloom.bloomschool.payments.security.MpesaIpWhitelistFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
+    private final MpesaIpWhitelistFilter mpesaIpWhitelistFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -32,16 +34,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/login",
-                                "/auth/send-otp",
-                                "/auth/validate-otp",
-                                "/auth/forgot-username",
                                 "/actuator/health",
-                                "/actuator/info"
+                                "/actuator/info",
+                                "/payments/mpesa/stk-callback",
+                                "/payments/mpesa/c2b/validation",
+                                "/payments/mpesa/c2b/confirmation",
+                                "/payments/banks/equity/callback",
+                                "/payments/banks/kcb/callback",
+                                "/payments/banks/coop/callback",
+                                "/attendance/device-capture"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(mpesaIpWhitelistFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

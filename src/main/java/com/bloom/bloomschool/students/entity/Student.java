@@ -2,6 +2,7 @@ package com.bloom.bloomschool.students.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
 import com.bloom.bloomschool.school.entity.GradeLevel;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,12 +39,13 @@ public class Student extends BaseEntity {
     private String grade;
     private String stream;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "grade_level_id")
     private GradeLevel gradeLevel;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admission_id")
+    @JsonIgnore
     private Admission admission;
 
     @Enumerated(EnumType.STRING)
@@ -53,8 +55,12 @@ public class Student extends BaseEntity {
 
     // Parent / Guardian
     private String parentName;
+    private String parentRelationship;
     private String parentPhone;
     private String parentEmail;
+
+    /** UUID of the linked PARENT-role User account (see auth.model.User), null until onboarded. */
+    private UUID parentUserUuid;
 
     public enum Status { ACTIVE, SUSPENDED, DISABLED, GRADUATED }
 }

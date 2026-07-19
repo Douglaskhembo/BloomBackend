@@ -22,4 +22,9 @@ public interface StaffAttendanceRepository extends JpaRepository<StaffAttendance
     Optional<StaffAttendance> findOpenClockIn(Long staffId, LocalDate date);
 
     // long countByAttendanceDateAndStatus(LocalDate date, StaffAttendance.AttendanceStatus status);
+
+    @Query("SELECT a FROM StaffAttendance a WHERE a.attendanceDate BETWEEN :from AND :to " +
+            "AND (:staffId IS NULL OR a.staff.staffId = :staffId) " +
+            "ORDER BY a.attendanceDate DESC, a.clockIn DESC")
+    List<StaffAttendance> search(LocalDate from, LocalDate to, String staffId);
 }

@@ -13,4 +13,5 @@ public class SubjectRequest {
     private String code;
     private String grade;
     private String description;
+    private boolean active = true;
 }

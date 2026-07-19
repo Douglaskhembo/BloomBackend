@@ -42,6 +42,10 @@ public class LeaveRequest extends BaseEntity {
     private int days;
     private String reason;
 
+    /** Metadata only — no file storage backend exists in this project yet. */
+    private String documentName;
+    private String documentType;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

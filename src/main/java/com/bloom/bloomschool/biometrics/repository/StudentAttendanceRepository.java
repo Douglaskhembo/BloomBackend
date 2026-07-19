@@ -23,4 +23,15 @@ public interface StudentAttendanceRepository extends JpaRepository<StudentAttend
     Optional<StudentAttendance> findOpenEntry(Long studentId, LocalDate date);
 
     long countByAttendanceDateAndStatus(LocalDate date, AttendanceStatus status);
+
+    @Query("SELECT a FROM StudentAttendance a WHERE a.attendanceDate BETWEEN :from AND :to " +
+            "AND (:grade IS NULL OR a.student.grade = :grade) " +
+            "AND (:stream IS NULL OR a.student.stream = :stream) " +
+            "AND (:admissionNumber IS NULL OR a.student.admissionNumber = :admissionNumber) " +
+            "ORDER BY a.attendanceDate DESC, a.entryTime DESC")
+    List<StudentAttendance> search(LocalDate from, LocalDate to, String grade, String stream, String admissionNumber);
+
+    @Query("SELECT a FROM StudentAttendance a WHERE a.attendanceDate BETWEEN :from AND :to " +
+            "AND a.student.admissionNumber IN :admissionNumbers ORDER BY a.attendanceDate DESC, a.entryTime DESC")
+    List<StudentAttendance> findByAdmissionNumbersAndDateRange(List<String> admissionNumbers, LocalDate from, LocalDate to);
 }

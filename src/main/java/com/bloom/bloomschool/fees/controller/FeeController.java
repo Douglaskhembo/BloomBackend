@@ -3,12 +3,16 @@ package com.bloom.bloomschool.fees.controller;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.fees.dto.FeeItemRequest;
 import com.bloom.bloomschool.fees.dto.FeePaymentRequest;
+import com.bloom.bloomschool.fees.dto.FeeStructureReviewRequest;
+import com.bloom.bloomschool.fees.dto.FeeStructureSubmitRequest;
 import com.bloom.bloomschool.fees.service.FeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/fees")
@@ -70,5 +74,39 @@ public class FeeController {
     public ResponseEntity<ApiResponse<?>> deletePayment(@PathVariable Long id) {
         feeService.deletePayment(id);
         return ResponseEntity.ok(ApiResponse.ok("Payment deleted"));
+    }
+
+    // ── Fee Structures (Maker / Approver / Approved workflow) ───────────────────
+
+    @GetMapping("/structures")
+    public ResponseEntity<ApiResponse<?>> getStructures() {
+        return ResponseEntity.ok(ApiResponse.ok(feeService.getAllFeeStructures()));
+    }
+
+    @GetMapping("/structures/audit")
+    public ResponseEntity<ApiResponse<?>> getStructureAudit() {
+        return ResponseEntity.ok(ApiResponse.ok(feeService.getFeeStructureAudit()));
+    }
+
+    @PostMapping("/structures/draft")
+    public ResponseEntity<ApiResponse<?>> saveDraft(@Valid @RequestBody FeeStructureSubmitRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Draft saved", feeService.saveDraft(req)));
+    }
+
+    @PostMapping("/structures/submit")
+    public ResponseEntity<ApiResponse<?>> submitStructure(@Valid @RequestBody FeeStructureSubmitRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Submitted for approval", feeService.submitForApproval(req)));
+    }
+
+    @PatchMapping("/structures/{uuid}/approve")
+    public ResponseEntity<ApiResponse<?>> approveStructure(@PathVariable UUID uuid, @Valid @RequestBody FeeStructureReviewRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Fee structure approved", feeService.approveStructure(uuid, req.getApprover())));
+    }
+
+    @PatchMapping("/structures/{uuid}/reject")
+    public ResponseEntity<ApiResponse<?>> rejectStructure(@PathVariable UUID uuid, @Valid @RequestBody FeeStructureReviewRequest req) {
+        if (req.getReason() == null || req.getReason().isBlank())
+            throw new IllegalArgumentException("Rejection reason is required");
+        return ResponseEntity.ok(ApiResponse.ok("Fee structure rejected", feeService.rejectStructure(uuid, req.getApprover(), req.getReason())));
     }
 }

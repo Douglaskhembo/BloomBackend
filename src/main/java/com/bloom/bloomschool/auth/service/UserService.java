@@ -2,6 +2,9 @@ package com.bloom.bloomschool.auth.service;
 
 import com.bloom.bloomschool.auth.dto.PermissionsBean;
 import com.bloom.bloomschool.auth.dto.Requests.CreateUserRequest;
+import com.bloom.bloomschool.auth.dto.Requests.OnboardStaffRequest;
+import com.bloom.bloomschool.auth.dto.Responses.OnboardStaffResponse;
+import com.bloom.bloomschool.auth.dto.Responses.ParentLinkResult;
 import com.bloom.bloomschool.auth.dto.Responses.UserResponse;
 import com.bloom.bloomschool.auth.dto.UserRolesDTO;
 import com.bloom.bloomschool.auth.model.Permission;
@@ -12,12 +15,16 @@ import com.bloom.bloomschool.auth.repo.PermissionRepository;
 import com.bloom.bloomschool.auth.repo.RoleRepository;
 import com.bloom.bloomschool.auth.repo.UserPermissionRepository;
 import com.bloom.bloomschool.auth.repo.UserRepository;
+import com.bloom.bloomschool.staff.entity.Staff;
+import com.bloom.bloomschool.staff.repository.StaffRepository;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +37,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final UserPermissionRepository userPermissionRepository;
+    private final StaffRepository staffRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
 
@@ -65,6 +73,87 @@ public class UserService {
 
         seedInheritedPermissions(saved, roles);
         return toResponse(saved);
+    }
+
+    /**
+     * Creates a login for an existing Staff member ("elect from staff") rather than
+     * accepting free-typed personal details — name/email/phone are derived from the
+     * Staff record itself, and profileRef links the account back to it.
+     */
+    @Transactional
+    public OnboardStaffResponse onboardStaff(OnboardStaffRequest request) {
+        Staff staff = staffRepository.findByUuid(request.getStaffUuid())
+                .orElseThrow(() -> new EntityNotFoundException("Staff not found"));
+
+        String staffRef = staff.getUuid().toString();
+        if (userRepository.existsByProfileRef(staffRef))
+            throw new EntityExistsException("A user account already exists for this staff member");
+        if (staff.getEmail() != null && userRepository.existsByEmail(staff.getEmail()))
+            throw new EntityExistsException("A user account already exists for this staff member's email");
+        if (userRepository.existsByUserName(request.getUserName()))
+            throw new IllegalArgumentException("Username already taken");
+
+        Set<Role> roles = resolveRoles(request.getRoleUuids());
+        String tempPassword = UUID.randomUUID().toString().substring(0, 10);
+
+        User saved = userRepository.save(User.builder()
+                .userName(request.getUserName())
+                .firstName(staff.getFirstName())
+                .otherNames(staff.getLastName())
+                .email(staff.getEmail())
+                .phoneNumber(staff.getPhone())
+                .profileRef(staffRef)
+                .password(passwordEncoder.encode(tempPassword))
+                .active(false).firstLogin(true).roles(roles)
+                .enable2FA(request.isEnable2FA())
+                .passwordExpiry(LocalDateTime.now().plusHours(24))
+                .build());
+
+        seedInheritedPermissions(saved, roles);
+        return OnboardStaffResponse.builder()
+                .user(toResponse(saved))
+                .temporaryPassword(tempPassword)
+                .build();
+    }
+
+    /**
+     * Links (or creates) a PARENT-role login for a student's guardian at admission-enrollment
+     * time. Matches an existing PARENT-role user by email/phone first — so siblings admitted
+     * later reuse the same parent account — and only creates a new one if no match is found.
+     */
+    @Transactional
+    public ParentLinkResult onboardParent(String parentName, String parentEmail, String parentPhone) {
+        String email = blankToNull(parentEmail);
+        String phone = blankToNull(parentPhone);
+        if (email == null && phone == null) {
+            return ParentLinkResult.builder().linked(false).build();
+        }
+
+        Optional<User> existing = userRepository.findParentByEmailOrPhone(email, phone);
+        if (existing.isPresent()) {
+            return ParentLinkResult.builder().linked(true).user(existing.get()).newlyCreated(false).build();
+        }
+
+        Role parentRole = roleRepository.findByName("PARENT")
+                .orElseThrow(() -> new IllegalStateException("PARENT role not found — ensure role seeding ran"));
+
+        String[] nameParts = splitName(parentName);
+        String tempPassword = UUID.randomUUID().toString().substring(0, 10);
+
+        User saved = userRepository.save(User.builder()
+                .userName(generateParentUserName(email, phone, parentName))
+                .firstName(nameParts[0])
+                .otherNames(nameParts[1])
+                .email(email)
+                .phoneNumber(phone)
+                .password(passwordEncoder.encode(tempPassword))
+                .active(false).firstLogin(true)
+                .roles(new HashSet<>(Set.of(parentRole)))
+                .passwordExpiry(LocalDateTime.now().plusHours(24))
+                .build());
+
+        seedInheritedPermissions(saved, Set.of(parentRole));
+        return ParentLinkResult.builder().linked(true).user(saved).newlyCreated(true).temporaryPassword(tempPassword).build();
     }
 
     @Transactional
@@ -215,6 +304,29 @@ public class UserService {
             }
         }
     }
+
+    private String generateParentUserName(String email, String phone, String parentName) {
+        String base;
+        if (email != null) base = email.split("@")[0].toLowerCase().replaceAll("[^a-z0-9]", "");
+        else if (parentName != null && !parentName.isBlank()) base = parentName.trim().toLowerCase().replaceAll("[^a-z0-9]+", "");
+        else base = "parent" + (phone != null ? phone.replaceAll("\\D", "") : "");
+        if (base.isBlank()) base = "parent";
+
+        String candidate = base;
+        int suffix = 1;
+        while (userRepository.existsByUserName(candidate)) {
+            candidate = base + suffix++;
+        }
+        return candidate;
+    }
+
+    private String[] splitName(String fullName) {
+        if (fullName == null || fullName.isBlank()) return new String[]{"Parent", "Guardian"};
+        String[] parts = fullName.trim().split("\\s+", 2);
+        return parts.length == 2 ? parts : new String[]{parts[0], ""};
+    }
+
+    private String blankToNull(String s) { return (s == null || s.isBlank()) ? null : s.trim(); }
 
     private Set<Role> resolveRoles(Set<UUID> roleUuids) {
         if (roleUuids == null || roleUuids.isEmpty()) return new HashSet<>();

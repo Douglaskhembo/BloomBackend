@@ -24,9 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService userDetailsService;
     private final UserRepository userRepository;
 
-    private static final List<String> PUBLIC_PATHS = List.of(
-            "/auth/login", "/auth/send-otp", "/auth/validate-otp", "/auth/reset-password"
-    );
+    private static final List<String> PUBLIC_PATHS = List.of("/auth/login");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

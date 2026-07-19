@@ -3,6 +3,7 @@ package com.bloom.bloomschool.students.entity;
 import com.bloom.bloomschool.common.entity.BaseEntity;
 import com.bloom.bloomschool.school.entity.GradeLevel;
 import com.bloom.bloomschool.students.util.Stage;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,11 +40,12 @@ public class Admission extends BaseEntity {
     private String grade;
     private String stream;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "grade_level_id")
     private GradeLevel gradeLevel;
 
     @OneToOne(mappedBy = "admission", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Student student;
 
     private String parentName;
@@ -56,4 +58,15 @@ public class Admission extends BaseEntity {
     @Builder.Default
     private Stage stage = Stage.APPLICATION_REVIEW;
 
+    /**
+     * Set only in-memory (never persisted) right after enrollment, so the stage-update
+     * response can surface a freshly created parent account's one-time temp password
+     * without changing the response DTO shape for any other caller of this entity.
+     */
+    @Transient
+    private Boolean parentAccountCreated;
+    @Transient
+    private String parentAccountUserName;
+    @Transient
+    private String parentTemporaryPassword;
 }

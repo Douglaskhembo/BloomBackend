@@ -54,6 +54,17 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.ok("Student deleted"));
     }
 
+    /** Active children linked to the given PARENT-role user — used by the parent portal. */
+    @GetMapping("/students/my-children")
+    public ResponseEntity<ApiResponse<?>> getMyChildren(@RequestParam UUID parentUserUuid) {
+        return ResponseEntity.ok(ApiResponse.ok(studentService.getMyChildren(parentUserUuid)));
+    }
+
+    @PatchMapping("/students/{uuid}/link-parent")
+    public ResponseEntity<ApiResponse<?>> linkParent(@PathVariable UUID uuid, @RequestParam UUID parentUserUuid) {
+        return ResponseEntity.ok(ApiResponse.ok("Parent linked", studentService.linkParent(uuid, parentUserUuid)));
+    }
+
     // ── Admissions ───────────────────────────────────────────────────────────
 
     @GetMapping("/admissions")

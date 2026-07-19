@@ -2,10 +2,12 @@ package com.bloom.bloomschool.auth.controller;
 
 import com.bloom.bloomschool.auth.dto.PermissionsBean;
 import com.bloom.bloomschool.auth.dto.Requests.CreateUserRequest;
+import com.bloom.bloomschool.auth.dto.Requests.OnboardStaffRequest;
 import com.bloom.bloomschool.auth.dto.UserRolesDTO;
 import com.bloom.bloomschool.auth.service.UserService;
 import com.bloom.bloomschool.auth.utils.ApiResponse;
 import com.bloom.bloomschool.auth.utils.GenericResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,11 @@ public class UserController {
     @PostMapping
     public ResponseEntity<ApiResponse<Object>> create(@RequestBody CreateUserRequest request) {
         return genericResponse.response(userService.createUser(request), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/onboard-staff")
+    public ResponseEntity<ApiResponse<Object>> onboardStaff(@Valid @RequestBody OnboardStaffRequest request) {
+        return genericResponse.response(userService.onboardStaff(request), HttpStatus.CREATED);
     }
 
     @PutMapping("/{uuid}")

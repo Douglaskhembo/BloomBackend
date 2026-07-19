@@ -9,7 +9,7 @@ import java.util.UUID;
 public class DepartmentRequest {
     @NotBlank private String name;
     @NotBlank private String code;
-    private String head;
+    private UUID headUuid;
     private Long id;
     private UUID uuid;
 }

@@ -22,6 +22,7 @@ public class PayrollService {
     private final NhifTierRepository nhifTierRepo;
     private final AllowanceTypeRepository allowanceTypeRepo;
     private final OtherDeductionRepository otherDeductionRepo;
+    private final StatutoryDeductionRepository statutoryDeductionRepo;
     private final PayrollSettingsRepository settingsRepo;
     private final StaffSalaryRepository staffSalaryRepo;
     private final PayrollRunRepository payrollRunRepo;
@@ -175,6 +176,54 @@ public class PayrollService {
         otherDeductionRepo.deleteById(id);
     }
 
+    // ── Statutory Deductions (NSSF, Housing Levy, custom) ────────────────────────
+
+    public List<StatutoryDeduction> getAllStatutoryDeductions() {
+        return statutoryDeductionRepo.findAll();
+    }
+
+    @Transactional
+    public StatutoryDeduction createStatutoryDeduction(StatutoryDeductionRequest req) {
+        if (statutoryDeductionRepo.existsByName(req.getName()))
+            throw new IllegalArgumentException("Statutory deduction '" + req.getName() + "' already exists");
+        return statutoryDeductionRepo.save(StatutoryDeduction.builder()
+                .name(req.getName())
+                .type(req.getType())
+                .category(req.getCategory())
+                .value(req.getValue())
+                .maxAmount(req.getMaxAmount())
+                .employerContribution(req.isEmployerContribution())
+                .employerValue(req.getEmployerValue())
+                .build());
+    }
+
+    @Transactional
+    public StatutoryDeduction updateStatutoryDeduction(Long id, StatutoryDeductionRequest req) {
+        StatutoryDeduction d = statutoryDeductionRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Statutory deduction not found"));
+        d.setName(req.getName());
+        d.setType(req.getType());
+        d.setCategory(req.getCategory());
+        d.setValue(req.getValue());
+        d.setMaxAmount(req.getMaxAmount());
+        d.setEmployerContribution(req.isEmployerContribution());
+        d.setEmployerValue(req.getEmployerValue());
+        return statutoryDeductionRepo.save(d);
+    }
+
+    @Transactional
+    public StatutoryDeduction toggleStatutoryDeduction(Long id) {
+        StatutoryDeduction d = statutoryDeductionRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Statutory deduction not found"));
+        d.setActive(!d.isActive());
+        return statutoryDeductionRepo.save(d);
+    }
+
+    @Transactional
+    public void deleteStatutoryDeduction(Long id) {
+        statutoryDeductionRepo.deleteById(id);
+    }
+
     // ── Payroll Settings ──────────────────────────────────────────────────────
 
     public PayrollSettings getSettings() {
@@ -240,6 +289,8 @@ public class PayrollService {
         List<PayeBand> bands = payeBandRepo.findAllByOrderByDisplayOrderAsc();
         List<NhifTier> tiers = nhifTierRepo.findAllByOrderByDisplayOrderAsc();
         List<AllowanceType> allowanceTypes = allowanceTypeRepo.findAll();
+        List<StatutoryDeduction> statutoryDeductions = statutoryDeductionRepo.findAll();
+        double personalRelief = getSettings().getPersonalRelief();
         List<StaffSalary> salaries = staffSalaryRepo.findAll();
 
         PayrollRun run = PayrollRun.builder()
@@ -271,7 +322,7 @@ public class PayrollService {
             PayrollLineResult result = engine.calculate(
                     sal.getStaffId(), sal.getStaffId(),
                     sal.getBasicSalary(), taxable, nonTaxable, otherDed,
-                    bands, tiers);
+                    bands, tiers, statutoryDeductions, personalRelief);
 
             PayrollLine line = PayrollLine.builder()
                     .payrollRun(run)

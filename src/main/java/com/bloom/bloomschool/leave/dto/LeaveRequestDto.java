@@ -15,6 +15,8 @@ public class LeaveRequestDto {
     @NotNull private LocalDate fromDate;
     @NotNull private LocalDate toDate;
     private String reason;
+    private String documentName;
+    private String documentType;
     private Long id;
     private UUID uuid;
 }

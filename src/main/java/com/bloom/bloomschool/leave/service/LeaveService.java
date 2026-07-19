@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.leave.service;
 
+import com.bloom.bloomschool.leave.dto.LeaveBalanceResponse;
 import com.bloom.bloomschool.leave.dto.LeaveRequestDto;
 import com.bloom.bloomschool.leave.dto.LeaveTypeRequest;
 import com.bloom.bloomschool.leave.entity.LeaveRequest;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -36,6 +38,9 @@ public class LeaveService {
                 .name(req.getName())
                 .maxDaysPerYear(req.getMaxDaysPerYear())
                 .requiresApproval(req.isRequiresApproval())
+                .paid(req.isPaid())
+                .requiresDocument(req.isRequiresDocument())
+                .documentTypes(req.isRequiresDocument() && req.getDocumentTypes() != null ? req.getDocumentTypes() : List.of())
                 .build());
     }
 
@@ -46,7 +51,18 @@ public class LeaveService {
         lt.setName(req.getName());
         lt.setMaxDaysPerYear(req.getMaxDaysPerYear());
         lt.setRequiresApproval(req.isRequiresApproval());
+        lt.setPaid(req.isPaid());
+        lt.setRequiresDocument(req.isRequiresDocument());
+        lt.setDocumentTypes(req.isRequiresDocument() && req.getDocumentTypes() != null ? req.getDocumentTypes() : List.of());
         return leaveTypeRepo.save(lt);
+    }
+
+    @Transactional
+    public void toggleLeaveTypeStatus(Long id) {
+        LeaveType lt = leaveTypeRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Leave type not found"));
+        lt.setActive(!lt.isActive());
+        leaveTypeRepo.save(lt);
     }
 
     @Transactional
@@ -81,9 +97,36 @@ public class LeaveService {
                 .toDate(req.getToDate())
                 .days((int) days)
                 .reason(req.getReason())
+                .documentName(req.getDocumentName())
+                .documentType(req.getDocumentType())
                 .status(LeaveRequest.Status.PENDING)
                 .build();
         return leaveRequestRepo.save(lr);
+    }
+
+    /** Remaining balance per active leave type, for the current calendar year, based on approved requests. */
+    public List<LeaveBalanceResponse> getBalances(String staffId) {
+        int currentYear = LocalDate.now().getYear();
+        List<LeaveRequest> approved = leaveRequestRepo.findByStaffIdAndStatus(staffId, LeaveRequest.Status.APPROVED);
+
+        return leaveTypeRepo.findAll().stream()
+                .filter(LeaveType::isActive)
+                .map(lt -> {
+                    int used = approved.stream()
+                            .filter(r -> r.getLeaveType().getId().equals(lt.getId()))
+                            .filter(r -> r.getFromDate().getYear() == currentYear)
+                            .mapToInt(LeaveRequest::getDays)
+                            .sum();
+                    return LeaveBalanceResponse.builder()
+                            .leaveTypeId(lt.getId())
+                            .leaveTypeUuid(lt.getUuid())
+                            .leaveTypeName(lt.getName())
+                            .maxDaysPerYear(lt.getMaxDaysPerYear())
+                            .usedDays(used)
+                            .remainingDays(Math.max(0, lt.getMaxDaysPerYear() - used))
+                            .build();
+                })
+                .toList();
     }
 
     @Transactional

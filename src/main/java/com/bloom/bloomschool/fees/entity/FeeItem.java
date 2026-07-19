@@ -26,6 +26,10 @@ public class FeeItem extends BaseEntity {
     private String description;
     private double amount;
     private String grade;   // null = applies to all grades
+
+    @Builder.Default
+    private String term = "Per Term";   // "Per Term" | "Per Year" | "One-time"
+
     @Builder.Default
     private boolean active = true;
 }

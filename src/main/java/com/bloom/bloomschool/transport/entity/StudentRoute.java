@@ -21,11 +21,11 @@ public class StudentRoute extends BaseEntity {
     @PrePersist
     public void generateUuid() { if (uuid == null) uuid = UUID.randomUUID(); }
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 

@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.school.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.staff.entity.Staff;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,7 +27,9 @@ public class Department extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String code;
 
-    private String head;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "head_staff_id")
+    private Staff head;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

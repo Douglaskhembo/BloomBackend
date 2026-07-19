@@ -3,6 +3,9 @@ package com.bloom.bloomschool.school.service;
 import com.bloom.bloomschool.school.dto.*;
 import com.bloom.bloomschool.school.entity.*;
 import com.bloom.bloomschool.school.repository.*;
+import com.bloom.bloomschool.staff.entity.Staff;
+import com.bloom.bloomschool.staff.repository.StaffRepository;
+import com.bloom.bloomschool.staff.util.StaffType;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ public class SchoolService {
     private final GradeLevelRepository gradeLevelRepo;
     private final DepartmentRepository departmentRepo;
     private final BranchRepository branchRepo;
+    private final StaffRepository staffRepo;
 
     // ── School Info ──────────────────────────────────────────────────────────
 
@@ -94,6 +98,15 @@ public class SchoolService {
         return departmentRepo.findAll();
     }
 
+    private Staff resolveDepartmentHead(UUID headUuid) {
+        if (headUuid == null) return null;
+        Staff staff = staffRepo.findByUuid(headUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Staff not found"));
+        if (staff.getStaffType() != StaffType.TEACHING)
+            throw new IllegalArgumentException("Department head must be a teaching staff member");
+        return staff;
+    }
+
     @Transactional
     public Department createDepartment(DepartmentRequest req) {
         if (departmentRepo.existsByCode(req.getCode()))
@@ -101,7 +114,7 @@ public class SchoolService {
         return departmentRepo.save(Department.builder()
                 .name(req.getName())
                 .code(req.getCode().toUpperCase())
-                .head(req.getHead())
+                .head(resolveDepartmentHead(req.getHeadUuid()))
                 .build());
     }
 
@@ -111,7 +124,7 @@ public class SchoolService {
                 .orElseThrow(() -> new EntityNotFoundException("Department not found"));
         d.setName(req.getName());
         d.setCode(req.getCode().toUpperCase());
-        d.setHead(req.getHead());
+        d.setHead(resolveDepartmentHead(req.getHeadUuid()));
         return departmentRepo.save(d);
     }
 

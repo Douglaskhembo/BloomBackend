@@ -46,3 +46,51 @@ logging:
   level:
     com.bloom.bloomschool: DEBUG
     org.springframework.web: INFO
+
+mpesa:
+  # Sandbox: https://sandbox.safaricom.co.ke  Production: https://api.safaricom.co.ke
+  base-url: ${MPESA_BASE_URL:https://sandbox.safaricom.co.ke}
+  oauth-path: /oauth/v1/generate?grant_type=client_credentials
+  stk-push-path: /mpesa/stkpush/v1/processrequest
+  stk-query-path: /mpesa/stkpushquery/v1/query
+  c2b-register-path: /mpesa/c2b/v1/registerurl
+  # Paybill number funds are received on (fee payments use this as the account-carrying shortcode)
+  shortcode: ${MPESA_SHORTCODE:}
+  # Only set if STK push uses a different shortcode from the paybill above
+  stk-shortcode: ${MPESA_STK_SHORTCODE:}
+  passkey: ${MPESA_PASSKEY:}
+  consumer-key: ${MPESA_CONSUMER_KEY:}
+  consumer-secret: ${MPESA_CONSUMER_SECRET:}
+  # Public HTTPS base URL this backend is reachable at (e.g. via ngrok in dev, or your real domain in prod)
+  callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://example.com/api}
+  stk-callback-path: /payments/mpesa/stk-callback
+  validation-path: /payments/mpesa/c2b/validation
+  confirmation-path: /payments/mpesa/c2b/confirmation
+  # Safaricom's published callback source IPs — leave empty to disable IP filtering (e.g. sandbox testing)
+  whitelist: ${MPESA_IP_WHITELIST:}
+
+banks:
+  equity:
+    enabled: ${EQUITY_ENABLED:false}
+    base-url: ${EQUITY_BASE_URL:}
+    api-key: ${EQUITY_API_KEY:}
+    api-secret: ${EQUITY_API_SECRET:}
+    merchant-code: ${EQUITY_MERCHANT_CODE:}
+    signature-secret: ${EQUITY_SIGNATURE_SECRET:}
+    signature-header: Signature
+  kcb:
+    enabled: ${KCB_ENABLED:false}
+    base-url: ${KCB_BASE_URL:}
+    api-key: ${KCB_API_KEY:}
+    api-secret: ${KCB_API_SECRET:}
+    merchant-code: ${KCB_MERCHANT_CODE:}
+    signature-secret: ${KCB_SIGNATURE_SECRET:}
+    signature-header: Signature
+  coop:
+    enabled: ${COOP_ENABLED:false}
+    base-url: ${COOP_BASE_URL:}
+    api-key: ${COOP_API_KEY:}
+    api-secret: ${COOP_API_SECRET:}
+    merchant-code: ${COOP_MERCHANT_CODE:}
+    signature-secret: ${COOP_SIGNATURE_SECRET:}
+    signature-header: Signature

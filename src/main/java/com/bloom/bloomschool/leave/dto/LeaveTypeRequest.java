@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -11,6 +12,9 @@ public class LeaveTypeRequest {
     @NotBlank private String name;
     @NotNull private Integer maxDaysPerYear;
     private boolean requiresApproval = true;
+    private boolean paid = true;
+    private boolean requiresDocument = false;
+    private List<String> documentTypes;
     private Long id;
     private UUID uuid;
 }

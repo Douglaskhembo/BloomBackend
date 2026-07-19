@@ -31,6 +31,7 @@ public class SubjectService {
                 .code(req.getCode())
                 .grade(req.getGrade())
                 .description(req.getDescription())
+                .active(req.isActive())
                 .build());
     }
 
@@ -42,6 +43,7 @@ public class SubjectService {
         s.setCode(req.getCode());
         s.setGrade(req.getGrade());
         s.setDescription(req.getDescription());
+        s.setActive(req.isActive());
         return subjectRepo.save(s);
     }
 

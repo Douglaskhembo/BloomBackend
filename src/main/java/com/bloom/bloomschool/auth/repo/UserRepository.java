@@ -14,7 +14,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUuid(UUID uuid);
     boolean existsByEmail(String email);
     boolean existsByUserName(String userName);
+    boolean existsByProfileRef(String profileRef);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles r LEFT JOIN FETCH r.permissions WHERE u.userName = :userName")
     Optional<User> findByUserNameWithRoles(@Param("userName") String userName);
+
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'PARENT' AND " +
+            "((:email IS NOT NULL AND u.email = :email) OR (:phone IS NOT NULL AND u.phoneNumber = :phone))")
+    Optional<User> findParentByEmailOrPhone(@Param("email") String email, @Param("phone") String phone);
 }

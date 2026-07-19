@@ -122,6 +122,35 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.ok("Deduction deleted"));
     }
 
+    // ── Statutory Deductions ──────────────────────────────────────────────────
+
+    @GetMapping("/statutory-deductions")
+    public ResponseEntity<ApiResponse<?>> getStatutoryDeductions() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getAllStatutoryDeductions()));
+    }
+
+    @PostMapping("/statutory-deductions")
+    public ResponseEntity<ApiResponse<?>> createStatutoryDeduction(@Valid @RequestBody StatutoryDeductionRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Statutory deduction created", payrollService.createStatutoryDeduction(req)));
+    }
+
+    @PutMapping("/statutory-deductions/{id}")
+    public ResponseEntity<ApiResponse<?>> updateStatutoryDeduction(@PathVariable Long id, @Valid @RequestBody StatutoryDeductionRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Statutory deduction updated", payrollService.updateStatutoryDeduction(id, req)));
+    }
+
+    @PatchMapping("/statutory-deductions/{id}/toggle")
+    public ResponseEntity<ApiResponse<?>> toggleStatutoryDeduction(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleStatutoryDeduction(id)));
+    }
+
+    @DeleteMapping("/statutory-deductions/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteStatutoryDeduction(@PathVariable Long id) {
+        payrollService.deleteStatutoryDeduction(id);
+        return ResponseEntity.ok(ApiResponse.ok("Statutory deduction deleted"));
+    }
+
     // ── Payroll Settings ──────────────────────────────────────────────────────
 
     @GetMapping("/settings")

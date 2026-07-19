@@ -12,6 +12,8 @@ public class FeeItemRequest {
     private String description;
     @NotNull private Double amount;
     private String grade;
+    private String term = "Per Term";
+    private boolean active = true;
     private Long id;
     private UUID uuid;
 }

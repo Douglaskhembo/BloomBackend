@@ -21,6 +21,7 @@ public class StudentRequest {
     private String stream;
     private UUID gradeLevelUuid;
     private String parentName;
+    private String parentRelationship;
     private String parentPhone;
     private String parentEmail;
     private Student.Status status;

@@ -1,5 +1,7 @@
 package com.bloom.bloomschool.students.service;
 
+import com.bloom.bloomschool.auth.dto.Responses.ParentLinkResult;
+import com.bloom.bloomschool.auth.service.UserService;
 import com.bloom.bloomschool.school.entity.GradeLevel;
 import com.bloom.bloomschool.school.repository.GradeLevelRepository;
 import com.bloom.bloomschool.students.dto.AdmissionRequest;
@@ -26,6 +28,7 @@ public class StudentService {
     private final StudentRepository studentRepo;
     private final AdmissionRepository admissionRepo;
     private final GradeLevelRepository gradeLevelRepo;
+    private final UserService userService;
 
     // ── Students ─────────────────────────────────────────────────────────────
 
@@ -61,6 +64,19 @@ public class StudentService {
     public void delete(UUID uuid) {
         Student s = getByUuid(uuid);
         studentRepo.deleteById(s.getId());
+    }
+
+    /** Active children linked to a PARENT-role user account — never exposes left/graduated students. */
+    public List<Student> getMyChildren(UUID parentUserUuid) {
+        return studentRepo.findByParentUserUuidAndStatus(parentUserUuid, Student.Status.ACTIVE);
+    }
+
+    /** Admin override for when auto-matching at admission time didn't find/create the right parent account. */
+    @Transactional
+    public Student linkParent(UUID studentUuid, UUID parentUserUuid) {
+        Student s = getByUuid(studentUuid);
+        s.setParentUserUuid(parentUserUuid);
+        return studentRepo.save(s);
     }
 
     // ── Admissions ───────────────────────────────────────────────────────────
@@ -117,12 +133,33 @@ public class StudentService {
                 .stream(a.getStream())
                 .gradeLevel(a.getGradeLevel())
                 .parentName(a.getParentName())
+                .parentRelationship(a.getParentRelationship())
                 .parentPhone(a.getParentPhone())
                 .parentEmail(a.getParentEmail())
                 .admission(a)
                 .status(Student.Status.ACTIVE)
                 .build();
+        s = studentRepo.save(s);
+        linkParentAccount(a, s);
+    }
+
+    /**
+     * Matches the admission's parent/guardian to an existing PARENT-role login by email/phone
+     * (so siblings share one account), or creates one. The Admission's transient fields carry
+     * the one-time temp password back to the caller only when a new account was created.
+     */
+    private void linkParentAccount(Admission a, Student s) {
+        ParentLinkResult result = userService.onboardParent(a.getParentName(), a.getParentEmail(), a.getParentPhone());
+        if (!result.isLinked()) return;
+
+        s.setParentUserUuid(result.getUser().getUuid());
         studentRepo.save(s);
+
+        a.setParentAccountCreated(result.isNewlyCreated());
+        if (result.isNewlyCreated()) {
+            a.setParentAccountUserName(result.getUser().getUserName());
+            a.setParentTemporaryPassword(result.getTemporaryPassword());
+        }
     }
 
     private String generateAdmissionNumber() {
@@ -147,6 +184,7 @@ public class StudentService {
         s.setStream(req.getStream());
         s.setGradeLevel(resolveGradeLevel(req.getGradeLevelUuid()));
         s.setParentName(req.getParentName());
+        s.setParentRelationship(req.getParentRelationship());
         s.setParentPhone(req.getParentPhone());
         s.setParentEmail(req.getParentEmail());
         if (req.getStatus() != null) s.setStatus(req.getStatus());
