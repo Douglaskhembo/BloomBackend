@@ -60,7 +60,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse createUser(CreateUserRequest request) {
+    public void createUser(CreateUserRequest request) {
         if (userRepository.existsByUserName(request.getUserName()))
             throw new IllegalArgumentException("Username already taken");
 
@@ -98,11 +98,10 @@ public class UserService {
             log.error("Failed to send registration email to {}", saved.getEmail(), e);
         }
 
-        return toResponse(saved);
     }
 
     @Transactional
-    public OnboardStaffResponse onboardStaff(OnboardStaffRequest request) {
+    public void onboardStaff(OnboardStaffRequest request) {
         Staff staff = staffRepository.findByUuid(request.getStaffUuid())
                 .orElseThrow(() -> new EntityNotFoundException("Staff not found"));
 
@@ -131,10 +130,17 @@ public class UserService {
                 .build());
 
         seedInheritedPermissions(saved, roles);
-        return OnboardStaffResponse.builder()
-                .user(toResponse(saved))
-                .temporaryPassword(tempPassword)
-                .build();
+        try {
+            mailService.registrationEmail(
+                    schoolService.getSchoolInfo().getName(),
+                    saved.getEmail(),
+                    saved.getFirstName(),
+                    saved.getUserName(),
+                    tempPassword
+            );
+        } catch (MessagingException e) {
+            log.error("Failed to send registration email to {}", saved.getEmail(), e);
+        }
     }
 
     @Transactional
@@ -173,7 +179,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(UUID uuid, CreateUserRequest request) {
+    public void updateUser(UUID uuid, CreateUserRequest request) {
         User user = userRepository.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         user.setFirstName(request.getFirstName());
@@ -182,7 +188,7 @@ public class UserService {
         user.setPhoneNumber(request.getPhoneNumber());
         user.setProfileRef(request.getProfileRef());
         if (request.getRoleUuids() != null) user.setRoles(resolveRoles(request.getRoleUuids()));
-        return toResponse(userRepository.save(user));
+        userRepository.save(user);
     }
 
     @Transactional

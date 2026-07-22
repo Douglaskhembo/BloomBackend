@@ -34,19 +34,22 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> create(@RequestBody CreateUserRequest request) {
-        return genericResponse.response(userService.createUser(request), HttpStatus.CREATED);
+    public ResponseEntity<?> create(@RequestBody CreateUserRequest request) {
+        userService.createUser(request);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PostMapping("/onboard-staff")
-    public ResponseEntity<ApiResponse<Object>> onboardStaff(@Valid @RequestBody OnboardStaffRequest request) {
-        return genericResponse.response(userService.onboardStaff(request), HttpStatus.CREATED);
+    public ResponseEntity<?> onboardStaff(@Valid @RequestBody OnboardStaffRequest request) {
+        userService.onboardStaff(request);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/{uuid}")
-    public ResponseEntity<ApiResponse<Object>> update(@PathVariable UUID uuid,
-                                                      @RequestBody CreateUserRequest request) {
-        return genericResponse.response(userService.updateUser(uuid, request), HttpStatus.OK);
+    public ResponseEntity<?> update(@PathVariable UUID uuid,
+                                    @RequestBody CreateUserRequest request) {
+        userService.updateUser(uuid, request);
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
     @PatchMapping("/{uuid}/toggle-status")
