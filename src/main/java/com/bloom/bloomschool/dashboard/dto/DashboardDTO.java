@@ -9,4 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class DashboardDTO {
+    private Long staffId;
+    private Long totalStudents;
 }
