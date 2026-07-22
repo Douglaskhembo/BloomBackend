@@ -34,4 +34,6 @@ public class StaffRequest {
     private String emergencyContactName;
     private String emergencyContactPhone;
     private String emergencyContactRelationship;
+    private String passportNumber;
+
 }

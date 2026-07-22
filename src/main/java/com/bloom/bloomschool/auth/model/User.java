@@ -39,6 +39,11 @@ public class User {
     @Builder.Default
     private boolean firstLogin = true;
 
+    @Builder.Default
+    private boolean accountLocked = false;
+
+    private Integer failedLoginAttempts = 0;
+
     @Column(columnDefinition = "boolean default false")
     private boolean enable2FA;
 

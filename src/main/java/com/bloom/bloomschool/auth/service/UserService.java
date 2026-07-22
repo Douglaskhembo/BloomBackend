@@ -15,11 +15,17 @@ import com.bloom.bloomschool.auth.repo.PermissionRepository;
 import com.bloom.bloomschool.auth.repo.RoleRepository;
 import com.bloom.bloomschool.auth.repo.UserPermissionRepository;
 import com.bloom.bloomschool.auth.repo.UserRepository;
+import com.bloom.bloomschool.notiffication.service.MailService;
+import com.bloom.bloomschool.school.entity.SchoolInfo;
+import com.bloom.bloomschool.school.repository.SchoolInfoRepository;
+import com.bloom.bloomschool.school.service.SchoolService;
 import com.bloom.bloomschool.staff.entity.Staff;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
+import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +37,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -40,6 +47,8 @@ public class UserService {
     private final StaffRepository staffRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final MailService mailService;
+    private final SchoolService schoolService;
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream().map(this::toResponse).toList();
@@ -54,6 +63,7 @@ public class UserService {
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByUserName(request.getUserName()))
             throw new IllegalArgumentException("Username already taken");
+
         if (userRepository.existsByEmail(request.getEmail()))
             throw new IllegalArgumentException("Email already registered");
 
@@ -68,18 +78,29 @@ public class UserService {
                 .phoneNumber(request.getPhoneNumber())
                 .profileRef(request.getProfileRef())
                 .password(passwordEncoder.encode(tempPassword))
-                .active(false).firstLogin(true).roles(roles)
+                .active(false)
+                .firstLogin(true)
+                .roles(roles)
+                .passwordExpiry(LocalDateTime.now().plusHours(24))
                 .build());
 
         seedInheritedPermissions(saved, roles);
+
+        try {
+            mailService.registrationEmail(
+                    schoolService.getSchoolInfo().getName(),
+                    saved.getEmail(),
+                    saved.getFirstName(),
+                    saved.getUserName(),
+                    tempPassword
+            );
+        } catch (MessagingException e) {
+            log.error("Failed to send registration email to {}", saved.getEmail(), e);
+        }
+
         return toResponse(saved);
     }
 
-    /**
-     * Creates a login for an existing Staff member ("elect from staff") rather than
-     * accepting free-typed personal details — name/email/phone are derived from the
-     * Staff record itself, and profileRef links the account back to it.
-     */
     @Transactional
     public OnboardStaffResponse onboardStaff(OnboardStaffRequest request) {
         Staff staff = staffRepository.findByUuid(request.getStaffUuid())
@@ -116,11 +137,6 @@ public class UserService {
                 .build();
     }
 
-    /**
-     * Links (or creates) a PARENT-role login for a student's guardian at admission-enrollment
-     * time. Matches an existing PARENT-role user by email/phone first — so siblings admitted
-     * later reuse the same parent account — and only creates a new one if no match is found.
-     */
     @Transactional
     public ParentLinkResult onboardParent(String parentName, String parentEmail, String parentPhone) {
         String email = blankToNull(parentEmail);

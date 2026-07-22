@@ -18,6 +18,8 @@ public class UserResponse {
     private boolean active;
     private boolean firstLogin;
     private boolean enable2FA;
+    private boolean accountLocked;
+    private Integer failedLoginAttempts = 0;
     private String profileRef;
     private Set<String> roles;
     private String roleName;   // primary role name (first)

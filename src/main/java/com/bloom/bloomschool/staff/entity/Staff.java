@@ -39,13 +39,18 @@ public class Staff extends BaseEntity {
     @Column(unique = true)
     private String idNumber;
 
-    @Column(nullable = false)
+    @Column(unique = true)
+    private String passportNumber;
+
+    @Column(nullable = false, unique = true)
     private String phone;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
     private String address;
+
+    @Column(unique = true)
     private String practiceNumber;
 
     @Enumerated(EnumType.STRING)
