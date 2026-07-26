@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +69,7 @@ public class SchoolService {
                 .name(req.getName())
                 .displayOrder(req.getDisplayOrder())
                 .streams(req.getStreams())
+                .streamNames(resolveStreamNames(req))
                 .build());
     }
 
@@ -78,7 +80,24 @@ public class SchoolService {
         g.setName(req.getName());
         g.setDisplayOrder(req.getDisplayOrder());
         g.setStreams(req.getStreams());
+        g.setStreamNames(resolveStreamNames(req));
         return gradeLevelRepo.save(g);
+    }
+
+    /** Streams > 1 must be named 1:1 (no more, no fewer, no blanks/duplicates) so each stream is
+     *  unambiguous; a single (undivided) grade needs no stream names at all. */
+    private List<String> resolveStreamNames(GradeLevelRequest req) {
+        if (req.getStreams() <= 1) return List.of();
+        List<String> names = req.getStreamNames() != null ? req.getStreamNames() : List.of();
+        if (names.size() != req.getStreams())
+            throw new IllegalArgumentException(
+                    "This grade has " + req.getStreams() + " stream(s) — provide exactly that many stream names (got " + names.size() + ")");
+        List<String> trimmed = names.stream().map(n -> n == null ? "" : n.trim()).collect(Collectors.toList());
+        if (trimmed.stream().anyMatch(String::isBlank))
+            throw new IllegalArgumentException("Stream names cannot be blank");
+        if (trimmed.stream().map(String::toLowerCase).distinct().count() != trimmed.size())
+            throw new IllegalArgumentException("Stream names must be unique within a grade level");
+        return trimmed;
     }
 
     @Transactional

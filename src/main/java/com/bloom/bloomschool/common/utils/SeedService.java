@@ -10,17 +10,20 @@ import com.bloom.bloomschool.auth.repo.RoleRepository;
 import com.bloom.bloomschool.auth.repo.SysModuleRepository;
 import com.bloom.bloomschool.auth.repo.UserPermissionRepository;
 import com.bloom.bloomschool.auth.repo.UserRepository;
-import com.bloom.bloomschool.payroll.entity.PayeBand;
-import com.bloom.bloomschool.payroll.entity.PayrollSettings;
-import com.bloom.bloomschool.payroll.entity.StatutoryDeduction;
 import com.bloom.bloomschool.payroll.repository.PayeBandRepository;
 import com.bloom.bloomschool.payroll.repository.PayrollSettingsRepository;
 import com.bloom.bloomschool.payroll.repository.StatutoryDeductionRepository;
+import com.bloom.bloomschool.school.repository.GradeLevelRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileCopyUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +41,8 @@ public class SeedService {
     private final PayeBandRepository payeBandRepo;
     private final StatutoryDeductionRepository statutoryDeductionRepo;
     private final PayrollSettingsRepository payrollSettingsRepo;
+    private final GradeLevelRepository gradeLevelRepo;
+    private final JdbcTemplate jdbcTemplate;
 
     @Transactional
     public void seedAll() {
@@ -46,6 +51,7 @@ public class SeedService {
         seedRolesWithPermissions();
         seedPayrollWorkflowPermissions();
         seedPayrollSetup();
+        seedGradeLevels();
     }
 
     private void seedModules() {
@@ -223,50 +229,64 @@ public class SeedService {
     private void seedPayrollSetup() {
         if (payeBandRepo.count() == 0) {
             log.info("Seeding PAYE bands...");
-            payeBandRepo.saveAll(List.of(
-                    PayeBand.builder().minAmount(0).maxAmount(24000d).rate(10).displayOrder(0).build(),
-                    PayeBand.builder().minAmount(24001).maxAmount(32333d).rate(25).displayOrder(24001).build(),
-                    PayeBand.builder().minAmount(32334).maxAmount(500000d).rate(30).displayOrder(32334).build(),
-                    PayeBand.builder().minAmount(500001).maxAmount(800000d).rate(32.5).displayOrder(500001).build(),
-                    PayeBand.builder().minAmount(800001).maxAmount(null).rate(35).displayOrder(800001).build()));
+            executeSqlSection("INSERT INTO bloom_sch_paye_bands", "payeBands");
         } else {
             log.info("PAYE bands already seeded, skipping");
         }
 
         if (statutoryDeductionRepo.count() == 0) {
             log.info("Seeding statutory deductions (NSSF, Housing Levy, SHIF)...");
-            statutoryDeductionRepo.saveAll(List.of(
-                    StatutoryDeduction.builder()
-                            .name("NSSF Tier I").type(StatutoryDeduction.ValueType.PERCENTAGE)
-                            .category(StatutoryDeduction.Category.NSSF)
-                            .value(6).thresholdAmount(0d).maxAmount(480d)
-                            .employerContribution(true).employerValue(6).build(),
-                    StatutoryDeduction.builder()
-                            .name("NSSF Tier II").type(StatutoryDeduction.ValueType.PERCENTAGE)
-                            .category(StatutoryDeduction.Category.NSSF)
-                            .value(6).thresholdAmount(8000d).maxAmount(3840d)
-                            .employerContribution(true).employerValue(6).build(),
-                    StatutoryDeduction.builder()
-                            .name("Affordable Housing Levy").type(StatutoryDeduction.ValueType.PERCENTAGE)
-                            .category(StatutoryDeduction.Category.HOUSING_LEVY)
-                            .value(1.5).maxAmount(null)
-                            .employerContribution(true).employerValue(1.5).build(),
-                    StatutoryDeduction.builder()
-                            .name("SHIF").type(StatutoryDeduction.ValueType.PERCENTAGE)
-                            .category(StatutoryDeduction.Category.SHIF)
-                            .value(2.75).minAmount(300d).maxAmount(null)
-                            .employerContribution(false).build()));
+            executeSqlSection("INSERT INTO bloom_sch_statutory_deductions", "statutoryDeductions");
         } else {
             log.info("Statutory deductions already seeded, skipping");
         }
 
         if (payrollSettingsRepo.count() == 0) {
             log.info("Seeding payroll settings...");
-            payrollSettingsRepo.save(PayrollSettings.builder()
-                    .personalRelief(2400).insuranceRelief(60000)
-                    .payDay(28).paymentMethod("bank_transfer").currency("KES").build());
+            executeSqlSection("INSERT INTO bloom_sch_payroll_settings", "payrollSettings");
         } else {
             log.info("Payroll settings already seeded, skipping");
+        }
+    }
+
+    /** Seeds the full Kenyan CBC grade structure (2-6-3-3): Pre-Primary, Primary, Junior School,
+     *  Senior School — Grade 10 is the newest cohort, rolling out from 2026. Idempotent: only
+     *  runs against an empty table, so it never overwrites a school's own grade configuration. */
+    private void seedGradeLevels() {
+        if (gradeLevelRepo.count() > 0) { log.info("Grade levels already seeded, skipping"); return; }
+        log.info("Seeding grade levels...");
+        executeSqlSection("INSERT INTO bloom_sch_grade_levels", "gradeLevels");
+    }
+
+    /** Runs the statement(s) in seed.sql whose text contains {@code keyword} — lets each section
+     *  of that flat-file live as plain SQL (easy for a DBA to read/edit) while the calling method
+     *  still decides *whether* to run it via its own idempotency check. Mirrors the pattern this
+     *  team already uses in the LegalTech backend's SeedService. */
+    private void executeSqlSection(String keyword, String label) {
+        try {
+            ClassPathResource resource = new ClassPathResource("seed.sql");
+            String sql = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()), StandardCharsets.UTF_8);
+
+            StringBuilder sectionSql = new StringBuilder();
+            String[] statements = sql.split(";");
+            for (String statement : statements) {
+                String trimmed = statement.trim();
+                if (trimmed.contains(keyword)) {
+                    sectionSql.append(trimmed).append(";");
+                }
+            }
+
+            if (sectionSql.isEmpty()) {
+                log.warn("No SQL section found for {}", label);
+                return;
+            }
+
+            log.debug("Executing SQL section for {}:\n{}", label, sectionSql);
+            jdbcTemplate.execute(sectionSql.toString());
+        } catch (IOException e) {
+            log.error("Failed to read seed.sql for {}", label, e);
+        } catch (Exception e) {
+            log.error("Failed to execute SQL section for {}", label, e);
         }
     }
 }
