@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,6 +31,8 @@ public class User {
 
     private String firstName;
     private String otherNames;
+
+    @JsonIgnore
     private String password;
     private String email;
     private String phoneNumber;
@@ -48,6 +51,7 @@ public class User {
     private boolean enable2FA;
 
     @Column(name = "session_token")
+    @JsonIgnore
     private String sessionToken;
 
     @Column(name = "password_expiry")

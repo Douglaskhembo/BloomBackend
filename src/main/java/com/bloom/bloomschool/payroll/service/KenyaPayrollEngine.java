@@ -1,7 +1,6 @@
 package com.bloom.bloomschool.payroll.service;
 
 import com.bloom.bloomschool.payroll.dto.PayrollLineResult;
-import com.bloom.bloomschool.payroll.entity.NhifTier;
 import com.bloom.bloomschool.payroll.entity.PayeBand;
 import com.bloom.bloomschool.payroll.entity.StatutoryDeduction;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +9,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Kenya statutory payroll engine. PAYE bands, NHIF tiers, NSSF/Housing Levy rates and
- * personal relief are all configured via the Payroll Setup screens (PayeBand, NhifTier,
- * StatutoryDeduction, PayrollSettings) rather than hardcoded — mirrors the frontend
- * lib/payroll/kenya.ts so both sides stay in sync.
+ * Kenya statutory payroll engine. PAYE bands, NSSF/Housing Levy/SHIF rates and personal relief
+ * are all configured via the Payroll Setup screens (PayeBand, StatutoryDeduction,
+ * PayrollSettings) rather than hardcoded — mirrors the frontend lib/payroll/kenya.ts so both
+ * sides stay in sync. SHIF (replacing NHIF since Oct 2024) is a flat percentage of gross like
+ * NSSF/Housing Levy, not a tiered lookup, so it's a StatutoryDeduction row, not its own table.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,13 +27,12 @@ public class KenyaPayrollEngine {
             double nonTaxableAllowances,
             double otherDeductions,
             List<PayeBand> payeBands,
-            List<NhifTier> nhifTiers,
             List<StatutoryDeduction> statutoryDeductions,
             double personalRelief) {
 
         double gross = basic + taxableAllowances + nonTaxableAllowances;
         double nssf = sumStatutory(gross, statutoryDeductions, StatutoryDeduction.Category.NSSF);
-        double nhif = computeNhif(gross, nhifTiers);
+        double nhif = sumStatutory(gross, statutoryDeductions, StatutoryDeduction.Category.SHIF);
         double housingLevy = sumStatutory(gross, statutoryDeductions, StatutoryDeduction.Category.HOUSING_LEVY);
 
         // PAYE taxable = gross - non-taxable allowances - NSSF (deductible)
@@ -61,28 +60,23 @@ public class KenyaPayrollEngine {
     }
 
     /**
-     * Sums active, non-tiered deductions in the given category (percentage of gross, or
-     * fixed, each capped at maxAmount if set). NSSF's two-tier structure is modeled as two
-     * rows (e.g. "NSSF Tier I"/"Tier II", each 6% capped at their KES limit) rather than a
-     * single band-based formula, matching what the Statutory Deductions setup screen offers.
+     * Sums active, non-tiered deductions in the given category. Percentage rows apply to
+     * (gross - thresholdAmount) rather than the full gross, so a tier can tax only the amount in
+     * excess of a lower bound (e.g. NSSF Tier II only applies above the Tier I ceiling) — a null/0
+     * threshold behaves exactly as before this concept existed. The result is then capped at
+     * maxAmount and floored at minAmount if either is set (SHIF's KES 300 minimum, for example).
      */
     private double sumStatutory(double gross, List<StatutoryDeduction> deductions, StatutoryDeduction.Category category) {
         double total = 0;
         for (StatutoryDeduction d : deductions) {
             if (!d.isActive() || d.getCategory() != category || d.getType() == StatutoryDeduction.ValueType.TIERED) continue;
-            double amount = d.getType() == StatutoryDeduction.ValueType.PERCENTAGE ? gross * (d.getValue() / 100.0) : d.getValue();
+            double base = Math.max(0, gross - (d.getThresholdAmount() != null ? d.getThresholdAmount() : 0));
+            double amount = d.getType() == StatutoryDeduction.ValueType.PERCENTAGE ? base * (d.getValue() / 100.0) : d.getValue();
             if (d.getMaxAmount() != null) amount = Math.min(amount, d.getMaxAmount());
+            if (d.getMinAmount() != null) amount = Math.max(amount, d.getMinAmount());
             total += amount;
         }
         return Math.round(total);
-    }
-
-    private double computeNhif(double gross, List<NhifTier> tiers) {
-        return tiers.stream()
-                .filter(t -> gross >= t.getMinSalary() && (t.getMaxSalary() == null || gross <= t.getMaxSalary()))
-                .mapToDouble(NhifTier::getAmount)
-                .findFirst()
-                .orElse(0);
     }
 
     private double computePaye(double taxableIncome, List<PayeBand> bands, double personalRelief) {

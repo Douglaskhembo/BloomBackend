@@ -1,5 +1,7 @@
 package com.bloom.bloomschool.school.service;
 
+import com.bloom.bloomschool.payroll.entity.Bank;
+import com.bloom.bloomschool.payroll.repository.BankRepository;
 import com.bloom.bloomschool.school.dto.*;
 import com.bloom.bloomschool.school.entity.*;
 import com.bloom.bloomschool.school.repository.*;
@@ -25,6 +27,8 @@ public class SchoolService {
     private final DepartmentRepository departmentRepo;
     private final BranchRepository branchRepo;
     private final StaffRepository staffRepo;
+    private final SchoolBankAccountRepository bankAccountRepo;
+    private final BankRepository bankRepo;
 
     // ── School Info ──────────────────────────────────────────────────────────
 
@@ -197,5 +201,67 @@ public class SchoolService {
             b.setDepartments(new HashSet<>(departmentRepo.findAllByUuidIn(req.getDepartmentUuids())));
         if (req.getGradeLevelUuids() != null)
             b.setGradeLevels(new HashSet<>(gradeLevelRepo.findAllByUuidIn(req.getGradeLevelUuids())));
+    }
+
+    // ── School Bank Accounts (own accounts used to disburse payroll) ────────────
+
+    public List<SchoolBankAccount> getAllBankAccounts() {
+        return bankAccountRepo.findAll();
+    }
+
+    private Bank resolveBank(UUID bankUuid) {
+        return bankRepo.findAll().stream().filter(b -> b.getUuid().equals(bankUuid)).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Bank not found"));
+    }
+
+    @Transactional
+    public SchoolBankAccount createBankAccount(SchoolBankAccountRequest req) {
+        return bankAccountRepo.save(SchoolBankAccount.builder()
+                .bank(resolveBank(req.getBankUuid()))
+                .accountNumber(req.getAccountNumber())
+                .accountName(req.getAccountName())
+                .branch(req.getBranch())
+                .build());
+    }
+
+    @Transactional
+    public SchoolBankAccount updateBankAccount(UUID uuid, SchoolBankAccountRequest req) {
+        SchoolBankAccount a = bankAccountRepo.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Bank account not found"));
+        a.setBank(resolveBank(req.getBankUuid()));
+        a.setAccountNumber(req.getAccountNumber());
+        a.setAccountName(req.getAccountName());
+        a.setBranch(req.getBranch());
+        return bankAccountRepo.save(a);
+    }
+
+    @Transactional
+    public SchoolBankAccount toggleBankAccount(UUID uuid) {
+        SchoolBankAccount a = bankAccountRepo.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Bank account not found"));
+        a.setActive(!a.isActive());
+        return bankAccountRepo.save(a);
+    }
+
+    @Transactional
+    public void deleteBankAccount(UUID uuid) {
+        SchoolBankAccount a = bankAccountRepo.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Bank account not found"));
+        bankAccountRepo.deleteById(a.getId());
+    }
+
+    /** Only one account may be flagged as the payroll debit account at a time. */
+    @Transactional
+    public SchoolBankAccount setUseForPayroll(UUID uuid) {
+        SchoolBankAccount target = bankAccountRepo.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Bank account not found"));
+        bankAccountRepo.findByUseForPayrollTrue().ifPresent(current -> {
+            if (!current.getUuid().equals(uuid)) {
+                current.setUseForPayroll(false);
+                bankAccountRepo.save(current);
+            }
+        });
+        target.setUseForPayroll(true);
+        return bankAccountRepo.save(target);
     }
 }

@@ -14,6 +14,8 @@ public class StatutoryDeductionRequest {
     @NotNull private StatutoryDeduction.Category category;
     @NotNull private Double value;
     private Double maxAmount;
+    private Double minAmount;
+    private Double thresholdAmount;
     private boolean employerContribution;
     private double employerValue;
     private Long id;

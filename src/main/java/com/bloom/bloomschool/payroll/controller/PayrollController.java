@@ -1,13 +1,17 @@
 package com.bloom.bloomschool.payroll.controller;
 
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.payroll.dto.*;
 import com.bloom.bloomschool.payroll.service.PayrollService;
+import com.bloom.bloomschool.staff.dto.StaffPaymentDetailsRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/payroll")
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class PayrollController {
 
     private final PayrollService payrollService;
+    private final PermissionResolver permissionResolver;
 
     // ── PAYE Bands ────────────────────────────────────────────────────────────
 
@@ -186,6 +191,170 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.ok("Salary record deleted"));
     }
 
+    // ── Banks ─────────────────────────────────────────────────────────────────
+
+    @GetMapping("/banks")
+    public ResponseEntity<ApiResponse<?>> getBanks() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getAllBanks()));
+    }
+
+    @PostMapping("/banks")
+    public ResponseEntity<ApiResponse<?>> createBank(@Valid @RequestBody BankRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Bank added", payrollService.createBank(req)));
+    }
+
+    @PutMapping("/banks/{id}")
+    public ResponseEntity<ApiResponse<?>> updateBank(@PathVariable Long id, @Valid @RequestBody BankRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Bank updated", payrollService.updateBank(id, req)));
+    }
+
+    @PatchMapping("/banks/{id}/toggle")
+    public ResponseEntity<ApiResponse<?>> toggleBank(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleBank(id)));
+    }
+
+    @DeleteMapping("/banks/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteBank(@PathVariable Long id) {
+        payrollService.deleteBank(id);
+        return ResponseEntity.ok(ApiResponse.ok("Bank deleted"));
+    }
+
+    // ── Mobile Money Providers ────────────────────────────────────────────────
+
+    @GetMapping("/mobile-money-providers")
+    public ResponseEntity<ApiResponse<?>> getMobileMoneyProviders() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getAllMobileMoneyProviders()));
+    }
+
+    @PostMapping("/mobile-money-providers")
+    public ResponseEntity<ApiResponse<?>> createMobileMoneyProvider(@Valid @RequestBody MobileMoneyProviderRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Provider added", payrollService.createMobileMoneyProvider(req)));
+    }
+
+    @PutMapping("/mobile-money-providers/{id}")
+    public ResponseEntity<ApiResponse<?>> updateMobileMoneyProvider(@PathVariable Long id, @Valid @RequestBody MobileMoneyProviderRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Provider updated", payrollService.updateMobileMoneyProvider(id, req)));
+    }
+
+    @PatchMapping("/mobile-money-providers/{id}/toggle")
+    public ResponseEntity<ApiResponse<?>> toggleMobileMoneyProvider(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleMobileMoneyProvider(id)));
+    }
+
+    @DeleteMapping("/mobile-money-providers/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteMobileMoneyProvider(@PathVariable Long id) {
+        payrollService.deleteMobileMoneyProvider(id);
+        return ResponseEntity.ok(ApiResponse.ok("Provider deleted"));
+    }
+
+    // ── Payment Types ─────────────────────────────────────────────────────────
+
+    @GetMapping("/payment-types")
+    public ResponseEntity<ApiResponse<?>> getPaymentTypes() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getAllPaymentTypes()));
+    }
+
+    @PostMapping("/payment-types")
+    public ResponseEntity<ApiResponse<?>> createPaymentType(@Valid @RequestBody PaymentTypeRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Payment type added", payrollService.createPaymentType(req)));
+    }
+
+    @PutMapping("/payment-types/{id}")
+    public ResponseEntity<ApiResponse<?>> updatePaymentType(@PathVariable Long id, @Valid @RequestBody PaymentTypeRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Payment type updated", payrollService.updatePaymentType(id, req)));
+    }
+
+    @PatchMapping("/payment-types/{id}/toggle")
+    public ResponseEntity<ApiResponse<?>> togglePaymentType(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.togglePaymentType(id)));
+    }
+
+    @DeleteMapping("/payment-types/{id}")
+    public ResponseEntity<ApiResponse<?>> deletePaymentType(@PathVariable Long id) {
+        payrollService.deletePaymentType(id);
+        return ResponseEntity.ok(ApiResponse.ok("Payment type deleted"));
+    }
+
+    // ── Staff Payment Details (Finance-only bank/mobile-money info) ─────────────
+
+    @GetMapping("/staff-payment-details")
+    public ResponseEntity<ApiResponse<?>> getAllStaffPaymentDetails() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getAllStaffPaymentDetails()));
+    }
+
+    @GetMapping("/staff-payment-details/{staffId}")
+    public ResponseEntity<ApiResponse<?>> getStaffPaymentDetails(@PathVariable String staffId) {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getStaffPaymentDetails(staffId).orElse(null)));
+    }
+
+    @PutMapping("/staff-payment-details")
+    public ResponseEntity<ApiResponse<?>> saveStaffPaymentDetails(@Valid @RequestBody StaffPaymentDetailsRequest req) {
+        permissionResolver.requirePermission("PAYROLL_STAFF_PAYMENT_MANAGE");
+        return ResponseEntity.ok(ApiResponse.ok("Payment details saved", payrollService.saveStaffPaymentDetails(req)));
+    }
+
+    // ── Self-service (any authenticated staff, scoped server-side to their own data) ────
+
+    @GetMapping("/my-payslips")
+    public ResponseEntity<ApiResponse<?>> getMyPayslips() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getMyPayslips()));
+    }
+
+    // ── Payroll Makers (who can generate/submit payroll) ─────────────────────────
+
+    @GetMapping("/makers")
+    public ResponseEntity<ApiResponse<?>> getMakers() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getMakers()));
+    }
+
+    @PostMapping("/makers")
+    public ResponseEntity<ApiResponse<?>> addMaker(@Valid @RequestBody PayrollMakerRequest req) {
+        permissionResolver.requirePermission("PAYROLL_WORKFLOW_MANAGE");
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Maker added", payrollService.addMaker(req)));
+    }
+
+    @DeleteMapping("/makers/{uuid}")
+    public ResponseEntity<ApiResponse<?>> removeMaker(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("PAYROLL_WORKFLOW_MANAGE");
+        payrollService.removeMaker(uuid);
+        return ResponseEntity.ok(ApiResponse.ok("Maker removed"));
+    }
+
+    // ── Payroll Approval Workflow Setup ──────────────────────────────────────────
+
+    @GetMapping("/workflow-steps")
+    public ResponseEntity<ApiResponse<?>> getWorkflowSteps() {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getWorkflowSteps()));
+    }
+
+    @PostMapping("/workflow-steps")
+    public ResponseEntity<ApiResponse<?>> createWorkflowStep(@Valid @RequestBody PayrollWorkflowStepRequest req) {
+        permissionResolver.requirePermission("PAYROLL_WORKFLOW_MANAGE");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Workflow step added", payrollService.createWorkflowStep(req)));
+    }
+
+    @PutMapping("/workflow-steps/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateWorkflowStep(@PathVariable UUID uuid, @Valid @RequestBody PayrollWorkflowStepRequest req) {
+        permissionResolver.requirePermission("PAYROLL_WORKFLOW_MANAGE");
+        return ResponseEntity.ok(ApiResponse.ok("Workflow step updated", payrollService.updateWorkflowStep(uuid, req)));
+    }
+
+    @DeleteMapping("/workflow-steps/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteWorkflowStep(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("PAYROLL_WORKFLOW_MANAGE");
+        payrollService.deleteWorkflowStep(uuid);
+        return ResponseEntity.ok(ApiResponse.ok("Workflow step deleted"));
+    }
+
+    @PatchMapping("/workflow-steps/reorder")
+    public ResponseEntity<ApiResponse<?>> reorderWorkflowSteps(@Valid @RequestBody WorkflowStepReorderRequest req) {
+        permissionResolver.requirePermission("PAYROLL_WORKFLOW_MANAGE");
+        return ResponseEntity.ok(ApiResponse.ok("Workflow reordered", payrollService.reorderWorkflowSteps(req)));
+    }
+
     // ── Payroll Runs ──────────────────────────────────────────────────────────
 
     @GetMapping("/runs")
@@ -198,12 +367,36 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.ok(payrollService.getRun(id)));
     }
 
+    @GetMapping("/runs/{id}/approvals")
+    public ResponseEntity<ApiResponse<?>> getRunApprovals(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(payrollService.getRunApprovals(id)));
+    }
+
     @PostMapping("/runs/process")
     public ResponseEntity<ApiResponse<?>> processPayroll(
             @RequestParam int year,
             @RequestParam int monthIndex,
             @RequestParam String monthLabel) {
+        permissionResolver.requirePermission("PAYROLL_RUN");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Payroll processed", payrollService.processPayroll(year, monthIndex, monthLabel)));
+    }
+
+    @PostMapping("/runs/{id}/submit")
+    public ResponseEntity<ApiResponse<?>> submitRun(@PathVariable Long id) {
+        permissionResolver.requirePermission("PAYROLL_RUN");
+        return ResponseEntity.ok(ApiResponse.ok("Submitted for approval", payrollService.submitRun(id)));
+    }
+
+    @PostMapping("/runs/{id}/decision")
+    public ResponseEntity<ApiResponse<?>> decideRun(@PathVariable Long id, @Valid @RequestBody PayrollDecisionRequest req) {
+        permissionResolver.requirePermission("PAYROLL_APPROVE");
+        return ResponseEntity.ok(ApiResponse.ok("Decision recorded", payrollService.decideStep(id, req)));
+    }
+
+    @PostMapping("/runs/{id}/send-to-bank")
+    public ResponseEntity<ApiResponse<?>> sendToBank(@PathVariable Long id) {
+        permissionResolver.requirePermission("PAYROLL_SEND_TO_BANK");
+        return ResponseEntity.ok(ApiResponse.ok("Marked as sent to bank", payrollService.markSentToBank(id)));
     }
 }

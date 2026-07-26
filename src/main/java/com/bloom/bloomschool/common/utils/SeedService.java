@@ -3,9 +3,19 @@ package com.bloom.bloomschool.common.utils;
 import com.bloom.bloomschool.auth.model.Permission;
 import com.bloom.bloomschool.auth.model.Role;
 import com.bloom.bloomschool.auth.model.SysModule;
+import com.bloom.bloomschool.auth.model.User;
+import com.bloom.bloomschool.auth.model.UserPermission;
 import com.bloom.bloomschool.auth.repo.PermissionRepository;
 import com.bloom.bloomschool.auth.repo.RoleRepository;
 import com.bloom.bloomschool.auth.repo.SysModuleRepository;
+import com.bloom.bloomschool.auth.repo.UserPermissionRepository;
+import com.bloom.bloomschool.auth.repo.UserRepository;
+import com.bloom.bloomschool.payroll.entity.PayeBand;
+import com.bloom.bloomschool.payroll.entity.PayrollSettings;
+import com.bloom.bloomschool.payroll.entity.StatutoryDeduction;
+import com.bloom.bloomschool.payroll.repository.PayeBandRepository;
+import com.bloom.bloomschool.payroll.repository.PayrollSettingsRepository;
+import com.bloom.bloomschool.payroll.repository.StatutoryDeductionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,12 +33,19 @@ public class SeedService {
     private final SysModuleRepository moduleRepo;
     private final PermissionRepository permissionRepo;
     private final RoleRepository roleRepo;
+    private final UserRepository userRepo;
+    private final UserPermissionRepository userPermissionRepo;
+    private final PayeBandRepository payeBandRepo;
+    private final StatutoryDeductionRepository statutoryDeductionRepo;
+    private final PayrollSettingsRepository payrollSettingsRepo;
 
     @Transactional
     public void seedAll() {
         seedModules();
         seedPermissions();
         seedRolesWithPermissions();
+        seedPayrollWorkflowPermissions();
+        seedPayrollSetup();
     }
 
     private void seedModules() {
@@ -136,6 +153,49 @@ public class SeedService {
         log.info("Roles seeded");
     }
 
+    /**
+     * Adds the payroll approval-workflow permissions even on databases already seeded before these
+     * existed — seedPermissions() above only runs once (guarded by permissionRepo.count() > 0), so
+     * new permissions introduced later need their own idempotent, always-run seeding step. Also grants
+     * them to ADMIN (which is seeded with "all permissions" once, at roleRepo-empty time) and backfills
+     * existing ADMIN users' UserPermission rows so login's effective-permissions list picks them up
+     * immediately instead of only on new-user onboarding.
+     */
+    private void seedPayrollWorkflowPermissions() {
+        SysModule payroll = moduleRepo.findByModuleName("Payroll Module")
+                .orElseGet(() -> moduleRepo.save(SysModule.builder().moduleName("Payroll Module").build()));
+
+        Permission approve = permIfMissing("PAYROLL_APPROVE", "Act on payroll approval workflow steps", "WRITE", payroll);
+        Permission workflowManage = permIfMissing("PAYROLL_WORKFLOW_MANAGE", "Configure the payroll approval workflow", "WRITE", payroll);
+        Permission sendToBank = permIfMissing("PAYROLL_SEND_TO_BANK", "Mark an approved payroll run as sent to the bank", "WRITE", payroll);
+        Permission staffPayment = permIfMissing("PAYROLL_STAFF_PAYMENT_MANAGE", "Manage staff bank/mobile-money payout details", "WRITE", payroll);
+
+        roleRepo.findByName("ADMIN").ifPresent(admin -> {
+            boolean changed = false;
+            for (Permission p : List.of(approve, workflowManage, sendToBank, staffPayment)) {
+                if (admin.getPermissions().add(p)) changed = true;
+            }
+            if (changed) roleRepo.save(admin);
+
+            for (User user : userRepo.findAll()) {
+                if (!user.getRoles().contains(admin)) continue;
+                for (Permission p : List.of(approve, workflowManage, sendToBank, staffPayment)) {
+                    if (userPermissionRepo.findByUserIdAndPermissionId(user.getId(), p.getId()) == null) {
+                        userPermissionRepo.save(UserPermission.builder().user(user).permission(p).overrideType(null).build());
+                    }
+                }
+            }
+        });
+    }
+
+    private Permission permIfMissing(String name, String desc, String accessType, SysModule module) {
+        Permission existing = permissionRepo.findByName(name).orElse(null);
+        if (existing != null) return existing;
+        Permission saved = permissionRepo.save(Permission.builder().name(name).permDesc(desc).accessType(accessType).module(module).build());
+        log.info("Seeded permission '{}'", name);
+        return saved;
+    }
+
     private Set<Permission> filterByNames(List<Permission> all, String... names) {
         Set<String> nameSet = Set.of(names);
         Set<Permission> result = new HashSet<>();
@@ -151,5 +211,62 @@ public class SeedService {
     private void perm(String name, String desc, String accessType, SysModule module) {
         permissionRepo.save(Permission.builder()
                 .name(name).permDesc(desc).accessType(accessType).module(module).build());
+    }
+
+    /**
+     * Seeds current (2025) Kenyan statutory payroll defaults so Payroll Setup isn't a blank slate:
+     * PAYE bands (2023 Finance Act), NSSF Tier I/II (Feb 2025 limits), Housing Levy 1.5%, and SHIF
+     * 2.75% with a KES 300 floor (replacing NHIF, which this app no longer models as a tiered lookup —
+     * see StatutoryDeduction.Category.SHIF). Idempotent: only runs against genuinely empty tables, so
+     * it never overwrites values an admin has already configured.
+     */
+    private void seedPayrollSetup() {
+        if (payeBandRepo.count() == 0) {
+            log.info("Seeding PAYE bands...");
+            payeBandRepo.saveAll(List.of(
+                    PayeBand.builder().minAmount(0).maxAmount(24000d).rate(10).displayOrder(0).build(),
+                    PayeBand.builder().minAmount(24001).maxAmount(32333d).rate(25).displayOrder(24001).build(),
+                    PayeBand.builder().minAmount(32334).maxAmount(500000d).rate(30).displayOrder(32334).build(),
+                    PayeBand.builder().minAmount(500001).maxAmount(800000d).rate(32.5).displayOrder(500001).build(),
+                    PayeBand.builder().minAmount(800001).maxAmount(null).rate(35).displayOrder(800001).build()));
+        } else {
+            log.info("PAYE bands already seeded, skipping");
+        }
+
+        if (statutoryDeductionRepo.count() == 0) {
+            log.info("Seeding statutory deductions (NSSF, Housing Levy, SHIF)...");
+            statutoryDeductionRepo.saveAll(List.of(
+                    StatutoryDeduction.builder()
+                            .name("NSSF Tier I").type(StatutoryDeduction.ValueType.PERCENTAGE)
+                            .category(StatutoryDeduction.Category.NSSF)
+                            .value(6).thresholdAmount(0d).maxAmount(480d)
+                            .employerContribution(true).employerValue(6).build(),
+                    StatutoryDeduction.builder()
+                            .name("NSSF Tier II").type(StatutoryDeduction.ValueType.PERCENTAGE)
+                            .category(StatutoryDeduction.Category.NSSF)
+                            .value(6).thresholdAmount(8000d).maxAmount(3840d)
+                            .employerContribution(true).employerValue(6).build(),
+                    StatutoryDeduction.builder()
+                            .name("Affordable Housing Levy").type(StatutoryDeduction.ValueType.PERCENTAGE)
+                            .category(StatutoryDeduction.Category.HOUSING_LEVY)
+                            .value(1.5).maxAmount(null)
+                            .employerContribution(true).employerValue(1.5).build(),
+                    StatutoryDeduction.builder()
+                            .name("SHIF").type(StatutoryDeduction.ValueType.PERCENTAGE)
+                            .category(StatutoryDeduction.Category.SHIF)
+                            .value(2.75).minAmount(300d).maxAmount(null)
+                            .employerContribution(false).build()));
+        } else {
+            log.info("Statutory deductions already seeded, skipping");
+        }
+
+        if (payrollSettingsRepo.count() == 0) {
+            log.info("Seeding payroll settings...");
+            payrollSettingsRepo.save(PayrollSettings.builder()
+                    .personalRelief(2400).insuranceRelief(60000)
+                    .payDay(28).paymentMethod("bank_transfer").currency("KES").build());
+        } else {
+            log.info("Payroll settings already seeded, skipping");
+        }
     }
 }

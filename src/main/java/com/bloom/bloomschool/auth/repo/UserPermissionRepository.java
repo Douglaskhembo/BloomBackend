@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface UserPermissionRepository extends JpaRepository<UserPermission, Long> {
 
+    List<UserPermission> findByUserId(Long userId);
+
     @Query("SELECT up FROM UserPermission up WHERE up.user.id = :userId AND up.permission.id = :permissionId")
     UserPermission findByUserIdAndPermissionId(@Param("userId") Long userId, @Param("permissionId") Long permissionId);
 

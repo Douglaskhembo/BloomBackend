@@ -124,4 +124,38 @@ public class SchoolController {
         schoolService.deleteBranch(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Branch deleted"));
     }
+
+    // ── School Bank Accounts (payroll disbursement) ─────────────────────────────
+
+    @GetMapping("/bank-accounts")
+    public ResponseEntity<ApiResponse<?>> getBankAccounts() {
+        return ResponseEntity.ok(ApiResponse.ok(schoolService.getAllBankAccounts()));
+    }
+
+    @PostMapping("/bank-accounts")
+    public ResponseEntity<ApiResponse<?>> createBankAccount(@Valid @RequestBody SchoolBankAccountRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Bank account added", schoolService.createBankAccount(req)));
+    }
+
+    @PutMapping("/bank-accounts/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateBankAccount(@PathVariable UUID uuid, @Valid @RequestBody SchoolBankAccountRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Bank account updated", schoolService.updateBankAccount(uuid, req)));
+    }
+
+    @PatchMapping("/bank-accounts/{uuid}/toggle")
+    public ResponseEntity<ApiResponse<?>> toggleBankAccount(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok("Toggled", schoolService.toggleBankAccount(uuid)));
+    }
+
+    @PatchMapping("/bank-accounts/{uuid}/use-for-payroll")
+    public ResponseEntity<ApiResponse<?>> setUseForPayroll(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok("Payroll debit account set", schoolService.setUseForPayroll(uuid)));
+    }
+
+    @DeleteMapping("/bank-accounts/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteBankAccount(@PathVariable UUID uuid) {
+        schoolService.deleteBankAccount(uuid);
+        return ResponseEntity.ok(ApiResponse.ok("Bank account deleted"));
+    }
 }

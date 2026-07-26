@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.payroll.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +23,7 @@ public class PayrollLine extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payroll_run_id", nullable = false)
+    @JsonIgnore
     private PayrollRun payrollRun;
 
     @Column(nullable = false)
@@ -45,6 +47,15 @@ public class PayrollLine extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Status status = Status.PAID;
+
+    /** Snapshot of the payout method/destination at the time this run was generated, so historical
+     *  payslips retain the details used even if the employee's bank/mobile-money details change later. */
+    private String paymentMethod;
+    private String payoutDestination;
+
+    /** Set when basic/allowances were prorated for a mid-month joiner, e.g. "Prorated 15/31 days
+     *  (joined 2026-07-17)" — null when the staff member worked the full month. */
+    private String prorationNote;
 
     public enum Status { PAID, PENDING }
 }
