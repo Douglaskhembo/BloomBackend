@@ -70,6 +70,8 @@ public class SchoolService {
                 .displayOrder(req.getDisplayOrder())
                 .streams(req.getStreams())
                 .streamNames(resolveStreamNames(req))
+                .capacity(resolveCapacity(req))
+                .streamCapacities(resolveStreamCapacities(req))
                 .build());
     }
 
@@ -81,6 +83,8 @@ public class SchoolService {
         g.setDisplayOrder(req.getDisplayOrder());
         g.setStreams(req.getStreams());
         g.setStreamNames(resolveStreamNames(req));
+        g.setCapacity(resolveCapacity(req));
+        g.setStreamCapacities(resolveStreamCapacities(req));
         return gradeLevelRepo.save(g);
     }
 
@@ -98,6 +102,24 @@ public class SchoolService {
         if (trimmed.stream().map(String::toLowerCase).distinct().count() != trimmed.size())
             throw new IllegalArgumentException("Stream names must be unique within a grade level");
         return trimmed;
+    }
+
+    /** Single-stream grade's capacity. Null/0/negative = unlimited. Ignored when streams > 1. */
+    private Integer resolveCapacity(GradeLevelRequest req) {
+        if (req.getStreams() > 1) return null;
+        Integer c = req.getCapacity();
+        return (c == null || c <= 0) ? null : c;
+    }
+
+    /** One capacity per stream, same order/length as streamNames. Null/0/negative entry = unlimited
+     *  for that stream. Ignored when streams <= 1 (use {@link #resolveCapacity} instead). */
+    private List<Integer> resolveStreamCapacities(GradeLevelRequest req) {
+        if (req.getStreams() <= 1) return List.of();
+        List<Integer> caps = req.getStreamCapacities() != null ? req.getStreamCapacities() : List.of();
+        if (caps.size() != req.getStreams())
+            throw new IllegalArgumentException(
+                    "This grade has " + req.getStreams() + " stream(s) — provide exactly that many capacities (got " + caps.size() + ")");
+        return caps.stream().map(c -> (c == null || c <= 0) ? null : c).collect(Collectors.toList());
     }
 
     @Transactional

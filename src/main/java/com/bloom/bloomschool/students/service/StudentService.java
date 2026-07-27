@@ -44,6 +44,7 @@ public class StudentService {
     @Transactional
     public Student create(StudentRequest req) {
         Student s = buildStudent(new Student(), req);
+        assertCapacity(s.getGradeLevel(), s.getGrade(), s.getStream());
         s.setAdmissionNumber(generateAdmissionNumber());
         return studentRepo.save(s);
     }
@@ -121,6 +122,7 @@ public class StudentService {
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private void enrollStudent(Admission a) {
+        assertCapacity(a.getGradeLevel(), a.getGrade(), a.getStream());
         Student s = Student.builder()
                 .admissionNumber(generateAdmissionNumber())
                 .firstName(a.getFirstName())
@@ -171,6 +173,30 @@ public class StudentService {
     private GradeLevel resolveGradeLevel(UUID gradeLevelUuid) {
         if (gradeLevelUuid == null) return null;
         return gradeLevelRepo.findByUuid(gradeLevelUuid).orElse(null);
+    }
+
+    /** Blocks seating a student past the grade/stream's configured capacity. No-op when the grade
+     *  level wasn't matched or has no capacity configured (unlimited). */
+    private void assertCapacity(GradeLevel gradeLevel, String grade, String stream) {
+        if (gradeLevel == null) return;
+        Integer capacity = capacityFor(gradeLevel, stream);
+        if (capacity == null) return;
+        long current = (stream == null || stream.isBlank())
+                ? studentRepo.countByGradeAndStatus(grade, Student.Status.ACTIVE)
+                : studentRepo.countByGradeAndStreamAndStatus(grade, stream, Student.Status.ACTIVE);
+        if (current >= capacity) {
+            String where = (stream == null || stream.isBlank()) ? grade : grade + " · " + stream;
+            throw new IllegalArgumentException(where + " is at full capacity (" + capacity + " student" + (capacity == 1 ? "" : "s") + ")");
+        }
+    }
+
+    private Integer capacityFor(GradeLevel gradeLevel, String stream) {
+        if (gradeLevel.getStreams() <= 1) return gradeLevel.getCapacity();
+        List<String> names = gradeLevel.getStreamNames();
+        List<Integer> caps = gradeLevel.getStreamCapacities();
+        int idx = names.indexOf(stream);
+        if (idx < 0 || idx >= caps.size()) return null;
+        return caps.get(idx);
     }
 
     private Student buildStudent(Student s, StudentRequest req) {

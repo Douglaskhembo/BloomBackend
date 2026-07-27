@@ -40,21 +40,23 @@ INSERT INTO bloom_sch_payroll_settings (uuid, personal_relief, insurance_relief,
 
 -- ========================================
 -- Grade Levels — Kenyan CBC structure (2-6-3-3): Pre-Primary, Primary, Junior School, Senior
--- School. Grade 10 (Senior School) is the newest cohort. All seeded as single-stream (streams=1);
--- schools with multiple streams per grade name them individually via the Grade Levels screen.
+-- School. Grade 10 (Senior School) is the newest cohort. All seeded as single-stream (streams=1)
+-- with a placeholder capacity of 40 (typical Kenyan classroom size) — schools adjust per-grade
+-- capacity, or split into multiple named streams with their own capacities, via the Grade Levels
+-- screen.
 -- ========================================
-INSERT INTO bloom_sch_grade_levels (uuid, name, display_order, streams, status) VALUES
-    (gen_random_uuid(), 'PP1',      1,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'PP2',      2,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 1',  3,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 2',  4,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 3',  5,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 4',  6,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 5',  7,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 6',  8,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 7',  9,  1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 8',  10, 1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 9',  11, 1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 10', 12, 1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 11', 13, 1, 'ACTIVE'),
-    (gen_random_uuid(), 'Grade 12', 14, 1, 'ACTIVE');
+INSERT INTO bloom_sch_grade_levels (uuid, name, display_order, streams, capacity, status) VALUES
+    (gen_random_uuid(), 'PP1',      1,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'PP2',      2,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 1',  3,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 2',  4,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 3',  5,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 4',  6,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 5',  7,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 6',  8,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 7',  9,  1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 8',  10, 1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 9',  11, 1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 10', 12, 1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 11', 13, 1, 40, 'ACTIVE'),
+    (gen_random_uuid(), 'Grade 12', 14, 1, 40, 'ACTIVE');

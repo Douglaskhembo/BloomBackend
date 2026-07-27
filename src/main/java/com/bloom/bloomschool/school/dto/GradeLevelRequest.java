@@ -14,6 +14,11 @@ public class GradeLevelRequest {
     private int streams = 1;
     /** Required (exactly `streams` entries) when streams > 1; ignored otherwise. */
     private List<String> streamNames;
+    /** Max students for the single stream; used only when streams == 1. Null/0 = unlimited. */
+    private Integer capacity;
+    /** Required (exactly `streams` entries, same order as streamNames) when streams > 1; ignored otherwise.
+     *  A null/0 entry means unlimited for that stream. */
+    private List<Integer> streamCapacities;
     private Long id;
     private UUID uuid;
 }

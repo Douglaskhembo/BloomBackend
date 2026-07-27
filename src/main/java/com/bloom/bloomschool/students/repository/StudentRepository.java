@@ -15,6 +15,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findByGrade(String grade);
     List<Student> findByParentUserUuidAndStatus(UUID parentUserUuid, Student.Status status);
     List<Student> findByGradeAndStreamAndStatus(String grade, String stream, Student.Status status);
+    long countByGradeAndStatus(String grade, Student.Status status);
+    long countByGradeAndStreamAndStatus(String grade, String stream, Student.Status status);
     long count();
 
     @Query("SELECT s FROM Student s WHERE LOWER(CONCAT(s.firstName,' ',s.lastName,' ',s.admissionNumber)) LIKE LOWER(CONCAT('%',:q,'%'))")

@@ -37,6 +37,18 @@ public class GradeLevel extends BaseEntity {
     @Builder.Default
     private List<String> streamNames = new ArrayList<>();
 
+    /** Max students for the single implicit stream when streams == 1. Null = unlimited. */
+    private Integer capacity;
+
+    /** Only meaningful when streams > 1 — one capacity per streamNames entry, same order/length.
+     *  Null entry = unlimited for that stream. Empty/unused when streams == 1 (use {@link #capacity} instead). */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "bloom_sch_grade_level_stream_capacities", joinColumns = @JoinColumn(name = "grade_level_id"))
+    @Column(name = "capacity")
+    @OrderColumn(name = "stream_order")
+    @Builder.Default
+    private List<Integer> streamCapacities = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
