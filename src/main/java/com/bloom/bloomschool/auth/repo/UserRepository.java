@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,6 +19,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles r LEFT JOIN FETCH r.permissions WHERE u.userName = :userName")
     Optional<User> findByUserNameWithRoles(@Param("userName") String userName);
+
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles r LEFT JOIN FETCH r.permissions")
+    List<User> findAllWithRoles();
 
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'PARENT' AND " +
             "((:email IS NOT NULL AND u.email = :email) OR (:phone IS NOT NULL AND u.phoneNumber = :phone))")

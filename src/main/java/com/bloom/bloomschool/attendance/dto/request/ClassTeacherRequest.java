@@ -9,6 +9,6 @@ import java.util.UUID;
 @Data
 public class ClassTeacherRequest {
     @NotNull private UUID teacherUuid;
-    @NotBlank private String grade;
-    @NotBlank private String stream;
+    @NotNull private UUID gradeLevelUuid;
+    private String stream;
 }

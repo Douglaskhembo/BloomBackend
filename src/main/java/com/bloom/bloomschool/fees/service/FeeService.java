@@ -13,6 +13,12 @@ import com.bloom.bloomschool.fees.repository.FeeItemRepository;
 import com.bloom.bloomschool.fees.repository.FeePaymentRepository;
 import com.bloom.bloomschool.fees.repository.FeeStructureAuditRepository;
 import com.bloom.bloomschool.fees.repository.FeeStructureRepository;
+import com.bloom.bloomschool.school.entity.GradeLevel;
+import com.bloom.bloomschool.school.repository.GradeLevelRepository;
+import com.bloom.bloomschool.auth.model.User;
+import com.bloom.bloomschool.auth.repo.UserRepository;
+import com.bloom.bloomschool.auth.service.PermissionResolver;
+import com.bloom.bloomschool.common.utils.UserUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -34,6 +41,10 @@ public class FeeService {
     private final FeePaymentRepository feePaymentRepo;
     private final FeeStructureRepository feeStructureRepo;
     private final FeeStructureAuditRepository feeStructureAuditRepo;
+    private final GradeLevelRepository gradeLevelRepo;
+    private final UserRepository userRepo;
+    private final UserUtils userUtils;
+    private final PermissionResolver permissionResolver;
 
     // ── Fee Items (Structure) ─────────────────────────────────────────────────
 
@@ -42,7 +53,10 @@ public class FeeService {
     }
 
     public List<FeeItem> getFeeItemsByGrade(String grade) {
-        return feeItemRepo.findByGradeOrGradeIsNull(grade);
+        return feeItemRepo.findAll().stream()
+                .filter(item -> item.getGradeLevels().isEmpty()
+                        || item.getGradeLevels().stream().anyMatch(g -> g.getName().equals(grade)))
+                .toList();
     }
 
     @Transactional
@@ -51,7 +65,7 @@ public class FeeService {
                 .name(req.getName())
                 .description(req.getDescription())
                 .amount(req.getAmount())
-                .grade(req.getGrade())
+                .gradeLevels(resolveGradeLevels(req.getGradeLevelUuids()))
                 .term(req.getTerm())
                 .active(req.isActive())
                 .build());
@@ -64,10 +78,15 @@ public class FeeService {
         f.setName(req.getName());
         f.setDescription(req.getDescription());
         f.setAmount(req.getAmount());
-        f.setGrade(req.getGrade());
+        f.setGradeLevels(resolveGradeLevels(req.getGradeLevelUuids()));
         f.setTerm(req.getTerm());
         f.setActive(req.isActive());
         return feeItemRepo.save(f);
+    }
+
+    private Set<GradeLevel> resolveGradeLevels(Set<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) return new HashSet<>();
+        return new HashSet<>(gradeLevelRepo.findAllByUuidIn(uuids));
     }
 
     @Transactional
@@ -98,6 +117,12 @@ public class FeeService {
         return total != null ? total : 0.0;
     }
 
+    /**
+     * This is the staff-facing manual capture endpoint — walk-in cash, cheque, or bank-slip payments
+     * (and a fallback for M-Pesa/bank transfers when the live gateway/webhook integration is down).
+     * Gateway-matched payments are created directly by PaymentReconciliationService instead, never
+     * through here, so everything recorded via this path is tagged {@code source = MANUAL}.
+     */
     @Transactional
     public FeePayment recordPayment(FeePaymentRequest req) {
         if (feePaymentRepo.existsByReference(req.getReference()))
@@ -113,7 +138,49 @@ public class FeeService {
                 .method(req.getMethod())
                 .reference(req.getReference())
                 .paymentDate(req.getPaymentDate() != null ? req.getPaymentDate() : LocalDateTime.now())
+                .source(FeePayment.PaymentSource.MANUAL)
+                .verificationStatus(defaultVerificationStatus(req.getMethod()))
+                .bankName(req.getBankName())
+                .slipOrChequeNumber(req.getSlipOrChequeNumber())
+                .notes(req.getNotes())
                 .build();
+        return feePaymentRepo.save(p);
+    }
+
+    /** Cash/card settle in the cashier's hand immediately; everything else needs a second-person check. */
+    private FeePayment.VerificationStatus defaultVerificationStatus(FeePayment.PaymentMethod method) {
+        return (method == FeePayment.PaymentMethod.CASH || method == FeePayment.PaymentMethod.CARD)
+                ? FeePayment.VerificationStatus.CONFIRMED
+                : FeePayment.VerificationStatus.PENDING_VERIFICATION;
+    }
+
+    public List<FeePayment> getPendingVerificationPayments() {
+        return feePaymentRepo.findBySourceAndVerificationStatusOrderByPaymentDateDesc(
+                FeePayment.PaymentSource.MANUAL, FeePayment.VerificationStatus.PENDING_VERIFICATION);
+    }
+
+    @Transactional
+    public FeePayment verifyPayment(Long id, String verifier) {
+        FeePayment p = feePaymentRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
+        if (p.getVerificationStatus() != FeePayment.VerificationStatus.PENDING_VERIFICATION)
+            throw new IllegalArgumentException("Only payments pending verification can be verified");
+        p.setVerificationStatus(FeePayment.VerificationStatus.CONFIRMED);
+        p.setVerifiedBy(verifier);
+        p.setVerifiedAt(LocalDateTime.now());
+        return feePaymentRepo.save(p);
+    }
+
+    @Transactional
+    public FeePayment rejectPayment(Long id, String verifier, String reason) {
+        FeePayment p = feePaymentRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
+        if (p.getVerificationStatus() != FeePayment.VerificationStatus.PENDING_VERIFICATION)
+            throw new IllegalArgumentException("Only payments pending verification can be rejected");
+        p.setVerificationStatus(FeePayment.VerificationStatus.REJECTED);
+        p.setVerifiedBy(verifier);
+        p.setVerifiedAt(LocalDateTime.now());
+        p.setRejectionReason(reason);
         return feePaymentRepo.save(p);
     }
 
@@ -180,8 +247,28 @@ public class FeeService {
                 .build());
     }
 
+    private User currentUser() {
+        String username = userUtils.getCurrentUser();
+        if (username == null) throw new IllegalStateException("Not authenticated");
+        return userRepo.findByUserName(username)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + username));
+    }
+
+    /**
+     * Blocks a maker from approving/rejecting their own submission, except when they're the only
+     * user currently holding FEES_APPROVE — otherwise a single-admin school could never move a fee
+     * structure past submission. Mirrors PayrollService.decideStep's "sole approver" exception.
+     */
+    private void requireNotSelfApproval(FeeStructure fs, User actor) {
+        if (fs.getMaker().equals(actor.getUserName())
+                && permissionResolver.anyOtherUserHasPermission("FEES_APPROVE", actor.getUserName())) {
+            throw new IllegalStateException("The person who submitted this fee structure cannot approve or reject it themselves");
+        }
+    }
+
     @Transactional
     public FeeStructure saveDraft(FeeStructureSubmitRequest req) {
+        String maker = currentUser().getUserName();
         LocalDateTime now = LocalDateTime.now();
         FeeStructure fs = FeeStructure.builder()
                 .academicYear(req.getAcademicYear())
@@ -191,18 +278,19 @@ public class FeeService {
                 .status(FeeStructure.Status.DRAFT)
                 .lines(toLines(req.getLines()))
                 .baseline(computeBaseline(req.getGrade(), req.getTerm()))
-                .maker(req.getMaker())
+                .maker(maker)
                 .note(req.getNote())
                 .submittedAt(now)
                 .updatedAt(now)
                 .build();
         FeeStructure saved = feeStructureRepo.save(fs);
-        addStructureAudit(req.getMaker(), FeeStructureAudit.Action.SAVED_DRAFT, req.getGrade(), req.getTerm(), req.getAcademicYear(), req.getNote());
+        addStructureAudit(maker, FeeStructureAudit.Action.SAVED_DRAFT, req.getGrade(), req.getTerm(), req.getAcademicYear(), req.getNote());
         return saved;
     }
 
     @Transactional
     public FeeStructure submitForApproval(FeeStructureSubmitRequest req) {
+        String maker = currentUser().getUserName();
         LocalDateTime now = LocalDateTime.now();
         boolean isRework = req.getReworkUuid() != null;
         FeeStructure fs;
@@ -215,7 +303,7 @@ public class FeeService {
             fs.setLines(toLines(req.getLines()));
             fs.setBaseline(computeBaseline(req.getGrade(), req.getTerm()));
             fs.setNote(req.getNote());
-            fs.setMaker(req.getMaker());
+            fs.setMaker(maker);
             fs.setStatus(FeeStructure.Status.PENDING_APPROVAL);
             fs.setRejectionReason(null);
             fs.setSubmittedAt(now);
@@ -229,7 +317,7 @@ public class FeeService {
                     .status(FeeStructure.Status.PENDING_APPROVAL)
                     .lines(toLines(req.getLines()))
                     .baseline(computeBaseline(req.getGrade(), req.getTerm()))
-                    .maker(req.getMaker())
+                    .maker(maker)
                     .note(req.getNote())
                     .submittedAt(now)
                     .updatedAt(now)
@@ -237,41 +325,45 @@ public class FeeService {
         }
 
         FeeStructure saved = feeStructureRepo.save(fs);
-        addStructureAudit(req.getMaker(), isRework ? FeeStructureAudit.Action.REWORKED : FeeStructureAudit.Action.SUBMITTED,
+        addStructureAudit(maker, isRework ? FeeStructureAudit.Action.REWORKED : FeeStructureAudit.Action.SUBMITTED,
                 req.getGrade(), req.getTerm(), req.getAcademicYear(), req.getNote());
         return saved;
     }
 
     @Transactional
-    public FeeStructure approveStructure(UUID uuid, String approver) {
+    public FeeStructure approveStructure(UUID uuid) {
         FeeStructure fs = feeStructureRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Fee structure not found"));
         if (fs.getStatus() != FeeStructure.Status.PENDING_APPROVAL)
             throw new IllegalArgumentException("Only fee structures pending approval can be approved");
+        User actor = currentUser();
+        requireNotSelfApproval(fs, actor);
         LocalDateTime now = LocalDateTime.now();
         fs.setStatus(FeeStructure.Status.APPROVED);
-        fs.setApprover(approver);
+        fs.setApprover(actor.getUserName());
         fs.setReviewedAt(now);
         fs.setUpdatedAt(now);
         FeeStructure saved = feeStructureRepo.save(fs);
-        addStructureAudit(approver, FeeStructureAudit.Action.APPROVED, fs.getGrade(), fs.getTerm(), fs.getAcademicYear(), null);
+        addStructureAudit(actor.getUserName(), FeeStructureAudit.Action.APPROVED, fs.getGrade(), fs.getTerm(), fs.getAcademicYear(), null);
         return saved;
     }
 
     @Transactional
-    public FeeStructure rejectStructure(UUID uuid, String approver, String reason) {
+    public FeeStructure rejectStructure(UUID uuid, String reason) {
         FeeStructure fs = feeStructureRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Fee structure not found"));
         if (fs.getStatus() != FeeStructure.Status.PENDING_APPROVAL)
             throw new IllegalArgumentException("Only fee structures pending approval can be rejected");
+        User actor = currentUser();
+        requireNotSelfApproval(fs, actor);
         LocalDateTime now = LocalDateTime.now();
         fs.setStatus(FeeStructure.Status.REJECTED);
-        fs.setApprover(approver);
+        fs.setApprover(actor.getUserName());
         fs.setRejectionReason(reason);
         fs.setReviewedAt(now);
         fs.setUpdatedAt(now);
         FeeStructure saved = feeStructureRepo.save(fs);
-        addStructureAudit(approver, FeeStructureAudit.Action.REJECTED, fs.getGrade(), fs.getTerm(), fs.getAcademicYear(), reason);
+        addStructureAudit(actor.getUserName(), FeeStructureAudit.Action.REJECTED, fs.getGrade(), fs.getTerm(), fs.getAcademicYear(), reason);
         return saved;
     }
 }

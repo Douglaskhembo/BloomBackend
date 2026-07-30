@@ -129,6 +129,7 @@ public class StudentService {
                 .lastName(a.getLastName())
                 .gender(a.getGender())
                 .dateOfBirth(a.getDateOfBirth())
+                .birthCertificateNumber(a.getBirthCertificateNumber())
                 .address(a.getAddress())
                 .medicalNotes(a.getMedicalNotes())
                 .grade(a.getGrade())
@@ -204,6 +205,7 @@ public class StudentService {
         s.setLastName(req.getLastName());
         s.setGender(req.getGender());
         s.setDateOfBirth(req.getDateOfBirth());
+        s.setBirthCertificateNumber(req.getBirthCertificateNumber());
         s.setAddress(req.getAddress());
         s.setMedicalNotes(req.getMedicalNotes());
         s.setGrade(req.getGrade());
@@ -222,6 +224,7 @@ public class StudentService {
         a.setLastName(req.getLastName());
         a.setGender(req.getGender());
         a.setDateOfBirth(req.getDateOfBirth());
+        a.setBirthCertificateNumber(req.getBirthCertificateNumber());
         a.setAddress(req.getAddress());
         a.setMedicalNotes(req.getMedicalNotes());
         a.setGrade(req.getGrade());

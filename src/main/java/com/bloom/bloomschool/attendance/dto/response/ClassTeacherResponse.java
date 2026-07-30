@@ -12,6 +12,7 @@ public class ClassTeacherResponse {
     private UUID teacherUuid;
     private String teacherName;
     private String staffId;
+    private UUID gradeLevelUuid;
     private String grade;
     private String stream;
 }

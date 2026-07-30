@@ -34,6 +34,7 @@ public class Student extends BaseEntity {
 
     private String gender;
     private LocalDate dateOfBirth;
+    private String birthCertificateNumber;
     private String address;
     private String medicalNotes;
     private String grade;

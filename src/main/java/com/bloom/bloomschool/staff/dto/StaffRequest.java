@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -26,8 +27,9 @@ public class StaffRequest {
     @NotNull private StaffType staffType;
     @NotNull private EmploymentType employmentType;
     private Integer contractPeriodMonths;
-    private String subject;
+    private Set<UUID> subjectUuids;
     private String grade;
+    private UUID staffRoleUuid;
     private String qualification;
     private String experience;
     private LocalDate joined;

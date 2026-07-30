@@ -4,10 +4,14 @@ import com.bloom.bloomschool.common.entity.BaseEntity;
 import com.bloom.bloomschool.staff.util.EmploymentType;
 import com.bloom.bloomschool.staff.util.StaffType;
 import com.bloom.bloomschool.staff.util.Status;
+import com.bloom.bloomschool.staffroles.entity.StaffRole;
+import com.bloom.bloomschool.subjects.entity.Subject;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -57,8 +61,19 @@ public class Staff extends BaseEntity {
     @Column(nullable = false)
     private StaffType staffType;
 
-    private String subject;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "bloom_sch_staff_subjects",
+            joinColumns = @JoinColumn(name = "staff_id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id"))
+    @Builder.Default
+    private Set<Subject> subjects = new HashSet<>();
+
     private String grade;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "staff_role_id")
+    private StaffRole staffRole;
+
     private String qualification;
     private String experience;
     private LocalDate joined;

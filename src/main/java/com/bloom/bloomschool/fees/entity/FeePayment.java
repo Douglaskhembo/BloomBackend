@@ -40,5 +40,43 @@ public class FeePayment extends BaseEntity {
 
     private LocalDateTime paymentDate;
 
+    /** Where this record came from: typed in by staff, or produced automatically off a gateway/bank event. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private PaymentSource source = PaymentSource.STREAMED;
+
+    /**
+     * CASH/CARD are confirmed the instant staff capture them (money/card already settled in hand).
+     * CHEQUE/BANK_TRANSFER/MPESA entered manually start PENDING_VERIFICATION until a second person
+     * confirms them against the bank statement or cheque clearing (or a matching bank webhook arrives
+     * and auto-confirms it, see PaymentReconciliationService) — this is what keeps a bounced cheque or
+     * a slip that never clears from silently counting as paid.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private VerificationStatus verificationStatus = VerificationStatus.CONFIRMED;
+
+    /** For manual CHEQUE/BANK_TRANSFER entries: which bank the cheque/slip is drawn on or deposited at. */
+    private String bankName;
+
+    /** Cheque number or bank deposit-slip number, as written on the physical document. */
+    private String slipOrChequeNumber;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    /** Who confirmed (or auto-match description) / rejected a manual entry, and when. */
+    private String verifiedBy;
+    private LocalDateTime verifiedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
     public enum PaymentMethod { MPESA, BANK_TRANSFER, CASH, CHEQUE, CARD }
+
+    public enum PaymentSource { MANUAL, STREAMED }
+
+    public enum VerificationStatus { CONFIRMED, PENDING_VERIFICATION, REJECTED }
 }

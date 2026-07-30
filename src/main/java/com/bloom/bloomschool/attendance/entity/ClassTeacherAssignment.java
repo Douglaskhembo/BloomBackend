@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.attendance.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.school.entity.GradeLevel;
 import com.bloom.bloomschool.staff.entity.Staff;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,7 @@ import java.util.UUID;
 /** One class/homeroom teacher per grade+stream — scopes "my class" attendance views. */
 @Entity
 @Table(name = "bloom_sch_class_teachers",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"grade", "stream"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"grade_level_id", "stream"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ClassTeacherAssignment extends BaseEntity {
 
@@ -27,8 +28,9 @@ public class ClassTeacherAssignment extends BaseEntity {
     @JoinColumn(name = "teacher_id", nullable = false, unique = true)
     private Staff teacher;
 
-    @Column(nullable = false)
-    private String grade;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "grade_level_id", nullable = false)
+    private GradeLevel gradeLevel;
 
     @Column(nullable = false)
     private String stream;

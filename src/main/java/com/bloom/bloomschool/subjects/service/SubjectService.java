@@ -1,5 +1,7 @@
 package com.bloom.bloomschool.subjects.service;
 
+import com.bloom.bloomschool.school.entity.GradeLevel;
+import com.bloom.bloomschool.school.repository.GradeLevelRepository;
 import com.bloom.bloomschool.subjects.dto.SubjectRequest;
 import com.bloom.bloomschool.subjects.entity.Subject;
 import com.bloom.bloomschool.subjects.repository.SubjectRepository;
@@ -8,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -16,9 +21,9 @@ import java.util.List;
 public class SubjectService {
 
     private final SubjectRepository subjectRepo;
+    private final GradeLevelRepository gradeLevelRepo;
 
-    public List<Subject> getAll(String grade) {
-        if (grade != null) return subjectRepo.findByGrade(grade);
+    public List<Subject> getAll() {
         return subjectRepo.findAll();
     }
 
@@ -29,9 +34,9 @@ public class SubjectService {
         return subjectRepo.save(Subject.builder()
                 .name(req.getName())
                 .code(req.getCode())
-                .grade(req.getGrade())
                 .description(req.getDescription())
                 .active(req.isActive())
+                .gradeLevels(resolveGradeLevels(req.getGradeLevelUuids()))
                 .build());
     }
 
@@ -41,9 +46,9 @@ public class SubjectService {
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
         s.setName(req.getName());
         s.setCode(req.getCode());
-        s.setGrade(req.getGrade());
         s.setDescription(req.getDescription());
         s.setActive(req.isActive());
+        s.setGradeLevels(resolveGradeLevels(req.getGradeLevelUuids()));
         return subjectRepo.save(s);
     }
 
@@ -58,5 +63,10 @@ public class SubjectService {
     @Transactional
     public void delete(Long id) {
         subjectRepo.deleteById(id);
+    }
+
+    private Set<GradeLevel> resolveGradeLevels(Set<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) return new HashSet<>();
+        return new HashSet<>(gradeLevelRepo.findAllByUuidIn(uuids));
     }
 }

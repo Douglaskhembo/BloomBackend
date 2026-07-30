@@ -10,8 +10,8 @@ import java.util.UUID;
 public interface ClassTeacherAssignmentRepository extends JpaRepository<ClassTeacherAssignment, Long> {
     Optional<ClassTeacherAssignment> findByUuid(UUID uuid);
     Optional<ClassTeacherAssignment> findByTeacherId(Long teacherId);
-    Optional<ClassTeacherAssignment> findByGradeAndStream(String grade, String stream);
-    boolean existsByGradeAndStream(String grade, String stream);
+    Optional<ClassTeacherAssignment> findByGradeLevel_UuidAndStream(UUID gradeLevelUuid, String stream);
+    boolean existsByGradeLevel_UuidAndStream(UUID gradeLevelUuid, String stream);
 
     @Query("SELECT a FROM ClassTeacherAssignment a WHERE a.teacher.uuid = :teacherUuid")
     Optional<ClassTeacherAssignment> findByTeacherUuid(UUID teacherUuid);

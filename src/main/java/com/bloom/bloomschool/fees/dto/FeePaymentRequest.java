@@ -21,4 +21,9 @@ public class FeePaymentRequest {
     private LocalDateTime paymentDate;
     private Long id;
     private UUID uuid;
+
+    // Manual-capture only (cash/cheque/bank-slip walk-in payments) — ignored for gateway-sourced payments
+    private String bankName;
+    private String slipOrChequeNumber;
+    private String notes;
 }

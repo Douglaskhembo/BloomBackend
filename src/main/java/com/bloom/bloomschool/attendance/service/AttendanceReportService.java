@@ -45,7 +45,7 @@ public class AttendanceReportService {
     public List<AttendanceResponse> getMyClassAttendance(UUID teacherUuid, LocalDate from, LocalDate to) {
         ClassTeacherAssignment a = classTeacherRepo.findByTeacherUuid(teacherUuid)
                 .orElseThrow(() -> new EntityNotFoundException("No class assigned to this teacher"));
-        return searchStudents(from, to, a.getGrade(), a.getStream(), null);
+        return searchStudents(from, to, a.getGradeLevel().getName(), a.getStream(), null);
     }
 
     /** Only ever the parent's ACTIVE children — left/graduated students are never included. */

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -30,6 +31,9 @@ import java.util.Optional;
 public class PaymentReconciliationService {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentReconciliationService.class);
+
+    /** How many days apart a manual bank-slip entry and the bank's own webhook event can be and still be treated as the same transaction. */
+    private static final long AUTO_MATCH_WINDOW_DAYS = 5;
 
     private final PaymentTransactionRepository txRepo;
     private final StudentRepository studentRepo;
@@ -139,12 +143,52 @@ public class PaymentReconciliationService {
         tx = txRepo.save(tx);
 
         if (student.isPresent()) {
-            createFeePayment(tx, student.get(), method);
+            Optional<FeePayment> manualEntry = findMatchingManualEntry(student.get().getAdmissionNumber(), tx);
+            if (manualEntry.isPresent()) {
+                linkToManualEntry(tx, manualEntry.get());
+            } else {
+                createFeePayment(tx, student.get(), method);
+            }
         } else {
             log.warn("{} transaction {} could not be matched to a student (account reference '{}')",
                     tx.getProvider(), tx.getTransactionRef(), accountRef);
         }
         return tx;
+    }
+
+    /**
+     * A staff member may have already walked in a bank-slip payment for this student manually before
+     * the bank's webhook arrived (or ever arrives, if the integration is down). Rather than create a
+     * second FeePayment and double the student's paid total, look for a PENDING_VERIFICATION manual
+     * bank-transfer entry with the same amount within {@link #AUTO_MATCH_WINDOW_DAYS} of this event —
+     * cheques never stream in this way so only BANK_TRANSFER manual entries are considered.
+     */
+    private Optional<FeePayment> findMatchingManualEntry(String admissionNumber, PaymentTransaction tx) {
+        if (tx.getAmount() == null) return Optional.empty();
+        List<FeePayment> candidates = feePaymentRepo.findByStudentIdAndSourceAndMethodAndVerificationStatus(
+                admissionNumber, FeePayment.PaymentSource.MANUAL, FeePayment.PaymentMethod.BANK_TRANSFER,
+                FeePayment.VerificationStatus.PENDING_VERIFICATION);
+        LocalDateTime receivedAt = tx.getReceivedAt() != null ? tx.getReceivedAt() : LocalDateTime.now();
+        LocalDateTime windowStart = receivedAt.minusDays(AUTO_MATCH_WINDOW_DAYS);
+        LocalDateTime windowEnd = receivedAt.plusDays(AUTO_MATCH_WINDOW_DAYS);
+        return candidates.stream()
+                .filter(p -> Math.abs(p.getAmount() - tx.getAmount()) < 0.01)
+                .filter(p -> p.getPaymentDate() != null
+                        && !p.getPaymentDate().isBefore(windowStart)
+                        && !p.getPaymentDate().isAfter(windowEnd))
+                .findFirst();
+    }
+
+    /** Confirms the existing manual entry instead of creating a duplicate FeePayment for the same money. */
+    private void linkToManualEntry(PaymentTransaction tx, FeePayment manualEntry) {
+        manualEntry.setVerificationStatus(FeePayment.VerificationStatus.CONFIRMED);
+        manualEntry.setVerifiedBy("Auto-matched to bank transaction " + tx.getTransactionRef());
+        manualEntry.setVerifiedAt(LocalDateTime.now());
+        feePaymentRepo.save(manualEntry);
+        tx.setMatchedFeePaymentId(manualEntry.getId());
+        txRepo.save(tx);
+        log.info("{} transaction {} auto-matched to manual FeePayment {} for student {}, skipping duplicate creation",
+                tx.getProvider(), tx.getTransactionRef(), manualEntry.getId(), manualEntry.getStudentId());
     }
 
     private void createFeePayment(PaymentTransaction tx, Student student, FeePayment.PaymentMethod method) {

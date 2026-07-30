@@ -16,7 +16,6 @@ public class FeeStructureSubmitRequest {
     @NotBlank private String term;
     @NotEmpty @Valid private List<FeeStructureLineRequest> lines;
     private String note;
-    @NotBlank private String maker;
 
     /** When set on /submit, reworks this rejected record in place instead of creating a new one. */
     private UUID reworkUuid;

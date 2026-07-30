@@ -17,8 +17,8 @@ public class SubjectController {
     private final SubjectService subjectService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getAll(@RequestParam(required = false) String grade) {
-        return ResponseEntity.ok(ApiResponse.ok(subjectService.getAll(grade)));
+    public ResponseEntity<ApiResponse<?>> getAll() {
+        return ResponseEntity.ok(ApiResponse.ok(subjectService.getAll()));
     }
 
     @PostMapping

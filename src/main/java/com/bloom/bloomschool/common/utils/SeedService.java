@@ -50,6 +50,7 @@ public class SeedService {
         seedPermissions();
         seedRolesWithPermissions();
         seedPayrollWorkflowPermissions();
+        seedFeeApprovalPermission();
         seedPayrollSetup();
         seedGradeLevels();
     }
@@ -109,6 +110,7 @@ public class SeedService {
         perm("FEES_VIEW",            "View fee records",         "READ",   finance);
         perm("FEES_MANAGE",          "Manage fee structure",     "WRITE",  finance);
         perm("FEES_COLLECT",         "Record fee payments",      "WRITE",  finance);
+        perm("FEES_APPROVE",         "Approve or reject submitted fee structures", "WRITE", finance);
         perm("FINANCE_VIEW",         "View finance module",      "READ",   finance);
         perm("FINANCE_MANAGE",       "Manage finance",           "WRITE",  finance);
         perm("SUPPLIERS_MANAGE",     "Manage suppliers",         "WRITE",  finance);
@@ -189,6 +191,30 @@ public class SeedService {
                     if (userPermissionRepo.findByUserIdAndPermissionId(user.getId(), p.getId()) == null) {
                         userPermissionRepo.save(UserPermission.builder().user(user).permission(p).overrideType(null).build());
                     }
+                }
+            }
+        });
+    }
+
+    /**
+     * Adds FEES_APPROVE even on databases already seeded before fee-structure approval enforcement
+     * existed — same rationale and pattern as seedPayrollWorkflowPermissions() above: seedPermissions()
+     * only runs once (guarded by permissionRepo.count() > 0), so this new permission needs its own
+     * idempotent, always-run seeding step to reach existing ADMIN role holders.
+     */
+    private void seedFeeApprovalPermission() {
+        SysModule finance = moduleRepo.findByModuleName("Finance Module")
+                .orElseGet(() -> moduleRepo.save(SysModule.builder().moduleName("Finance Module").build()));
+
+        Permission approve = permIfMissing("FEES_APPROVE", "Approve or reject submitted fee structures", "WRITE", finance);
+
+        roleRepo.findByName("ADMIN").ifPresent(admin -> {
+            if (admin.getPermissions().add(approve)) roleRepo.save(admin);
+
+            for (User user : userRepo.findAll()) {
+                if (!user.getRoles().contains(admin)) continue;
+                if (userPermissionRepo.findByUserIdAndPermissionId(user.getId(), approve.getId()) == null) {
+                    userPermissionRepo.save(UserPermission.builder().user(user).permission(approve).overrideType(null).build());
                 }
             }
         });

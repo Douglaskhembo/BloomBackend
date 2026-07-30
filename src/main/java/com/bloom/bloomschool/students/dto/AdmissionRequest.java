@@ -16,6 +16,7 @@ public class AdmissionRequest {
     private UUID uuid;
     private String gender;
     private LocalDate dateOfBirth;
+    private String birthCertificateNumber;
     private String address;
     private String medicalNotes;
     @NotBlank private String grade;

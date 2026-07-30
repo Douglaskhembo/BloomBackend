@@ -5,12 +5,18 @@ import com.bloom.bloomschool.staff.entity.Staff;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
 import com.bloom.bloomschool.staff.util.StaffType;
 import com.bloom.bloomschool.staff.util.Status;
+import com.bloom.bloomschool.staffroles.entity.StaffRole;
+import com.bloom.bloomschool.staffroles.repository.StaffRoleRepository;
+import com.bloom.bloomschool.subjects.entity.Subject;
+import com.bloom.bloomschool.subjects.repository.SubjectRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -19,6 +25,8 @@ import java.util.UUID;
 public class StaffService {
 
     private final StaffRepository staffRepo;
+    private final SubjectRepository subjectRepo;
+    private final StaffRoleRepository staffRoleRepo;
 
     public List<Staff> getAll(String search) {
         if (search != null && !search.isBlank()) return staffRepo.search(search.trim());
@@ -85,8 +93,9 @@ public class StaffService {
             (req.getEmploymentType() == com.bloom.bloomschool.staff.util.EmploymentType.PERMANENT)
                 ? null : req.getContractPeriodMonths()
         );
-        s.setSubject(req.getSubject());
+        s.setSubjects(resolveSubjects(req.getSubjectUuids()));
         s.setGrade(req.getGrade());
+        s.setStaffRole(resolveStaffRole(req.getStaffRoleUuid()));
         s.setQualification(req.getQualification());
         s.setExperience(req.getExperience());
         s.setJoined(req.getJoined());
@@ -94,5 +103,15 @@ public class StaffService {
         s.setEmergencyContactPhone(req.getEmergencyContactPhone());
         s.setEmergencyContactRelationship(req.getEmergencyContactRelationship());
         return s;
+    }
+
+    private Set<Subject> resolveSubjects(Set<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) return new HashSet<>();
+        return new HashSet<>(subjectRepo.findAllByUuidIn(uuids));
+    }
+
+    private StaffRole resolveStaffRole(UUID uuid) {
+        if (uuid == null) return null;
+        return staffRoleRepo.findByUuid(uuid).orElse(null);
     }
 }

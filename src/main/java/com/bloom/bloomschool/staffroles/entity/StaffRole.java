@@ -1,18 +1,15 @@
-package com.bloom.bloomschool.subjects.entity;
+package com.bloom.bloomschool.staffroles.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
-import com.bloom.bloomschool.school.entity.GradeLevel;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "bloom_sch_subjects")
+@Table(name = "bloom_sch_staff_roles")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Subject extends BaseEntity {
+public class StaffRole extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,15 +23,7 @@ public class Subject extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name;
 
-    private String code;
     private String description;
     @Builder.Default
     private boolean active = true;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "bloom_sch_subject_grade_levels",
-            joinColumns = @JoinColumn(name = "subject_id"),
-            inverseJoinColumns = @JoinColumn(name = "grade_level_id"))
-    @Builder.Default
-    private Set<GradeLevel> gradeLevels = new HashSet<>();
 }

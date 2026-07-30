@@ -40,6 +40,18 @@ public class PermissionResolver {
             throw new AccessDeniedException("This action requires the '" + permissionName + "' permission");
     }
 
+    /**
+     * True if some user other than {@code excludingUsername} currently holds the given permission.
+     * Used to allow a lone holder of an approval permission to act on their own submission — mirrors
+     * the payroll workflow's "sole approver" exception (see PayrollService.decideStep) — since strict
+     * self-approval blocking would make the action un-actionable in a single-admin school.
+     */
+    public boolean anyOtherUserHasPermission(String permissionName, String excludingUsername) {
+        return userRepo.findAllWithRoles().stream()
+                .filter(u -> !u.getUserName().equals(excludingUsername))
+                .anyMatch(u -> effectivePermissionNames(u).contains(permissionName));
+    }
+
     private Set<String> effectivePermissionNames(User user) {
         Set<String> names = new HashSet<>();
         user.getRoles().forEach(role -> role.getPermissions().forEach(p -> names.add(p.getName())));
