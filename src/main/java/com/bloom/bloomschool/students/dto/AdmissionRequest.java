@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.students.dto;
 
 import com.bloom.bloomschool.students.entity.Admission;
+import com.bloom.bloomschool.students.util.BoarderStatus;
 import com.bloom.bloomschool.students.util.Stage;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class AdmissionRequest {
     private String medicalNotes;
     @NotBlank private String grade;
     private String stream;
+    private BoarderStatus boarderStatus;
     private UUID gradeLevelUuid;
     private String parentName;
     private String parentRelationship;

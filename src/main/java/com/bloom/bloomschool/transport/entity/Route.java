@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.transport.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.staff.entity.Staff;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,8 +26,12 @@ public class Route extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    private String driver;
-    private String driverPhone;
+    // Column is nullable at the DB level so Hibernate's ddl-auto=update can add it to a table with
+    // existing rows without a NOT NULL migration failure; RouteRequest still requires it at the API level.
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "driver_staff_id")
+    private Staff driver;
+
     private String vehicle;
     private int capacity;
     private double fare;

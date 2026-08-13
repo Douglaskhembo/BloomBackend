@@ -2,6 +2,7 @@ package com.bloom.bloomschool.students.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
 import com.bloom.bloomschool.school.entity.GradeLevel;
+import com.bloom.bloomschool.students.util.BoarderStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -39,6 +40,9 @@ public class Student extends BaseEntity {
     private String medicalNotes;
     private String grade;
     private String stream;
+
+    @Enumerated(EnumType.STRING)
+    private BoarderStatus boarderStatus;   // nullable; treated as DAY_SCHOLAR for fee eligibility until set
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "grade_level_id")

@@ -17,7 +17,9 @@ public class FeePaymentRequest {
     @NotNull private Double amount;
     private Double expectedAmount;
     @NotNull private FeePayment.PaymentMethod method;
-    @NotBlank private String reference;
+    // Required for all methods except CASH — cash payments get a system-generated reference
+    // (see FeeService.recordPayment / RefGeneratorService), so the UI never collects one for cash.
+    private String reference;
     private LocalDateTime paymentDate;
     private Long id;
     private UUID uuid;

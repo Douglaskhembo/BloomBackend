@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ public class FeeStructureSubmitRequest {
     @NotBlank private String term;
     @NotEmpty @Valid private List<FeeStructureLineRequest> lines;
     private String note;
+    private LocalDate dueDate;
 
     /** When set on /submit, reworks this rejected record in place instead of creating a new one. */
     private UUID reworkUuid;

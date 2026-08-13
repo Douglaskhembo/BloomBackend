@@ -5,6 +5,7 @@ import com.bloom.bloomschool.fees.repository.FeePaymentRepository;
 import com.bloom.bloomschool.payments.dto.ReconcileInput;
 import com.bloom.bloomschool.payments.entity.PaymentTransaction;
 import com.bloom.bloomschool.payments.repository.PaymentTransactionRepository;
+import com.bloom.bloomschool.setups.service.RefGeneratorService;
 import com.bloom.bloomschool.students.entity.Student;
 import com.bloom.bloomschool.students.repository.StudentRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -38,6 +39,7 @@ public class PaymentReconciliationService {
     private final PaymentTransactionRepository txRepo;
     private final StudentRepository studentRepo;
     private final FeePaymentRepository feePaymentRepo;
+    private final RefGeneratorService refGeneratorService;
 
     /** For channels where the first time we see the payment IS the event carrying everything (C2B, bank webhooks). */
     public PaymentTransaction reconcile(ReconcileInput input) {
@@ -205,6 +207,7 @@ public class PaymentReconciliationService {
                 .amount(tx.getAmount() != null ? tx.getAmount() : 0)
                 .method(method != null ? method : methodFor(tx.getProvider()))
                 .reference(reference)
+                .receiptNumber(refGeneratorService.generateReference("RCPT"))
                 .paymentDate(tx.getReceivedAt())
                 .build();
         payment = feePaymentRepo.save(payment);

@@ -12,4 +12,5 @@ public interface FeeStructureRepository extends JpaRepository<FeeStructure, Long
     long countByGradeAndTermAndStatus(String grade, String term, FeeStructure.Status status);
     Optional<FeeStructure> findFirstByGradeAndTermAndStatusOrderByReviewedAtDesc(String grade, String term, FeeStructure.Status status);
     List<FeeStructure> findAllByOrderBySubmittedAtDesc();
+    List<FeeStructure> findAllByStatus(FeeStructure.Status status);
 }

@@ -98,6 +98,15 @@ public class FeeController {
         return ResponseEntity.ok(ApiResponse.ok("Payment rejected", feeService.rejectPayment(id, req.getApprover(), req.getReason())));
     }
 
+    // ── Student Fee Charges ──────────────────────────────────────────────────
+
+    @GetMapping("/charges")
+    public ResponseEntity<ApiResponse<?>> getCharges(
+            @RequestParam(required = false) String admissionNumber,
+            @RequestParam(required = false) String grade) {
+        return ResponseEntity.ok(ApiResponse.ok(feeService.getCurrentCharges(admissionNumber, grade)));
+    }
+
     // ── Fee Structures (Maker / Approver / Approved workflow) ───────────────────
 
     @GetMapping("/structures")

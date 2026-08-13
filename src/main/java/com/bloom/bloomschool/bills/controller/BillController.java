@@ -38,13 +38,18 @@ public class BillController {
     }
 
     @PatchMapping("/{id}/mark-paid")
-    public ResponseEntity<ApiResponse<?>> markPaid(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok("Bill marked as paid", billService.markPaid(id)));
+    public ResponseEntity<ApiResponse<?>> markPaid(@PathVariable Long id, String paymentRef) {
+        return ResponseEntity.ok(ApiResponse.ok("Bill marked as paid", billService.markPaid(id, paymentRef)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Long id) {
         billService.delete(id);
         return ResponseEntity.ok(ApiResponse.ok("Bill deleted"));
+    }
+
+    public ResponseEntity<ApiResponse<?>> softDelete(@PathVariable Long id) {
+        billService.softDelete(id);
+        return  ResponseEntity.ok(ApiResponse.ok("Bill marked as deleted"));
     }
 }

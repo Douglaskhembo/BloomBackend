@@ -40,6 +40,13 @@ public class FeeItem extends BaseEntity {
     @Builder.Default
     private String term = "Per Term";   // "Per Term" | "Per Year" | "One-time"
 
+    @Enumerated(EnumType.STRING)
+    private FeeCategory category;   // nullable — legacy items stay uncategorized until edited
+
+    /** Wrapper Boolean, not primitive — a primitive would force ddl-auto=update to add this
+     *  column NOT NULL with no default, which fails against the already-populated table. */
+    private Boolean mandatory;
+
     @Builder.Default
     private boolean active = true;
 }

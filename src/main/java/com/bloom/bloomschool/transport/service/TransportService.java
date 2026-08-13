@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.transport.service;
 
+import com.bloom.bloomschool.staff.repository.StaffRepository;
 import com.bloom.bloomschool.students.repository.StudentRepository;
 import com.bloom.bloomschool.transport.dto.EnrollStudentRequest;
 import com.bloom.bloomschool.transport.dto.RouteRequest;
@@ -23,6 +24,7 @@ public class TransportService {
     private final RouteRepository routeRepo;
     private final StudentRouteRepository studentRouteRepo;
     private final StudentRepository studentRepo;
+    private final StaffRepository staffRepo;
 
     // ── Routes ────────────────────────────────────────────────────────────────
 
@@ -85,8 +87,8 @@ public class TransportService {
 
     private Route buildRoute(Route r, RouteRequest req) {
         r.setName(req.getName());
-        r.setDriver(req.getDriver());
-        r.setDriverPhone(req.getDriverPhone());
+        r.setDriver(staffRepo.findByUuid(req.getDriverUuid())
+                .orElseThrow(() -> new EntityNotFoundException("Driver not found")));
         r.setVehicle(req.getVehicle());
         r.setCapacity(req.getCapacity());
         r.setFare(req.getFare());

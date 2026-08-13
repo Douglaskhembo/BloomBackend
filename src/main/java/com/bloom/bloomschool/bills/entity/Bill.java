@@ -23,6 +23,15 @@ public class Bill extends BaseEntity {
     @PrePersist
     public void generateUuid() { if (uuid == null) uuid = UUID.randomUUID(); }
 
+    /** Auto-generated via RefGeneratorService at creation, e.g. BILL-260730-001. */
+    @Column(unique = true)
+    private String billNumber;
+
+    private String paymentRef;
+
+    @Builder.Default
+    private boolean deleted = false;
+
     /** Optional link to a registered supplier — a bill can also be raised against a free-text supplier name. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")

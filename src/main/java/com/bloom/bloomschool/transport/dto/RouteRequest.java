@@ -2,15 +2,16 @@ package com.bloom.bloomschool.transport.dto;
 
 import com.bloom.bloomschool.transport.entity.Route;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class RouteRequest {
     @NotBlank private String name;
-    private String driver;
-    private String driverPhone;
+    @NotNull private UUID driverUuid;
     private String vehicle;
     private int capacity;
     private double fare;

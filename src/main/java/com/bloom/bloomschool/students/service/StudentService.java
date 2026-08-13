@@ -134,6 +134,7 @@ public class StudentService {
                 .medicalNotes(a.getMedicalNotes())
                 .grade(a.getGrade())
                 .stream(a.getStream())
+                .boarderStatus(a.getBoarderStatus())
                 .gradeLevel(a.getGradeLevel())
                 .parentName(a.getParentName())
                 .parentRelationship(a.getParentRelationship())
@@ -210,6 +211,7 @@ public class StudentService {
         s.setMedicalNotes(req.getMedicalNotes());
         s.setGrade(req.getGrade());
         s.setStream(req.getStream());
+        s.setBoarderStatus(req.getBoarderStatus());
         s.setGradeLevel(resolveGradeLevel(req.getGradeLevelUuid()));
         s.setParentName(req.getParentName());
         s.setParentRelationship(req.getParentRelationship());
@@ -229,6 +231,7 @@ public class StudentService {
         a.setMedicalNotes(req.getMedicalNotes());
         a.setGrade(req.getGrade());
         a.setStream(req.getStream());
+        a.setBoarderStatus(req.getBoarderStatus());
         a.setGradeLevel(resolveGradeLevel(req.getGradeLevelUuid()));
         a.setParentName(req.getParentName());
         a.setParentRelationship(req.getParentRelationship());

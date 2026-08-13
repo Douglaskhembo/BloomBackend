@@ -4,21 +4,29 @@ import com.bloom.bloomschool.fees.dto.FeeItemRequest;
 import com.bloom.bloomschool.fees.dto.FeePaymentRequest;
 import com.bloom.bloomschool.fees.dto.FeeStructureLineRequest;
 import com.bloom.bloomschool.fees.dto.FeeStructureSubmitRequest;
+import com.bloom.bloomschool.fees.entity.FeeCategory;
 import com.bloom.bloomschool.fees.entity.FeeItem;
 import com.bloom.bloomschool.fees.entity.FeePayment;
 import com.bloom.bloomschool.fees.entity.FeeStructure;
 import com.bloom.bloomschool.fees.entity.FeeStructureAudit;
 import com.bloom.bloomschool.fees.entity.FeeStructureLine;
+import com.bloom.bloomschool.fees.entity.StudentFeeCharge;
 import com.bloom.bloomschool.fees.repository.FeeItemRepository;
 import com.bloom.bloomschool.fees.repository.FeePaymentRepository;
 import com.bloom.bloomschool.fees.repository.FeeStructureAuditRepository;
 import com.bloom.bloomschool.fees.repository.FeeStructureRepository;
+import com.bloom.bloomschool.fees.repository.StudentFeeChargeRepository;
 import com.bloom.bloomschool.school.entity.GradeLevel;
 import com.bloom.bloomschool.school.repository.GradeLevelRepository;
+import com.bloom.bloomschool.students.entity.Student;
+import com.bloom.bloomschool.students.repository.StudentRepository;
+import com.bloom.bloomschool.students.util.BoarderStatus;
+import com.bloom.bloomschool.transport.repository.StudentRouteRepository;
 import com.bloom.bloomschool.auth.model.User;
 import com.bloom.bloomschool.auth.repo.UserRepository;
 import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.utils.UserUtils;
+import com.bloom.bloomschool.setups.service.RefGeneratorService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,8 +34,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,10 +51,14 @@ public class FeeService {
     private final FeePaymentRepository feePaymentRepo;
     private final FeeStructureRepository feeStructureRepo;
     private final FeeStructureAuditRepository feeStructureAuditRepo;
+    private final StudentFeeChargeRepository studentFeeChargeRepo;
     private final GradeLevelRepository gradeLevelRepo;
+    private final StudentRepository studentRepo;
+    private final StudentRouteRepository studentRouteRepo;
     private final UserRepository userRepo;
     private final UserUtils userUtils;
     private final PermissionResolver permissionResolver;
+    private final RefGeneratorService refGeneratorService;
 
     // ── Fee Items (Structure) ─────────────────────────────────────────────────
 
@@ -67,6 +81,8 @@ public class FeeService {
                 .amount(req.getAmount())
                 .gradeLevels(resolveGradeLevels(req.getGradeLevelUuids()))
                 .term(req.getTerm())
+                .category(req.getCategory())
+                .mandatory(req.getMandatory())
                 .active(req.isActive())
                 .build());
     }
@@ -80,6 +96,8 @@ public class FeeService {
         f.setAmount(req.getAmount());
         f.setGradeLevels(resolveGradeLevels(req.getGradeLevelUuids()));
         f.setTerm(req.getTerm());
+        f.setCategory(req.getCategory());
+        f.setMandatory(req.getMandatory());
         f.setActive(req.isActive());
         return feeItemRepo.save(f);
     }
@@ -125,8 +143,19 @@ public class FeeService {
      */
     @Transactional
     public FeePayment recordPayment(FeePaymentRequest req) {
-        if (feePaymentRepo.existsByReference(req.getReference()))
-            throw new IllegalArgumentException("Payment reference '" + req.getReference() + "' already exists");
+        boolean isCash = req.getMethod() == FeePayment.PaymentMethod.CASH;
+        String reference;
+        if (isCash) {
+            // Cash walk-ins have no external slip/txn number to key off — mint one ourselves so the
+            // teller never has to make up a reference.
+            reference = refGeneratorService.generateReference("CASH");
+        } else {
+            if (req.getReference() == null || req.getReference().isBlank())
+                throw new IllegalArgumentException("Reference is required for " + req.getMethod());
+            reference = req.getReference();
+            if (feePaymentRepo.existsByReference(reference))
+                throw new IllegalArgumentException("Payment reference '" + reference + "' already exists");
+        }
 
         FeePayment p = FeePayment.builder()
                 .studentId(req.getStudentId())
@@ -136,7 +165,8 @@ public class FeeService {
                 .amount(req.getAmount())
                 .expectedAmount(req.getExpectedAmount() != null ? req.getExpectedAmount() : 0)
                 .method(req.getMethod())
-                .reference(req.getReference())
+                .reference(reference)
+                .receiptNumber(refGeneratorService.generateReference("RCPT"))
                 .paymentDate(req.getPaymentDate() != null ? req.getPaymentDate() : LocalDateTime.now())
                 .source(FeePayment.PaymentSource.MANUAL)
                 .verificationStatus(defaultVerificationStatus(req.getMethod()))
@@ -197,6 +227,92 @@ public class FeeService {
 
     public List<FeeStructureAudit> getFeeStructureAudit() {
         return feeStructureAuditRepo.findAllByOrderByAtDesc();
+    }
+
+    // ── Student Fee Charges ──────────────────────────────────────────────────
+
+    /**
+     * The persisted, itemized charges currently owed — one entry per (academicYear, grade, period)
+     * resolves to the latest APPROVED structure version for that period, and only that version's
+     * charges count (older versions' rows stay in the table for audit but are excluded here).
+     * Self-healing: a structure approved before StudentFeeCharge existed has no rows yet, so this
+     * lazily generates them the first time anyone asks — no separate backfill migration needed.
+     */
+    @Transactional
+    public List<StudentFeeCharge> getCurrentCharges(String admissionNumber, String grade) {
+        List<FeeStructure> approved = feeStructureRepo.findAllByStatus(FeeStructure.Status.APPROVED);
+        Map<String, FeeStructure> latestByPeriod = new HashMap<>();
+        for (FeeStructure fs : approved) {
+            String key = fs.getAcademicYear() + "::" + fs.getGrade() + "::" + fs.getTerm();
+            FeeStructure existing = latestByPeriod.get(key);
+            if (existing == null || reviewedAtOf(fs).isAfter(reviewedAtOf(existing))) latestByPeriod.put(key, fs);
+        }
+        for (FeeStructure fs : latestByPeriod.values()) generateCharges(fs);
+
+        Set<UUID> currentUuids = latestByPeriod.values().stream().map(FeeStructure::getUuid).collect(Collectors.toSet());
+        if (currentUuids.isEmpty()) return List.of();
+        List<StudentFeeCharge> charges = admissionNumber != null
+                ? studentFeeChargeRepo.findByAdmissionNumberAndFeeStructureUuidIn(admissionNumber, currentUuids)
+                : studentFeeChargeRepo.findByFeeStructureUuidIn(currentUuids);
+        return grade != null ? charges.stream().filter(c -> c.getGrade().equals(grade)).toList() : charges;
+    }
+
+    private LocalDateTime reviewedAtOf(FeeStructure fs) {
+        return fs.getReviewedAt() != null ? fs.getReviewedAt() : fs.getUpdatedAt();
+    }
+
+    /**
+     * Generates one charge row per (eligible student x enabled line) for a newly-approved structure.
+     * Idempotent per structure version — safe to call again (e.g. from getCurrentCharges's backfill)
+     * without duplicating rows. Never touches charges generated by a different structure version.
+     */
+    private void generateCharges(FeeStructure fs) {
+        if (studentFeeChargeRepo.existsByFeeStructureUuid(fs.getUuid())) return;
+
+        List<FeeStructureLine> enabled = fs.getLines().stream().filter(FeeStructureLine::isEnabled).toList();
+        if (enabled.isEmpty()) return;
+
+        Map<Long, FeeItem> itemsById = feeItemRepo.findAllById(
+                enabled.stream().map(FeeStructureLine::getItemId).toList()
+        ).stream().collect(Collectors.toMap(FeeItem::getId, i -> i));
+
+        List<Student> gradeStudents = studentRepo.findByGradeAndStatus(fs.getGrade(), Student.Status.ACTIVE);
+        if (gradeStudents.isEmpty()) return;
+
+        LocalDateTime now = LocalDateTime.now();
+        List<StudentFeeCharge> charges = new ArrayList<>();
+        for (FeeStructureLine line : enabled) {
+            FeeItem item = itemsById.get(line.getItemId());   // may be null if the item was since deleted
+            String itemName = item != null ? item.getName() : ("Item #" + line.getItemId());
+            FeeCategory category = item != null ? item.getCategory() : null;
+
+            for (Student s : gradeStudents) {
+                if (!isEligible(s, category)) continue;
+                charges.add(StudentFeeCharge.builder()
+                        .studentUuid(s.getUuid()).admissionNumber(s.getAdmissionNumber())
+                        .studentName(s.getFirstName() + " " + s.getLastName())
+                        .grade(s.getGrade()).stream(s.getStream())
+                        .feeStructureUuid(fs.getUuid()).structureVersion(fs.getVersion())
+                        .academicYear(fs.getAcademicYear()).period(fs.getTerm())
+                        .itemId(line.getItemId()).itemName(itemName).category(category)
+                        .amount(line.getAmount()).dueDate(fs.getDueDate()).generatedAt(now)
+                        .build());
+            }
+        }
+        studentFeeChargeRepo.saveAll(charges);
+    }
+
+    /**
+     * BOARDING and TRANSPORT items narrow eligibility beyond "everyone in the matching grade":
+     * boarding only charges students flagged BOARDER; transport eligibility is derived from the
+     * student's actual TransportPage route enrollment rather than a second opt-in flag, so it can
+     * never drift out of sync with reality. Every other category (including uncategorized legacy
+     * items) keeps today's behavior of applying to the whole grade.
+     */
+    private boolean isEligible(Student s, FeeCategory category) {
+        if (category == FeeCategory.BOARDING) return s.getBoarderStatus() == BoarderStatus.BOARDER;
+        if (category == FeeCategory.TRANSPORT) return studentRouteRepo.existsByStudentUuid(s.getUuid());
+        return true;
     }
 
     private List<FeeStructureLine> defaultLines() {
@@ -280,6 +396,7 @@ public class FeeService {
                 .baseline(computeBaseline(req.getGrade(), req.getTerm()))
                 .maker(maker)
                 .note(req.getNote())
+                .dueDate(req.getDueDate())
                 .submittedAt(now)
                 .updatedAt(now)
                 .build();
@@ -303,6 +420,7 @@ public class FeeService {
             fs.setLines(toLines(req.getLines()));
             fs.setBaseline(computeBaseline(req.getGrade(), req.getTerm()));
             fs.setNote(req.getNote());
+            fs.setDueDate(req.getDueDate());
             fs.setMaker(maker);
             fs.setStatus(FeeStructure.Status.PENDING_APPROVAL);
             fs.setRejectionReason(null);
@@ -319,6 +437,7 @@ public class FeeService {
                     .baseline(computeBaseline(req.getGrade(), req.getTerm()))
                     .maker(maker)
                     .note(req.getNote())
+                    .dueDate(req.getDueDate())
                     .submittedAt(now)
                     .updatedAt(now)
                     .build();
@@ -345,6 +464,7 @@ public class FeeService {
         fs.setUpdatedAt(now);
         FeeStructure saved = feeStructureRepo.save(fs);
         addStructureAudit(actor.getUserName(), FeeStructureAudit.Action.APPROVED, fs.getGrade(), fs.getTerm(), fs.getAcademicYear(), null);
+        generateCharges(saved);
         return saved;
     }
 

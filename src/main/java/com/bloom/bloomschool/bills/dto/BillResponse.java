@@ -12,6 +12,7 @@ import java.util.UUID;
 public class BillResponse {
     private Long id;
     private UUID uuid;
+    private String billNumber;
     private Long supplierId;
     private String supplierName;
     private String description;
@@ -20,4 +21,6 @@ public class BillResponse {
     private LocalDateTime paidDate;
     /** UNPAID, PAID, or OVERDUE — OVERDUE is derived (UNPAID + dueDate in the past), never stored as ground truth. */
     private String status;
+    private String paymentRef;
+    private boolean deleted;
 }

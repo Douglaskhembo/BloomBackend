@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.fees.dto;
 
+import com.bloom.bloomschool.fees.entity.FeeCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -14,6 +15,8 @@ public class FeeItemRequest {
     @NotNull private Double amount;
     private Set<UUID> gradeLevelUuids;
     private String term = "Per Term";
+    private FeeCategory category;
+    private Boolean mandatory = true;
     private boolean active = true;
     private Long id;
     private UUID uuid;

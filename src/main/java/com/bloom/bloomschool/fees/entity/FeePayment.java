@@ -38,6 +38,10 @@ public class FeePayment extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String reference;
 
+    /** Internal receipt number for this payment, auto-generated via RefGeneratorService — distinct from {@link #reference}, which is the external MPESA/bank/cheque reference used to dedupe gateway events. */
+    @Column(unique = true)
+    private String receiptNumber;
+
     private LocalDateTime paymentDate;
 
     /** Where this record came from: typed in by staff, or produced automatically off a gateway/bank event. */

@@ -4,6 +4,7 @@ import com.bloom.bloomschool.bills.dto.BillRequest;
 import com.bloom.bloomschool.bills.dto.BillResponse;
 import com.bloom.bloomschool.bills.entity.Bill;
 import com.bloom.bloomschool.bills.repository.BillRepository;
+import com.bloom.bloomschool.setups.service.RefGeneratorService;
 import com.bloom.bloomschool.suppliers.entity.Supplier;
 import com.bloom.bloomschool.suppliers.repository.SupplierRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,6 +23,7 @@ public class BillService {
 
     private final BillRepository billRepo;
     private final SupplierRepository supplierRepo;
+    private final RefGeneratorService refGeneratorService;
 
     public List<BillResponse> getAll(String search) {
         List<Bill> bills = (search != null && !search.isBlank()) ? billRepo.search(search.trim()) : billRepo.findAll();
@@ -34,7 +36,9 @@ public class BillService {
 
     @Transactional
     public BillResponse create(BillRequest req) {
-        return toResponse(billRepo.save(build(new Bill(), req)));
+        Bill bill = build(new Bill(), req);
+        bill.setBillNumber(refGeneratorService.generateReference("BILL"));
+        return toResponse(billRepo.save(bill));
     }
 
     @Transactional
@@ -43,13 +47,23 @@ public class BillService {
     }
 
     @Transactional
-    public BillResponse markPaid(Long id) {
+    public BillResponse markPaid(Long id, String paymentRef) {
         Bill b = getEntity(id);
         if (b.getStatus() == Bill.Status.PAID) throw new IllegalArgumentException("Bill is already marked as paid");
         b.setStatus(Bill.Status.PAID);
         b.setPaidDate(LocalDateTime.now());
+        b.setPaymentRef(paymentRef);
         return toResponse(billRepo.save(b));
     }
+
+    @Transactional
+    public void softDelete(Long id){
+        Bill bill = billRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Bill not found, please contact admin"));
+        bill.setDeleted(!bill.isDeleted());
+
+        billRepo.save(bill);
+    };
 
     @Transactional
     public void delete(Long id) {
@@ -85,6 +99,7 @@ public class BillService {
         return BillResponse.builder()
                 .id(b.getId())
                 .uuid(b.getUuid())
+                .billNumber(b.getBillNumber())
                 .supplierId(b.getSupplier() != null ? b.getSupplier().getId() : null)
                 .supplierName(b.getSupplierName())
                 .description(b.getDescription())

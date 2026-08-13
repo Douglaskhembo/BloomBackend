@@ -4,6 +4,7 @@ import com.bloom.bloomschool.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,9 @@ public class FeeStructure extends BaseEntity {
 
     @Column(length = 2000)
     private String note;
+
+    /** When this period's fees fall due. Optional — informational only, not enforced anywhere yet. */
+    private LocalDate dueDate;
 
     @Column(length = 2000)
     private String rejectionReason;
