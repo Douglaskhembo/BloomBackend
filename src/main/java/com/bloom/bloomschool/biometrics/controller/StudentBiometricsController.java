@@ -2,7 +2,6 @@ package com.bloom.bloomschool.biometrics.controller;
 
 import com.bloom.bloomschool.auth.utils.ApiResponse;
 import com.bloom.bloomschool.auth.utils.GenericResponse;
-import com.bloom.bloomschool.biometrics.dto.request.BioCaptureRequest;
 import com.bloom.bloomschool.biometrics.dto.request.BioEnrollRequest;
 import com.bloom.bloomschool.biometrics.entity.StudentBioData;
 import com.bloom.bloomschool.biometrics.service.StudentBiometricsService;
@@ -42,11 +41,11 @@ public class StudentBiometricsController {
         return genericResponse.response(service.updateStatus(bioUuid, status), HttpStatus.OK);
     }
 
-    /** Endpoint called by the biometric device on every scan */
-    @PostMapping("/capture")
-    public ResponseEntity<ApiResponse<Object>> capture(@Valid @RequestBody BioCaptureRequest req) {
-        return genericResponse.response(service.capture(req), HttpStatus.OK);
-    }
+    // Attendance capture is no longer taken directly here — accepting a bioDataUuid straight
+    // from a caller would let anyone with a valid one mark attendance without ever presenting
+    // a fingerprint. See BiometricsCaptureController (/biometrics/capture) and
+    // DeviceCaptureController (/attendance/device-capture), which both require an actual scan
+    // image and resolve identity via FingerprintIdentificationService.
 
     @GetMapping("/{studentUuid}/attendance")
     public ResponseEntity<ApiResponse<Object>> getAttendance(

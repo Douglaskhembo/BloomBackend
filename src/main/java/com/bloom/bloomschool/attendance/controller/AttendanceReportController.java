@@ -27,6 +27,15 @@ public class AttendanceReportController {
         return ResponseEntity.ok(ApiResponse.ok(reportService.searchStudents(from, to, grade, stream, admissionNumber)));
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<?>> studentSummary(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String grade,
+            @RequestParam(required = false) String stream) {
+        return ResponseEntity.ok(ApiResponse.ok(reportService.getStudentAttendanceSummary(from, to, grade, stream)));
+    }
+
     @GetMapping("/staff")
     public ResponseEntity<ApiResponse<?>> searchStaff(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

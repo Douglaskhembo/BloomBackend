@@ -1,0 +1,18 @@
+package com.bloom.bloomschool.holidays.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+import java.time.LocalDate;
+import java.util.UUID;
+
+@Data
+public class HolidayRequest {
+    @NotBlank private String name;
+    @NotNull private LocalDate date;
+    private Long id;
+    private UUID uuid;
+    private boolean recurringAnnually = false;
+    private boolean active = true;
+}

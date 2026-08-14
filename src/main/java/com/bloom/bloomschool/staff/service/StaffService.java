@@ -1,6 +1,10 @@
 package com.bloom.bloomschool.staff.service;
 
+import com.bloom.bloomschool.auth.model.User;
+import com.bloom.bloomschool.auth.repo.UserRepository;
+import com.bloom.bloomschool.common.utils.UserUtils;
 import com.bloom.bloomschool.staff.dto.StaffRequest;
+import com.bloom.bloomschool.staff.dto.StaffSelfUpdateRequest;
 import com.bloom.bloomschool.staff.entity.Staff;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
 import com.bloom.bloomschool.staff.util.StaffType;
@@ -27,6 +31,8 @@ public class StaffService {
     private final StaffRepository staffRepo;
     private final SubjectRepository subjectRepo;
     private final StaffRoleRepository staffRoleRepo;
+    private final UserRepository userRepo;
+    private final UserUtils userUtils;
 
     public List<Staff> getAll(String search) {
         if (search != null && !search.isBlank()) return staffRepo.search(search.trim());
@@ -69,6 +75,41 @@ public class StaffService {
     public void delete(UUID uuid) {
         Staff s = getByUuid(uuid);
         staffRepo.deleteById(s.getId());
+    }
+
+    // ── Self-service (resolved server-side from the logged-in user, never a client-supplied id) ──
+
+    public Staff getMyProfile() {
+        return resolveCurrentStaff();
+    }
+
+    @Transactional
+    public Staff updateMyProfile(StaffSelfUpdateRequest req) {
+        Staff s = resolveCurrentStaff();
+        if (!s.getEmail().equalsIgnoreCase(req.getEmail()) && staffRepo.existsByEmail(req.getEmail()))
+            throw new IllegalArgumentException("Email already in use");
+        if (!s.getPhone().equals(req.getPhone()) && staffRepo.existsByPhone(req.getPhone()))
+            throw new IllegalArgumentException("Phone already in use");
+
+        s.setPhone(req.getPhone());
+        s.setEmail(req.getEmail());
+        s.setAddress(req.getAddress());
+        s.setEmergencyContactName(req.getEmergencyContactName());
+        s.setEmergencyContactPhone(req.getEmergencyContactPhone());
+        s.setEmergencyContactRelationship(req.getEmergencyContactRelationship());
+        return staffRepo.save(s);
+    }
+
+    private Staff resolveCurrentStaff() {
+        String username = userUtils.getCurrentUser();
+        if (username == null) throw new IllegalStateException("Not authenticated");
+        User user = userRepo.findByUserName(username)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + username));
+        String profileRef = user.getProfileRef();
+        if (profileRef == null || profileRef.isBlank())
+            throw new EntityNotFoundException("No staff profile linked to this account");
+        return staffRepo.findByUuid(UUID.fromString(profileRef))
+                .orElseThrow(() -> new EntityNotFoundException("Linked staff record not found"));
     }
 
     private String generateStaffId(StaffType type) {

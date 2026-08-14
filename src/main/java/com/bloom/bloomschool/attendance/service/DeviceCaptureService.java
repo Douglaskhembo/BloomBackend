@@ -2,28 +2,23 @@ package com.bloom.bloomschool.attendance.service;
 
 import com.bloom.bloomschool.attendance.dto.request.DeviceCaptureRequest;
 import com.bloom.bloomschool.attendance.entity.BiometricDevice;
+import com.bloom.bloomschool.attendance.util.OwnerType;
 import com.bloom.bloomschool.biometrics.dto.request.BioCaptureRequest;
 import com.bloom.bloomschool.biometrics.dto.response.AttendanceResponse;
-import com.bloom.bloomschool.biometrics.entity.StaffBioData;
-import com.bloom.bloomschool.biometrics.entity.StudentBioData;
-import com.bloom.bloomschool.biometrics.repository.StaffBioDataRepository;
-import com.bloom.bloomschool.biometrics.repository.StudentBioDataRepository;
+import com.bloom.bloomschool.biometrics.service.FingerprintIdentificationService;
+import com.bloom.bloomschool.biometrics.service.IdentifiedOwner;
 import com.bloom.bloomschool.biometrics.service.StaffBiometricsService;
 import com.bloom.bloomschool.biometrics.service.StudentBiometricsService;
-import com.bloom.bloomschool.staff.entity.Staff;
-import com.bloom.bloomschool.staff.repository.StaffRepository;
-import com.bloom.bloomschool.students.entity.Student;
-import com.bloom.bloomschool.students.repository.StudentRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Entry point for real hardware (or a bridge/agent it's paired with): authenticates the
- * device by its API key, resolves the scanned person by their human-readable ref, then
- * delegates to the same {@code StaffBiometricsService}/{@code StudentBiometricsService}
- * capture logic the web "test scan" path uses — one clock-in/out engine, two ways in.
+ * device by its API key, identifies the scanned fingerprint via 1:N matching against every
+ * enrolled student/staff (the same {@link FingerprintIdentificationService} the web "identify"
+ * test path uses), then delegates to the same {@code StaffBiometricsService}/
+ * {@code StudentBiometricsService} capture logic — one clock-in/out engine, two ways in.
  */
 @Service
 @RequiredArgsConstructor
@@ -31,37 +26,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeviceCaptureService {
 
     private final BiometricDeviceService deviceService;
-    private final StaffRepository staffRepository;
-    private final StudentRepository studentRepository;
-    private final StaffBioDataRepository staffBioDataRepository;
-    private final StudentBioDataRepository studentBioDataRepository;
+    private final FingerprintIdentificationService identificationService;
     private final StaffBiometricsService staffBiometricsService;
     private final StudentBiometricsService studentBiometricsService;
 
     public AttendanceResponse capture(String deviceCode, String apiKey, DeviceCaptureRequest req) {
         BiometricDevice device = deviceService.authenticate(deviceCode, apiKey);
 
+        IdentifiedOwner identified = identificationService.identify(req.getImage(), req.getOwnerType());
+
         BioCaptureRequest captureReq = new BioCaptureRequest();
+        captureReq.setBioDataUuid(identified.bioDataUuid());
         captureReq.setDeviceId(device.getDeviceCode());
         captureReq.setRemarks(req.getRemarks());
 
-        return switch (req.getOwnerType()) {
-            case STAFF -> {
-                Staff staff = staffRepository.findByStaffId(req.getOwnerRef())
-                        .orElseThrow(() -> new EntityNotFoundException("No staff with staffId '" + req.getOwnerRef() + "'"));
-                StaffBioData bio = staffBioDataRepository.findByStaffId(staff.getId())
-                        .orElseThrow(() -> new EntityNotFoundException("Staff has no enrolled biometrics"));
-                captureReq.setBioDataUuid(bio.getUuid());
-                yield staffBiometricsService.capture(captureReq);
-            }
-            case STUDENT -> {
-                Student student = studentRepository.findByAdmissionNumber(req.getOwnerRef())
-                        .orElseThrow(() -> new EntityNotFoundException("No student with admission number '" + req.getOwnerRef() + "'"));
-                StudentBioData bio = studentBioDataRepository.findByStudentId(student.getId())
-                        .orElseThrow(() -> new EntityNotFoundException("Student has no enrolled biometrics"));
-                captureReq.setBioDataUuid(bio.getUuid());
-                yield studentBiometricsService.capture(captureReq);
-            }
-        };
+        AttendanceResponse response = identified.ownerType() == OwnerType.STAFF
+                ? staffBiometricsService.capture(captureReq)
+                : studentBiometricsService.capture(captureReq);
+
+        response.setOwnerType(identified.ownerType().name());
+        response.setMatchScore(identified.score());
+        return response;
     }
 }

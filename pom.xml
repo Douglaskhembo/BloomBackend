@@ -107,6 +107,15 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
+
+        <!-- Fingerprint matching (server-side, self-hosted, no vendor SDK) — version pinned deliberately,
+             see AesGcmByteConverter/FingerprintEngine comments: template format has no cross-version
+             compatibility guarantee, so do not bump casually without a re-enrollment plan. -->
+        <dependency>
+            <groupId>com.machinezoo.sourceafis</groupId>
+            <artifactId>sourceafis</artifactId>
+            <version>3.18.1</version>
+        </dependency>
     </dependencies>
 
     <build>

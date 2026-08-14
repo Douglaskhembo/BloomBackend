@@ -15,6 +15,9 @@ public class FeeItemRequest {
     @NotNull private Double amount;
     private Set<UUID> gradeLevelUuids;
     private String term = "Per Term";
+    private Double term1Amount;
+    private Double term2Amount;
+    private Double term3Amount;
     private FeeCategory category;
     private Boolean mandatory = true;
     private boolean active = true;

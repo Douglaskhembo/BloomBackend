@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.leave.entity;
 
 import com.bloom.bloomschool.common.entity.BaseEntity;
+import com.bloom.bloomschool.common.util.WeekendCountPolicy;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,6 +36,19 @@ public class LeaveType extends BaseEntity {
 
     @Builder.Default
     private boolean requiresDocument = false;
+
+    @Builder.Default
+    private boolean carryForwardAllowed = false;
+
+    @Builder.Default
+    private int maxCarryForwardDays = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private WeekendCountPolicy weekendPolicy = WeekendCountPolicy.EXCLUDE;
+
+    @Builder.Default
+    private boolean countPublicHolidays = false;
 
     @ElementCollection
     @CollectionTable(name = "bloom_sch_leave_type_documents", joinColumns = @JoinColumn(name = "leave_type_id"))

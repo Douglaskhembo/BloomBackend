@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.leave.dto;
 
+import com.bloom.bloomschool.common.util.WeekendCountPolicy;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -15,6 +16,10 @@ public class LeaveTypeRequest {
     private boolean paid = true;
     private boolean requiresDocument = false;
     private List<String> documentTypes;
+    private boolean carryForwardAllowed = false;
+    private int maxCarryForwardDays = 0;
+    private WeekendCountPolicy weekendPolicy = WeekendCountPolicy.EXCLUDE;
+    private boolean countPublicHolidays = false;
     private Long id;
     private UUID uuid;
 }

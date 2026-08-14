@@ -56,8 +56,9 @@ public class LeaveController {
     }
 
     @GetMapping("/leave-requests/balance")
-    public ResponseEntity<ApiResponse<?>> getBalances(@RequestParam String staffId) {
-        return ResponseEntity.ok(ApiResponse.ok(leaveService.getBalances(staffId)));
+    public ResponseEntity<ApiResponse<?>> getBalances(@RequestParam String staffId, @RequestParam(required = false) Integer year) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                year != null ? leaveService.getBalances(staffId, year) : leaveService.getBalances(staffId)));
     }
 
     @PostMapping("/leave-requests")

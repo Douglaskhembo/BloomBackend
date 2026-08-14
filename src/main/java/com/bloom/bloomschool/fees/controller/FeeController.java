@@ -132,9 +132,11 @@ public class FeeController {
     }
 
     @PatchMapping("/structures/{uuid}/approve")
-    public ResponseEntity<ApiResponse<?>> approveStructure(@PathVariable UUID uuid) {
+    public ResponseEntity<ApiResponse<?>> approveStructure(@PathVariable UUID uuid, @Valid @RequestBody FeeStructureDecisionRequest req) {
         permissionResolver.requirePermission("FEES_APPROVE");
-        return ResponseEntity.ok(ApiResponse.ok("Fee structure approved", feeService.approveStructure(uuid)));
+        if (req.getReason() == null || req.getReason().isBlank())
+            throw new IllegalArgumentException("Approval note is required");
+        return ResponseEntity.ok(ApiResponse.ok("Fee structure approved", feeService.approveStructure(uuid, req.getReason())));
     }
 
     @PatchMapping("/structures/{uuid}/reject")

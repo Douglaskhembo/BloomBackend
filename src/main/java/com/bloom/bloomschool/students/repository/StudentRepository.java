@@ -22,4 +22,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     @Query("SELECT s FROM Student s WHERE LOWER(CONCAT(s.firstName,' ',s.lastName,' ',s.admissionNumber)) LIKE LOWER(CONCAT('%',:q,'%'))")
     List<Student> search(String q);
+
+    @Query("SELECT s FROM Student s WHERE s.status = 'ACTIVE' AND (:grade IS NULL OR s.grade = :grade) AND (:stream IS NULL OR s.stream = :stream)")
+    List<Student> findActiveRoster(String grade, String stream);
 }

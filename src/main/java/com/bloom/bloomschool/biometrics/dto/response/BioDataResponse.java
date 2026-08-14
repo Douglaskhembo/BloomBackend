@@ -14,10 +14,7 @@ public class BioDataResponse {
     private String ownerName;
     private String ownerRef;
 
-    private String leftFingerprintTemplateRef;
     private String leftFingerName;
-
-    private String rightFingerprintTemplateRef;
     private String rightFingerName;
 
     private String faceTemplateRef;

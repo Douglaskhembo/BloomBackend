@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,27 +31,29 @@ public class StudentBiometricsService {
     private final StudentRepository studentRepository;
     private final StudentBioDataRepository bioDataRepository;
     private final StudentAttendanceRepository attendanceRepository;
+    private final FingerprintEngine fingerprintEngine;
 
+    /** Enrolls a student, or replaces their templates if already enrolled (re-scan/retry). */
     @Transactional
     public BioDataResponse enroll(UUID studentUuid, BioEnrollRequest req) {
         Student student = studentRepository.findByUuid(studentUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Student not found"));
 
-        if (bioDataRepository.existsByStudentId(student.getId()))
-            throw new IllegalArgumentException("Student already has biometric data enrolled");
+        byte[] leftTemplate = fingerprintEngine.extractTemplate(Base64.getDecoder().decode(req.getLeftFingerprintImage()));
+        byte[] rightTemplate = fingerprintEngine.extractTemplate(Base64.getDecoder().decode(req.getRightFingerprintImage()));
 
-        StudentBioData bio = bioDataRepository.save(StudentBioData.builder()
-                .student(student)
-                .leftFingerprintTemplateRef(req.getLeftFingerprintTemplateRef())
-                .leftFingerName(req.getLeftFingerName())
-                .rightFingerprintTemplateRef(req.getRightFingerprintTemplateRef())
-                .rightFingerName(req.getRightFingerName())
-                .faceTemplateRef(req.getFaceTemplateRef())
-                .enrolledDeviceId(req.getEnrolledDeviceId())
-                .enrolledAt(LocalDateTime.now())
-                .build());
+        StudentBioData bio = bioDataRepository.findByStudentId(student.getId()).orElseGet(() ->
+                StudentBioData.builder().student(student).build());
 
-        return toResponse(bio);
+        bio.setLeftFingerprintTemplate(leftTemplate);
+        bio.setLeftFingerName(req.getLeftFingerName());
+        bio.setRightFingerprintTemplate(rightTemplate);
+        bio.setRightFingerName(req.getRightFingerName());
+        bio.setFaceTemplateRef(req.getFaceTemplateRef());
+        bio.setEnrolledDeviceId(req.getEnrolledDeviceId());
+        bio.setEnrolledAt(LocalDateTime.now());
+
+        return toResponse(bioDataRepository.save(bio));
     }
 
     public BioDataResponse getBioData(UUID studentUuid) {
@@ -130,9 +133,7 @@ public class StudentBiometricsService {
                 .ownerUuid(b.getStudent().getUuid().toString())
                 .ownerName(b.getStudent().getFirstName() + " " + b.getStudent().getLastName())
                 .ownerRef(b.getStudent().getAdmissionNumber())
-                .leftFingerprintTemplateRef(b.getLeftFingerprintTemplateRef())
                 .leftFingerName(b.getLeftFingerName().name())
-                .rightFingerprintTemplateRef(b.getRightFingerprintTemplateRef())
                 .rightFingerName(b.getRightFingerName().name())
                 .faceTemplateRef(b.getFaceTemplateRef())
                 .enrolledDeviceId(b.getEnrolledDeviceId())

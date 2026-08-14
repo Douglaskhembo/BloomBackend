@@ -38,11 +38,8 @@ public class LeaveRequest extends BaseEntity {
 
     @Column(nullable = false)
     private LocalDate toDate;
-
-    private int days;
+    private double days;
     private String reason;
-
-    /** Metadata only — no file storage backend exists in this project yet. */
     private String documentName;
     private String documentType;
 

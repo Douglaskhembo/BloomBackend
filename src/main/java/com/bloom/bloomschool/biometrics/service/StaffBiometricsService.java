@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,27 +31,29 @@ public class StaffBiometricsService {
     private final StaffRepository staffRepository;
     private final StaffBioDataRepository bioDataRepository;
     private final StaffAttendanceRepository attendanceRepository;
+    private final FingerprintEngine fingerprintEngine;
 
+    /** Enrolls a staff member, or replaces their templates if already enrolled (re-scan/retry). */
     @Transactional
     public BioDataResponse enroll(UUID staffUuid, BioEnrollRequest req) {
         Staff staff = staffRepository.findByUuid(staffUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Staff not found"));
 
-        if (bioDataRepository.existsByStaffId(staff.getId()))
-            throw new IllegalArgumentException("Staff already has biometric data enrolled");
+        byte[] leftTemplate = fingerprintEngine.extractTemplate(Base64.getDecoder().decode(req.getLeftFingerprintImage()));
+        byte[] rightTemplate = fingerprintEngine.extractTemplate(Base64.getDecoder().decode(req.getRightFingerprintImage()));
 
-        StaffBioData bio = bioDataRepository.save(StaffBioData.builder()
-                .staff(staff)
-                .leftFingerprintTemplateRef(req.getLeftFingerprintTemplateRef())
-                .leftFingerName(req.getLeftFingerName())
-                .rightFingerprintTemplateRef(req.getRightFingerprintTemplateRef())
-                .rightFingerName(req.getRightFingerName())
-                .faceTemplateRef(req.getFaceTemplateRef())
-                .enrolledDeviceId(req.getEnrolledDeviceId())
-                .enrolledAt(LocalDateTime.now())
-                .build());
+        StaffBioData bio = bioDataRepository.findByStaffId(staff.getId()).orElseGet(() ->
+                StaffBioData.builder().staff(staff).build());
 
-        return toResponse(bio);
+        bio.setLeftFingerprintTemplate(leftTemplate);
+        bio.setLeftFingerName(req.getLeftFingerName());
+        bio.setRightFingerprintTemplate(rightTemplate);
+        bio.setRightFingerName(req.getRightFingerName());
+        bio.setFaceTemplateRef(req.getFaceTemplateRef());
+        bio.setEnrolledDeviceId(req.getEnrolledDeviceId());
+        bio.setEnrolledAt(LocalDateTime.now());
+
+        return toResponse(bioDataRepository.save(bio));
     }
 
     public BioDataResponse getBioData(UUID staffUuid) {
@@ -130,9 +133,7 @@ public class StaffBiometricsService {
                 .ownerUuid(b.getStaff().getUuid().toString())
                 .ownerName(b.getStaff().getFirstName() + " " + b.getStaff().getLastName())
                 .ownerRef(b.getStaff().getStaffId())
-                .leftFingerprintTemplateRef(b.getLeftFingerprintTemplateRef())
                 .leftFingerName(b.getLeftFingerName().name())
-                .rightFingerprintTemplateRef(b.getRightFingerprintTemplateRef())
                 .rightFingerName(b.getRightFingerName().name())
                 .faceTemplateRef(b.getFaceTemplateRef())
                 .enrolledDeviceId(b.getEnrolledDeviceId())

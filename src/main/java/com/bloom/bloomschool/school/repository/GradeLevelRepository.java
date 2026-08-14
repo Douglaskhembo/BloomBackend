@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public interface GradeLevelRepository extends JpaRepository<GradeLevel, Long> {
     Optional<GradeLevel> findByUuid(UUID uuid);
+    Optional<GradeLevel> findByName(String name);
     List<GradeLevel> findAllByOrderByDisplayOrderAsc();
     List<GradeLevel> findAllByUuidIn(Set<UUID> uuids);
     boolean existsByName(String name);

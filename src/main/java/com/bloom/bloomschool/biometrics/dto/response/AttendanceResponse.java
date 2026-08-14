@@ -12,6 +12,7 @@ import java.util.UUID;
 public class AttendanceResponse {
     private UUID uuid;
     private String ownerUuid;       // staff or student UUID
+    private String ownerType;       // "STUDENT" or "STAFF" — set when resolved via fingerprint identification
     private String ownerName;
     private String ownerRef;        // staffId or admissionNumber
     private LocalDate attendanceDate;
@@ -21,4 +22,5 @@ public class AttendanceResponse {
     private String eventType;
     private String status;
     private String remarks;
+    private Double matchScore;      // set when resolved via fingerprint identification
 }

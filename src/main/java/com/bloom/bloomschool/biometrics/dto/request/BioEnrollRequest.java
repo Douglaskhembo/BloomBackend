@@ -8,15 +8,15 @@ import lombok.Data;
 @Data
 public class BioEnrollRequest {
 
-    /** Left-hand fingerprint template ref from the device */
+    /** Left-hand fingerprint scan image (PNG/JPEG/BMP/TIFF/WSQ), base64-encoded */
     @NotBlank
-    private String leftFingerprintTemplateRef;
+    private String leftFingerprintImage;
     @NotNull
     private FingerName leftFingerName;
 
-    /** Right-hand fingerprint template ref from the device */
+    /** Right-hand fingerprint scan image, same convention as left */
     @NotBlank
-    private String rightFingerprintTemplateRef;
+    private String rightFingerprintImage;
     @NotNull
     private FingerName rightFingerName;
 

@@ -2,6 +2,7 @@ package com.bloom.bloomschool.staff.controller;
 
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.staff.dto.StaffRequest;
+import com.bloom.bloomschool.staff.dto.StaffSelfUpdateRequest;
 import com.bloom.bloomschool.staff.service.StaffService;
 import com.bloom.bloomschool.staff.util.Status;
 import jakarta.validation.Valid;
@@ -22,6 +23,18 @@ public class StaffController {
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll(@RequestParam(required = false) String search) {
         return ResponseEntity.ok(ApiResponse.ok(staffService.getAll(search)));
+    }
+
+    // ── Self-service (any authenticated staff, scoped server-side to their own record) ──
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<?>> getMyProfile() {
+        return ResponseEntity.ok(ApiResponse.ok(staffService.getMyProfile()));
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse<?>> updateMyProfile(@Valid @RequestBody StaffSelfUpdateRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Profile updated", staffService.updateMyProfile(req)));
     }
 
     @GetMapping("/{uuid}")

@@ -12,6 +12,12 @@ public class LeaveBalanceResponse {
     private UUID leaveTypeUuid;
     private String leaveTypeName;
     private int maxDaysPerYear;
-    private int usedDays;
-    private int remainingDays;
+    private double usedDays;
+    private double remainingDays;
+
+    private int year;
+    private double proratedEntitlement;
+    private boolean carryForwardAllowed;
+    private double carriedForwardDays;
+    private double totalAvailableDays;
 }

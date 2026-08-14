@@ -53,6 +53,20 @@ app:
     # Base64-encoded secret — override via JWT_SECRET env var in production
     secret: ${JWT_SECRET:Ymxvb21zY2hvb2wtc3VwZXItc2VjcmV0LWtleS1jaGFuZ2UtaW4tcHJvZHVjdGlvbi0yMDI1}
     expiration-ms: ${JWT_EXPIRY:86400000}
+  biometrics:
+    # Base64-encoded AES-256 key for fingerprint template encryption — override via
+    # BIOMETRIC_ENCRYPTION_KEY env var in production. Rotating this key orphans every
+    # already-enrolled template (they become undecryptable), so treat it like the JWT
+    # secret: generate once with `openssl rand -base64 32`, then keep it stable.
+    encryption-key: ${BIOMETRIC_ENCRYPTION_KEY:vZ+7I2skvY61JFKKo/x2OgX6Xp2dOrhOwxzGwWPehOU=}
+    # DPI to assume for captured fingerprint images — SourceAFIS is not scale-invariant.
+    # 500 is the common default for most USB optical/capacitive scanners; override per
+    # deployment via BIOMETRIC_SCANNER_DPI if a specific scanner reports otherwise.
+    scanner-dpi: ${BIOMETRIC_SCANNER_DPI:500}
+    # Minimum SourceAFIS match score to accept a 1:N identification. 40 is SourceAFIS's own
+    # documented starting point (~0.01% false-match rate) — tune empirically once real
+    # scanner data exists, via BIOMETRIC_MATCH_THRESHOLD.
+    match-threshold: ${BIOMETRIC_MATCH_THRESHOLD:40}
 
 logging:
   level:

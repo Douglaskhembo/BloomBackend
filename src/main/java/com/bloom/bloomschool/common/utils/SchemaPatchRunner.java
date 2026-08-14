@@ -49,6 +49,21 @@ public class SchemaPatchRunner implements CommandLineRunner {
                 "CHECK (category IN ('NSSF','HOUSING_LEVY','SHIF','OTHER'))"
         ).executeUpdate();
 
+        // StudentBioData/StaffBioData moved from plain-text template ref strings to real,
+        // encrypted SourceAFIS templates (see AesGcmByteConverter) stored under new column
+        // names — Hibernate's ddl-auto:update creates the new bytea columns fine, but never
+        // drops the old ones, so remove the orphaned columns explicitly here.
+        entityManager.createNativeQuery(
+                "ALTER TABLE bloom_sch_student_bio_data " +
+                "DROP COLUMN IF EXISTS left_fingerprint_template_ref, " +
+                "DROP COLUMN IF EXISTS right_fingerprint_template_ref"
+        ).executeUpdate();
+        entityManager.createNativeQuery(
+                "ALTER TABLE bloom_sch_staff_bio_data " +
+                "DROP COLUMN IF EXISTS left_fingerprint_template_ref, " +
+                "DROP COLUMN IF EXISTS right_fingerprint_template_ref"
+        ).executeUpdate();
+
         log.info("Schema patches applied");
     }
 }

@@ -81,6 +81,9 @@ public class FeeService {
                 .amount(req.getAmount())
                 .gradeLevels(resolveGradeLevels(req.getGradeLevelUuids()))
                 .term(req.getTerm())
+                .term1Amount(req.getTerm1Amount())
+                .term2Amount(req.getTerm2Amount())
+                .term3Amount(req.getTerm3Amount())
                 .category(req.getCategory())
                 .mandatory(req.getMandatory())
                 .active(req.isActive())
@@ -96,6 +99,9 @@ public class FeeService {
         f.setAmount(req.getAmount());
         f.setGradeLevels(resolveGradeLevels(req.getGradeLevelUuids()));
         f.setTerm(req.getTerm());
+        f.setTerm1Amount(req.getTerm1Amount());
+        f.setTerm2Amount(req.getTerm2Amount());
+        f.setTerm3Amount(req.getTerm3Amount());
         f.setCategory(req.getCategory());
         f.setMandatory(req.getMandatory());
         f.setActive(req.isActive());
@@ -315,13 +321,28 @@ public class FeeService {
         return true;
     }
 
-    private List<FeeStructureLine> defaultLines() {
+    /** "Per Term" items can carry a per-term default override; everything else (and any unset
+     *  override) falls back to the item's flat `amount`. */
+    private double resolveAmount(FeeItem item, String structureTerm) {
+        if ("Per Term".equals(item.getTerm())) {
+            Double perTerm = switch (structureTerm) {
+                case "Term 1" -> item.getTerm1Amount();
+                case "Term 2" -> item.getTerm2Amount();
+                case "Term 3" -> item.getTerm3Amount();
+                default -> null;
+            };
+            if (perTerm != null) return perTerm;
+        }
+        return item.getAmount();
+    }
+
+    private List<FeeStructureLine> defaultLines(String term) {
         return feeItemRepo.findAll().stream()
-                .map(item -> FeeStructureLine.builder().itemId(item.getId()).enabled(item.isActive()).amount(item.getAmount()).build())
+                .map(item -> FeeStructureLine.builder().itemId(item.getId()).enabled(item.isActive()).amount(resolveAmount(item, term)).build())
                 .toList();
     }
 
-    private List<FeeStructureLine> mergeWithCurrentItems(List<FeeStructureLine> existing) {
+    private List<FeeStructureLine> mergeWithCurrentItems(List<FeeStructureLine> existing, String term) {
         List<FeeItem> allItems = feeItemRepo.findAll();
         Set<Long> knownIds = existing.stream().map(FeeStructureLine::getItemId).collect(Collectors.toSet());
         List<FeeStructureLine> merged = new ArrayList<>();
@@ -330,15 +351,15 @@ public class FeeService {
         }
         for (FeeItem item : allItems) {
             if (!knownIds.contains(item.getId()))
-                merged.add(FeeStructureLine.builder().itemId(item.getId()).enabled(false).amount(item.getAmount()).build());
+                merged.add(FeeStructureLine.builder().itemId(item.getId()).enabled(false).amount(resolveAmount(item, term)).build());
         }
         return merged;
     }
 
     private List<FeeStructureLine> computeBaseline(String grade, String term) {
         return feeStructureRepo.findFirstByGradeAndTermAndStatusOrderByReviewedAtDesc(grade, term, FeeStructure.Status.APPROVED)
-                .map(fs -> mergeWithCurrentItems(fs.getLines()))
-                .orElseGet(this::defaultLines);
+                .map(fs -> mergeWithCurrentItems(fs.getLines(), term))
+                .orElseGet(() -> defaultLines(term));
     }
 
     private List<FeeStructureLine> toLines(List<FeeStructureLineRequest> lines) {
@@ -427,6 +448,8 @@ public class FeeService {
             fs.setSubmittedAt(now);
             fs.setUpdatedAt(now);
         } else {
+            if (feeStructureRepo.countByGradeAndTermAndStatus(req.getGrade(), req.getTerm(), FeeStructure.Status.PENDING_APPROVAL) > 0)
+                throw new IllegalArgumentException(req.getGrade() + " · " + req.getTerm() + " already has a fee structure pending approval");
             fs = FeeStructure.builder()
                     .academicYear(req.getAcademicYear())
                     .grade(req.getGrade())
@@ -450,7 +473,7 @@ public class FeeService {
     }
 
     @Transactional
-    public FeeStructure approveStructure(UUID uuid) {
+    public FeeStructure approveStructure(UUID uuid, String note) {
         FeeStructure fs = feeStructureRepo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Fee structure not found"));
         if (fs.getStatus() != FeeStructure.Status.PENDING_APPROVAL)
@@ -463,7 +486,7 @@ public class FeeService {
         fs.setReviewedAt(now);
         fs.setUpdatedAt(now);
         FeeStructure saved = feeStructureRepo.save(fs);
-        addStructureAudit(actor.getUserName(), FeeStructureAudit.Action.APPROVED, fs.getGrade(), fs.getTerm(), fs.getAcademicYear(), null);
+        addStructureAudit(actor.getUserName(), FeeStructureAudit.Action.APPROVED, fs.getGrade(), fs.getTerm(), fs.getAcademicYear(), note);
         generateCharges(saved);
         return saved;
     }

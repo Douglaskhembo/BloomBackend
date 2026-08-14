@@ -2,6 +2,7 @@ package com.bloom.bloomschool.biometrics.entity;
 
 import com.bloom.bloomschool.biometrics.util.EnrollmentStatus;
 import com.bloom.bloomschool.biometrics.util.FingerName;
+import com.bloom.bloomschool.common.crypto.AesGcmByteConverter;
 import com.bloom.bloomschool.common.entity.BaseEntity;
 import com.bloom.bloomschool.staff.entity.Staff;
 import jakarta.persistence.*;
@@ -29,11 +30,14 @@ public class StaffBioData extends BaseEntity {
     private Staff staff;
 
     /**
-     * Left-hand fingerprint — opaque template ref/hash from the device, never raw biometric data.
+     * Left-hand fingerprint — SourceAFIS-extracted template (never the raw scan image),
+     * encrypted at rest via {@link AesGcmByteConverter}.
      * leftFingerName = which finger was used e.g. THUMB, INDEX, MIDDLE, RING, LITTLE
      */
+    @Lob
+    @Convert(converter = AesGcmByteConverter.class)
     @Column(nullable = false)
-    private String leftFingerprintTemplateRef;
+    private byte[] leftFingerprintTemplate;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FingerName leftFingerName;
@@ -41,8 +45,10 @@ public class StaffBioData extends BaseEntity {
     /**
      * Right-hand fingerprint — same convention as left.
      */
+    @Lob
+    @Convert(converter = AesGcmByteConverter.class)
     @Column(nullable = false)
-    private String rightFingerprintTemplateRef;
+    private byte[] rightFingerprintTemplate;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FingerName rightFingerName;

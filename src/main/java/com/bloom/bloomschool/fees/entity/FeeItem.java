@@ -40,6 +40,12 @@ public class FeeItem extends BaseEntity {
     @Builder.Default
     private String term = "Per Term";   // "Per Term" | "Per Year" | "One-time"
 
+    /** Per-term overrides for "Per Term" items — null means fall back to `amount` for that term.
+     *  Wrapper types (not primitive), same reasoning as `mandatory` above. Ignored for "Per Year"/"One-time" items. */
+    private Double term1Amount;
+    private Double term2Amount;
+    private Double term3Amount;
+
     @Enumerated(EnumType.STRING)
     private FeeCategory category;   // nullable — legacy items stay uncategorized until edited
 
