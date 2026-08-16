@@ -41,12 +41,6 @@ public class StaffBiometricsController {
         return genericResponse.response(service.updateStatus(bioUuid, status), HttpStatus.OK);
     }
 
-    // Attendance capture is no longer taken directly here — accepting a bioDataUuid straight
-    // from a caller would let anyone with a valid one mark attendance without ever presenting
-    // a fingerprint. See BiometricsCaptureController (/biometrics/capture) and
-    // DeviceCaptureController (/attendance/device-capture), which both require an actual scan
-    // image and resolve identity via FingerprintIdentificationService.
-
     @GetMapping("/{staffUuid}/attendance")
     public ResponseEntity<ApiResponse<Object>> getAttendance(
             @PathVariable UUID staffUuid,

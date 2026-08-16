@@ -32,7 +32,6 @@ public class StaffAttendance {
     @JoinColumn(name = "staff_id", nullable = false)
     private Staff staff;
 
-    /** The bio profile that triggered this event — preserves audit trail even if bio data changes */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "bio_data_id", nullable = false)
     private StaffBioData bioData;
@@ -45,7 +44,6 @@ public class StaffAttendance {
 
     private LocalDateTime clockOut;
 
-    /** Device that captured the event */
     private String deviceId;
 
     @Enumerated(EnumType.STRING)

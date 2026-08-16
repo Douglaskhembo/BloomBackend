@@ -33,7 +33,6 @@ public class StudentBiometricsService {
     private final StudentAttendanceRepository attendanceRepository;
     private final FingerprintEngine fingerprintEngine;
 
-    /** Enrolls a student, or replaces their templates if already enrolled (re-scan/retry). */
     @Transactional
     public BioDataResponse enroll(UUID studentUuid, BioEnrollRequest req) {
         Student student = studentRepository.findByUuid(studentUuid)
@@ -72,7 +71,6 @@ public class StudentBiometricsService {
         return toResponse(bioDataRepository.save(bio));
     }
 
-    /** Called by the biometric device on scan — auto-detects entry vs exit */
     @Transactional
     public AttendanceResponse capture(BioCaptureRequest req) {
         StudentBioData bio = bioDataRepository.findByUuid(req.getBioDataUuid())

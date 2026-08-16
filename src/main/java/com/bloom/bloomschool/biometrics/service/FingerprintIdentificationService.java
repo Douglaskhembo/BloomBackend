@@ -13,12 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
 
-/**
- * Runs 1:N fingerprint matching: given a probe scan image, finds the best-scoring enrolled
- * person across ACTIVE students and/or staff, or rejects the scan if nothing clears the
- * configured threshold. This is the single matching engine shared by the web "identify" test
- * path and the real device-capture path — neither ever trusts a caller-supplied identity.
- */
+
 @Service
 @Transactional(readOnly = true)
 public class FingerprintIdentificationService {

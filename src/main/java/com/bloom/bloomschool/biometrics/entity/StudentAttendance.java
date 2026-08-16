@@ -32,7 +32,6 @@ public class StudentAttendance {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    /** The bio profile that triggered this event */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "bio_data_id", nullable = false)
     private StudentBioData bioData;
@@ -45,7 +44,6 @@ public class StudentAttendance {
 
     private LocalDateTime exitTime;
 
-    /** Device that captured the event */
     private String deviceId;
 
     @Enumerated(EnumType.STRING)

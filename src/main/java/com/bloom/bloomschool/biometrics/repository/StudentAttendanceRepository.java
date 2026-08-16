@@ -18,7 +18,6 @@ public interface StudentAttendanceRepository extends JpaRepository<StudentAttend
 
     List<StudentAttendance> findByAttendanceDateOrderByStudentId(LocalDate date);
 
-    /** Latest open entry (no exit yet) for a student on a given date */
     @Query("SELECT a FROM StudentAttendance a WHERE a.student.id = :studentId AND a.attendanceDate = :date AND a.exitTime IS NULL ORDER BY a.entryTime DESC")
     Optional<StudentAttendance> findOpenEntry(Long studentId, LocalDate date);
 

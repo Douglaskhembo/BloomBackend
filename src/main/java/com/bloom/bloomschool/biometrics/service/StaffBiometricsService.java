@@ -33,7 +33,6 @@ public class StaffBiometricsService {
     private final StaffAttendanceRepository attendanceRepository;
     private final FingerprintEngine fingerprintEngine;
 
-    /** Enrolls a staff member, or replaces their templates if already enrolled (re-scan/retry). */
     @Transactional
     public BioDataResponse enroll(UUID staffUuid, BioEnrollRequest req) {
         Staff staff = staffRepository.findByUuid(staffUuid)
@@ -72,7 +71,6 @@ public class StaffBiometricsService {
         return toResponse(bioDataRepository.save(bio));
     }
 
-    /** Called by the biometric device on scan — auto-detects clock-in vs clock-out */
     @Transactional
     public AttendanceResponse capture(BioCaptureRequest req) {
         StaffBioData bio = bioDataRepository.findByUuid(req.getBioDataUuid())

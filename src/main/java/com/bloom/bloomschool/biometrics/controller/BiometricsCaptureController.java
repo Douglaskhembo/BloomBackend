@@ -19,13 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * JWT-authenticated entry point for identifying a scanned fingerprint against every enrolled
- * student/staff and recording the resulting attendance event — used by the admin "Identify"
- * test UI. Real hardware/bridge software uses the equivalent device-key-authenticated path at
- * {@code POST /attendance/device-capture} (see DeviceCaptureController), which shares the same
- * FingerprintIdentificationService so there is exactly one matching engine either way.
- */
 @RestController
 @RequestMapping("/biometrics")
 @RequiredArgsConstructor

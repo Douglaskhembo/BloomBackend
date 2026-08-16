@@ -17,7 +17,6 @@ public interface StaffAttendanceRepository extends JpaRepository<StaffAttendance
 
     List<StaffAttendance> findByAttendanceDateOrderByStaffId(LocalDate date);
 
-    /** Latest open clock-in (no clock-out yet) for a staff on a given date */
     @Query("SELECT a FROM StaffAttendance a WHERE a.staff.id = :staffId AND a.attendanceDate = :date AND a.clockOut IS NULL ORDER BY a.clockIn DESC")
     Optional<StaffAttendance> findOpenClockIn(Long staffId, LocalDate date);
 

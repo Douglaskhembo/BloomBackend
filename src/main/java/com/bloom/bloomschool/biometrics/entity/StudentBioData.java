@@ -29,11 +29,6 @@ public class StudentBioData extends BaseEntity {
     @JoinColumn(name = "student_id", nullable = false, unique = true)
     private Student student;
 
-    /**
-     * Left-hand fingerprint — SourceAFIS-extracted template (never the raw scan image),
-     * encrypted at rest via {@link AesGcmByteConverter}.
-     * leftFingerName = which finger was used e.g. THUMB, INDEX, MIDDLE, RING, LITTLE
-     */
     @Lob
     @Convert(converter = AesGcmByteConverter.class)
     @Column(nullable = false)
@@ -42,9 +37,6 @@ public class StudentBioData extends BaseEntity {
     @Column(nullable = false)
     private FingerName leftFingerName;
 
-    /**
-     * Right-hand fingerprint — same convention as left.
-     */
     @Lob
     @Convert(converter = AesGcmByteConverter.class)
     @Column(nullable = false)
@@ -55,7 +47,6 @@ public class StudentBioData extends BaseEntity {
 
     private String faceTemplateRef;
 
-    /** ID of the device that enrolled this person */
     private String enrolledDeviceId;
 
     @Column(nullable = false)
