@@ -7,7 +7,6 @@ import lombok.*;
 
 import java.util.UUID;
 
-/** A single student's score on one {@link Assessment}. Null score = not yet graded. */
 @Entity
 @Table(name = "bloom_sch_assessment_marks",
         uniqueConstraints = @UniqueConstraint(columnNames = {"assessment_id", "student_id"}))

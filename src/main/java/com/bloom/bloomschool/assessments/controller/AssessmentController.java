@@ -33,15 +33,12 @@ public class AssessmentController {
         return ResponseEntity.ok(ApiResponse.ok(assessmentService.getSubjectPerformance(term, year)));
     }
 
-    /** Unscoped class listing — admin browsing any class, or a class teacher's homeroom across
-     *  every subject (not just the ones they personally teach). */
     @GetMapping("/all-classes")
     public ResponseEntity<ApiResponse<?>> getAllClasses() {
         permissionResolver.requirePermission("GRADES_VIEW");
         return ResponseEntity.ok(ApiResponse.ok(assessmentService.getAllClasses()));
     }
 
-    /** Every assessment for a class+subject, regardless of who created it. */
     @GetMapping("/for-class")
     public ResponseEntity<ApiResponse<?>> getClassAssessments(
             @RequestParam UUID gradeLevelUuid, @RequestParam(defaultValue = "") String stream, @RequestParam UUID subjectUuid) {

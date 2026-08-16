@@ -65,9 +65,6 @@ public class AssessmentService {
         return new ArrayList<>(byKey.values());
     }
 
-    /** Unscoped version of getMyClasses — every (grade, stream, subject) taught anywhere, with the
-     *  teaching teacher attached. Used by admin (browse any class) and by a class teacher (see
-     *  every subject for their own homeroom, not just the ones they personally teach). */
     public List<MyClassResponse> getAllClasses() {
         List<TimetableEntry> entries = entryRepo.findAll();
         Map<String, MyClassResponse> byKey = new LinkedHashMap<>();
@@ -89,7 +86,6 @@ public class AssessmentService {
         return new ArrayList<>(byKey.values());
     }
 
-    /** Every assessment for a class+subject regardless of creator — see AssessmentRepository. */
     public List<AssessmentResponse> getClassAssessments(UUID gradeLevelUuid, String stream, UUID subjectUuid) {
         return assessmentRepo.findByGradeLevel_UuidAndStreamAndSubject_Uuid(gradeLevelUuid, stream, subjectUuid)
                 .stream().map(this::toResponse).toList();
@@ -191,8 +187,6 @@ public class AssessmentService {
         assessmentRepo.delete(assessment);
     }
 
-    /** School-wide average/high/low per subject, as a percentage of each assessment's maxScore.
-     *  Ungraded marks (score == null) are excluded rather than treated as zero. */
     public SubjectPerformanceResponse getSubjectPerformance(String term, int year) {
         List<AssessmentMark> marks = markRepo.findGradedByTermAndYear(term, year);
 

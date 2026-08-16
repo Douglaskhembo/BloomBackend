@@ -10,11 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Public — physical devices (or bridge/agent software) call this on every scan, no JWT.
- * Authenticated instead by the X-Device-Code / X-Device-Key headers against the device
- * registry (see {@link com.bloom.bloomschool.attendance.service.BiometricDeviceService}).
- */
+
 @RestController
 @RequestMapping("/attendance")
 @RequiredArgsConstructor

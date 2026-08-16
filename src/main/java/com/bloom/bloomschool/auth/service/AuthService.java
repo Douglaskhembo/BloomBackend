@@ -177,11 +177,6 @@ public class AuthService {
         return jwtService.generateToken(user);
     }
 
-    /** Delegates to PermissionResolver so the login response always matches what the backend
-     *  actually enforces — this used to only union Role.permissions, silently omitting individual
-     *  UserPermission GRANT/REVOKE overrides, so a user granted an extra permission beyond their
-     *  role (e.g. a payroll approval signatory) never saw the corresponding button even though the
-     *  backend would have allowed the action. */
     private Set<String> extractPermissions(User user) {
         return permissionResolver.effectivePermissionNames(user);
     }

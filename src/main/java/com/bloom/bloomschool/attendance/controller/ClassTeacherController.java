@@ -40,7 +40,6 @@ public class ClassTeacherController {
         return ResponseEntity.ok(ApiResponse.ok("Assignment removed"));
     }
 
-    /** Resolves the logged-in teacher's own assignment (frontend passes teacherUuid from AuthContext.profileRef). */
     @GetMapping("/mine")
     public ResponseEntity<ApiResponse<?>> getMine(@RequestParam UUID teacherUuid) {
         return ResponseEntity.ok(ApiResponse.ok(classTeacherService.getMine(teacherUuid)));

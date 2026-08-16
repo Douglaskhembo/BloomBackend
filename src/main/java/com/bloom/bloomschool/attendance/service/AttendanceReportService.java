@@ -27,11 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Read/reporting layer over the existing staff & student attendance records — filtered
- * search for the admin Attendance page, plus the scoped "my class" (class teacher) and
- * "my children" (parent) views.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -58,7 +53,6 @@ public class AttendanceReportService {
         return searchStudents(from, to, a.getGradeLevel().getName(), a.getStream(), null);
     }
 
-    /** Only ever the parent's ACTIVE children — left/graduated students are never included. */
     public List<AttendanceResponse> getMyChildrenAttendance(UUID parentUserUuid, LocalDate from, LocalDate to) {
         List<String> admissionNumbers = studentRepository.findByParentUserUuidAndStatus(parentUserUuid, Student.Status.ACTIVE)
                 .stream().map(Student::getAdmissionNumber).toList();
@@ -67,12 +61,6 @@ public class AttendanceReportService {
                 .stream().map(this::toResponse).toList();
     }
 
-    /**
-     * Percentage present per student — roster comes from {@code Student}, not from attendance
-     * rows, so a student with zero scans in range still shows up at 0% rather than being
-     * silently omitted. "Present" = at least one ENTRY scan on a school day (weekends and
-     * persisted public holidays excluded from both the denominator and eligible presence dates).
-     */
     public List<AttendanceSummaryResponse> getStudentAttendanceSummary(LocalDate from, LocalDate to, String grade, String stream) {
         String g = blank(grade), s = blank(stream);
         List<Student> roster = studentRepository.findActiveRoster(g, s);

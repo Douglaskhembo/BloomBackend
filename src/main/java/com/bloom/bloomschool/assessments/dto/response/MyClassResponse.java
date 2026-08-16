@@ -18,8 +18,6 @@ public class MyClassResponse {
     private UUID subjectUuid;
     private String subjectName;
     private long studentCount;
-    /** Only populated by the unscoped "all classes" listing (admin/class-teacher browsing);
-     *  null on the teacher-scoped "my classes" listing since the caller already knows who "my" is. */
     private UUID teacherUuid;
     private String teacherName;
 }

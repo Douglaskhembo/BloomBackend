@@ -22,8 +22,6 @@ public class Bill extends BaseEntity {
 
     @PrePersist
     public void generateUuid() { if (uuid == null) uuid = UUID.randomUUID(); }
-
-    /** Auto-generated via RefGeneratorService at creation, e.g. BILL-260730-001. */
     @Column(unique = true)
     private String billNumber;
 
@@ -31,13 +29,9 @@ public class Bill extends BaseEntity {
 
     @Builder.Default
     private boolean deleted = false;
-
-    /** Optional link to a registered supplier — a bill can also be raised against a free-text supplier name. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
-
-    /** Snapshot of the supplier's name at bill-creation time (or a manually typed name if no supplier link). */
     @Column(nullable = false)
     private String supplierName;
 
@@ -51,8 +45,6 @@ public class Bill extends BaseEntity {
     private LocalDate dueDate;
 
     private LocalDateTime paidDate;
-
-    /** Ground truth is just UNPAID/PAID — "overdue" is derived at read time from dueDate, never stored. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

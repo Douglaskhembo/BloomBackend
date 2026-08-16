@@ -13,13 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Entry point for real hardware (or a bridge/agent it's paired with): authenticates the
- * device by its API key, identifies the scanned fingerprint via 1:N matching against every
- * enrolled student/staff (the same {@link FingerprintIdentificationService} the web "identify"
- * test path uses), then delegates to the same {@code StaffBiometricsService}/
- * {@code StudentBiometricsService} capture logic — one clock-in/out engine, two ways in.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional

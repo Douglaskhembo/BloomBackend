@@ -65,7 +65,6 @@ public class BiometricDeviceService {
         deviceRepo.delete(getByUuid(uuid));
     }
 
-    /** Validates a device's presented raw API key and returns the matching ACTIVE device, or empty. */
     @Transactional
     public BiometricDevice authenticate(String deviceCode, String rawApiKey) {
         BiometricDevice device = deviceRepo.findByDeviceCode(deviceCode)

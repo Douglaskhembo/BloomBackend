@@ -33,7 +33,6 @@ public class ClassTeacherService {
         return repo.findAll().stream().map(this::toResponse).toList();
     }
 
-    /** One teacher : one grade+stream. Reassigning a teacher to a new class moves them off their old one. */
     @Transactional
     public ClassTeacherResponse assign(ClassTeacherRequest req) {
         Staff teacher = staffRepository.findByUuid(req.getTeacherUuid())

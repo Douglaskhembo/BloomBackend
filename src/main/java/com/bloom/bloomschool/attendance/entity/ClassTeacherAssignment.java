@@ -8,7 +8,6 @@ import lombok.*;
 
 import java.util.UUID;
 
-/** One class/homeroom teacher per grade+stream — scopes "my class" attendance views. */
 @Entity
 @Table(name = "bloom_sch_class_teachers",
         uniqueConstraints = @UniqueConstraint(columnNames = {"grade_level_id", "stream"}))

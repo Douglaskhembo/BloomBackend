@@ -19,7 +19,6 @@ public class BillResponse {
     private double amount;
     private LocalDate dueDate;
     private LocalDateTime paidDate;
-    /** UNPAID, PAID, or OVERDUE — OVERDUE is derived (UNPAID + dueDate in the past), never stored as ground truth. */
     private String status;
     private String paymentRef;
     private boolean deleted;

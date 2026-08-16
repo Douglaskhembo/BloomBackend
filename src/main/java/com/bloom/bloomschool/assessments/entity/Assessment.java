@@ -9,8 +9,7 @@ import lombok.*;
 
 import java.util.UUID;
 
-/** One gradebook column: a named CAT/Exam for a (subject, gradeLevel, stream, term, year),
- *  owned by the teacher who created it. Marks live in {@link AssessmentMark}. */
+
 @Entity
 @Table(name = "bloom_sch_assessments",
         uniqueConstraints = @UniqueConstraint(columnNames = {"subject_id", "grade_level_id", "stream", "term", "year", "name"}))

@@ -49,7 +49,6 @@ public class AttendanceReportController {
         return ResponseEntity.ok(ApiResponse.ok(reportService.searchStaff(from, to, staffId)));
     }
 
-    /** teacherUuid = the logged-in teacher's Staff.uuid (frontend resolves it via AuthContext.profileRef). */
     @GetMapping("/my-class")
     public ResponseEntity<ApiResponse<?>> getMyClass(
             @RequestParam UUID teacherUuid,
@@ -58,7 +57,6 @@ public class AttendanceReportController {
         return ResponseEntity.ok(ApiResponse.ok(reportService.getMyClassAttendance(teacherUuid, from, to)));
     }
 
-    /** parentUserUuid = the logged-in parent's own User.uuid (AuthContext.userUuid). */
     @GetMapping("/my-children")
     public ResponseEntity<ApiResponse<?>> getMyChildren(
             @RequestParam UUID parentUserUuid,

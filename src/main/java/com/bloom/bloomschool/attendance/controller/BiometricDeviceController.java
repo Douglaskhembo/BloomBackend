@@ -13,8 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-/** Admin-managed registry of physical biometric devices installed around the school — every
- *  endpoint gated, including reads, since this issues real API keys (sensitive credentials). */
+
 @RestController
 @RequestMapping("/attendance/devices")
 @RequiredArgsConstructor
