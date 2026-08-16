@@ -21,8 +21,13 @@ public class FeePayment extends BaseEntity {
     @PrePersist
     public void generateUuid() { if (uuid == null) uuid = UUID.randomUUID(); }
 
-    @Column(nullable = false)
-    private String studentId;       // admission number
+    private String studentId;       // admission number — null for a payment recorded pre-enrollment (see admissionUuid)
+
+    /** Set instead of {@link #studentId} when this payment is captured against an admission that
+     *  hasn't reached ENROLLED yet (no admission number exists until then) — e.g. an application/
+     *  deposit fee paid during the FEE_PAYMENT stage. Left null once the applicant is enrolled;
+     *  existing rows are not retroactively re-keyed to the new studentId. */
+    private UUID admissionUuid;
 
     private String studentName;
     private String grade;

@@ -62,16 +62,4 @@ public class Admission extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Stage stage = Stage.APPLICATION_REVIEW;
-
-    /**
-     * Set only in-memory (never persisted) right after enrollment, so the stage-update
-     * response can surface a freshly created parent account's one-time temp password
-     * without changing the response DTO shape for any other caller of this entity.
-     */
-    @Transient
-    private Boolean parentAccountCreated;
-    @Transient
-    private String parentAccountUserName;
-    @Transient
-    private String parentTemporaryPassword;
 }

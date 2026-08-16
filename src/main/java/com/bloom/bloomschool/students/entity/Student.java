@@ -41,6 +41,12 @@ public class Student extends BaseEntity {
     private String grade;
     private String stream;
 
+    /** The date this student actually started attending — distinct from `createdDate` (when the
+     *  row was inserted, e.g. at enrollment time or during a bulk import). Drives fee billing
+     *  eligibility in FeeService: never billed for a term before this date. Defaults to today at
+     *  enrollment but is admin-editable for backdating/future-dating and correcting migrated data. */
+    private LocalDate joinDate;
+
     @Enumerated(EnumType.STRING)
     private BoarderStatus boarderStatus;   // nullable; treated as DAY_SCHOLAR for fee eligibility until set
 

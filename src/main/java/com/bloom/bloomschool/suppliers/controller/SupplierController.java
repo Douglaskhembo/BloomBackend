@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.suppliers.controller;
 
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.suppliers.dto.SupplierRequest;
 import com.bloom.bloomschool.suppliers.service.SupplierService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class SupplierController {
 
     private final SupplierService supplierService;
+    private final PermissionResolver permissionResolver;
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll(@RequestParam(required = false) String search) {
@@ -28,22 +30,26 @@ public class SupplierController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody SupplierRequest req) {
+        permissionResolver.requirePermission("SUPPLIERS_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Supplier created", supplierService.create(req)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> update(@PathVariable Long id, @Valid @RequestBody SupplierRequest req) {
+        permissionResolver.requirePermission("SUPPLIERS_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Supplier updated", supplierService.update(id, req)));
     }
 
     @PatchMapping("/{id}/toggle-status")
     public ResponseEntity<ApiResponse<?>> toggleStatus(@PathVariable Long id) {
+        permissionResolver.requirePermission("SUPPLIERS_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Status toggled", supplierService.toggleStatus(id)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Long id) {
+        permissionResolver.requirePermission("SUPPLIERS_MANAGE");
         supplierService.delete(id);
         return ResponseEntity.ok(ApiResponse.ok("Supplier deleted"));
     }

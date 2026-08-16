@@ -1,7 +1,6 @@
 package com.bloom.bloomschool.fees.dto;
 
 import com.bloom.bloomschool.fees.entity.FeePayment;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -10,7 +9,10 @@ import java.util.UUID;
 
 @Data
 public class FeePaymentRequest {
-    @NotBlank private String studentId;
+    // Exactly one of studentId (post-enrollment) / admissionUuid (pre-enrollment) is required —
+    // enforced in FeeService.recordPayment, not here, since it's a cross-field rule.
+    private String studentId;
+    private UUID admissionUuid;
     private String studentName;
     private String grade;
     private String stream;

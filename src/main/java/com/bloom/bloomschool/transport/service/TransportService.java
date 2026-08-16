@@ -47,7 +47,7 @@ public class TransportService {
     @Transactional
     public void deleteRoute(UUID uuid) {
         Route r = getRouteByUuid(uuid);
-        if (studentRouteRepo.findByRouteUuid(uuid).size() > 0)
+        if (!studentRouteRepo.findByRouteUuidAndActiveTrue(uuid).isEmpty())
             throw new IllegalStateException("Cannot delete route with enrolled students");
         routeRepo.deleteById(r.getId());
     }
@@ -61,11 +61,11 @@ public class TransportService {
 
     // ── Enrollments ───────────────────────────────────────────────────────────
 
-    public List<StudentRoute> getAllEnrollments() { return studentRouteRepo.findAll(); }
+    public List<StudentRoute> getAllEnrollments() { return studentRouteRepo.findByActiveTrue(); }
 
     @Transactional
     public StudentRoute enrollStudent(EnrollStudentRequest req) {
-        if (studentRouteRepo.existsByStudentUuid(req.getStudentUuid()))
+        if (studentRouteRepo.existsByStudentUuidAndActiveTrue(req.getStudentUuid()))
             throw new IllegalStateException("Student is already enrolled in a route");
         StudentRoute sr = StudentRoute.builder()
                 .student(studentRepo.findByUuid(req.getStudentUuid())
@@ -76,11 +76,14 @@ public class TransportService {
         return studentRouteRepo.save(sr);
     }
 
+    /** Deactivates rather than deletes, so past transport enrollment/billing history is preserved
+     *  and the student stops being charged the TRANSPORT fee item going forward (see FeeService.isEligible). */
     @Transactional
     public void unenrollStudent(UUID enrollmentUuid) {
         StudentRoute sr = studentRouteRepo.findByUuid(enrollmentUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Enrollment not found"));
-        studentRouteRepo.deleteById(sr.getId());
+        sr.setActive(false);
+        studentRouteRepo.save(sr);
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

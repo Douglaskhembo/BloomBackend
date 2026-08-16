@@ -4,7 +4,6 @@ import com.bloom.bloomschool.auth.model.User;
 import com.bloom.bloomschool.auth.repo.UserRepository;
 import com.bloom.bloomschool.common.utils.UserUtils;
 import com.bloom.bloomschool.staff.dto.StaffRequest;
-import com.bloom.bloomschool.staff.dto.StaffSelfUpdateRequest;
 import com.bloom.bloomschool.staff.entity.Staff;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
 import com.bloom.bloomschool.staff.util.StaffType;
@@ -78,26 +77,10 @@ public class StaffService {
     }
 
     // ── Self-service (resolved server-side from the logged-in user, never a client-supplied id) ──
+    // Read-only: staff profile fields are HR-controlled and changed only through the admin staff endpoints.
 
     public Staff getMyProfile() {
         return resolveCurrentStaff();
-    }
-
-    @Transactional
-    public Staff updateMyProfile(StaffSelfUpdateRequest req) {
-        Staff s = resolveCurrentStaff();
-        if (!s.getEmail().equalsIgnoreCase(req.getEmail()) && staffRepo.existsByEmail(req.getEmail()))
-            throw new IllegalArgumentException("Email already in use");
-        if (!s.getPhone().equals(req.getPhone()) && staffRepo.existsByPhone(req.getPhone()))
-            throw new IllegalArgumentException("Phone already in use");
-
-        s.setPhone(req.getPhone());
-        s.setEmail(req.getEmail());
-        s.setAddress(req.getAddress());
-        s.setEmergencyContactName(req.getEmergencyContactName());
-        s.setEmergencyContactPhone(req.getEmergencyContactPhone());
-        s.setEmergencyContactRelationship(req.getEmergencyContactRelationship());
-        return staffRepo.save(s);
     }
 
     private Staff resolveCurrentStaff() {

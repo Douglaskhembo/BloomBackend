@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.attendance.controller;
 
 import com.bloom.bloomschool.attendance.service.AttendanceReportService;
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class AttendanceReportController {
 
     private final AttendanceReportService reportService;
+    private final PermissionResolver permissionResolver;
 
     @GetMapping("/students")
     public ResponseEntity<ApiResponse<?>> searchStudents(
@@ -24,6 +26,7 @@ public class AttendanceReportController {
             @RequestParam(required = false) String grade,
             @RequestParam(required = false) String stream,
             @RequestParam(required = false) String admissionNumber) {
+        permissionResolver.requirePermission("ATTENDANCE_VIEW");
         return ResponseEntity.ok(ApiResponse.ok(reportService.searchStudents(from, to, grade, stream, admissionNumber)));
     }
 
@@ -33,6 +36,7 @@ public class AttendanceReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String grade,
             @RequestParam(required = false) String stream) {
+        permissionResolver.requirePermission("ATTENDANCE_VIEW");
         return ResponseEntity.ok(ApiResponse.ok(reportService.getStudentAttendanceSummary(from, to, grade, stream)));
     }
 
@@ -41,6 +45,7 @@ public class AttendanceReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String staffId) {
+        permissionResolver.requirePermission("ATTENDANCE_VIEW");
         return ResponseEntity.ok(ApiResponse.ok(reportService.searchStaff(from, to, staffId)));
     }
 

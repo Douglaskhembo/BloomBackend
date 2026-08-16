@@ -52,7 +52,12 @@ public class PermissionResolver {
                 .anyMatch(u -> effectivePermissionNames(u).contains(permissionName));
     }
 
-    private Set<String> effectivePermissionNames(User user) {
+    /** A user's full effective permission set: every Role.permissions they hold, plus individual
+     *  UserPermission GRANT overrides, minus REVOKE overrides. This is the single source of truth
+     *  for "what can this user do" — anywhere permissions are reported to the user (e.g. the login
+     *  response) must call this exact method rather than re-deriving role permissions alone, or it
+     *  silently drops individual per-user grants/revokes. See AuthService.extractPermissions. */
+    public Set<String> effectivePermissionNames(User user) {
         Set<String> names = new HashSet<>();
         user.getRoles().forEach(role -> role.getPermissions().forEach(p -> names.add(p.getName())));
 

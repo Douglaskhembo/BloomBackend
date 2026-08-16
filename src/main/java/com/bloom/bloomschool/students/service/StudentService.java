@@ -1,7 +1,6 @@
 package com.bloom.bloomschool.students.service;
 
-import com.bloom.bloomschool.auth.dto.Responses.ParentLinkResult;
-import com.bloom.bloomschool.auth.service.UserService;
+import com.bloom.bloomschool.fees.service.FeeService;
 import com.bloom.bloomschool.school.entity.GradeLevel;
 import com.bloom.bloomschool.school.repository.GradeLevelRepository;
 import com.bloom.bloomschool.students.dto.AdmissionRequest;
@@ -16,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Year;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,9 +27,7 @@ public class StudentService {
     private final StudentRepository studentRepo;
     private final AdmissionRepository admissionRepo;
     private final GradeLevelRepository gradeLevelRepo;
-    private final UserService userService;
-
-    // ── Students ─────────────────────────────────────────────────────────────
+    private final FeeService feeService;
 
     public List<Student> getAll(String search) {
         if (search != null && !search.isBlank()) return studentRepo.search(search.trim());
@@ -46,6 +43,7 @@ public class StudentService {
         Student s = buildStudent(new Student(), req);
         assertCapacity(s.getGradeLevel(), s.getGrade(), s.getStream());
         s.setAdmissionNumber(generateAdmissionNumber());
+        if (s.getJoinDate() == null) s.setJoinDate(LocalDate.now());
         return studentRepo.save(s);
     }
 
@@ -67,20 +65,16 @@ public class StudentService {
         studentRepo.deleteById(s.getId());
     }
 
-    /** Active children linked to a PARENT-role user account — never exposes left/graduated students. */
     public List<Student> getMyChildren(UUID parentUserUuid) {
         return studentRepo.findByParentUserUuidAndStatus(parentUserUuid, Student.Status.ACTIVE);
     }
 
-    /** Admin override for when auto-matching at admission time didn't find/create the right parent account. */
     @Transactional
     public Student linkParent(UUID studentUuid, UUID parentUserUuid) {
         Student s = getByUuid(studentUuid);
         s.setParentUserUuid(parentUserUuid);
         return studentRepo.save(s);
     }
-
-    // ── Admissions ───────────────────────────────────────────────────────────
 
     public List<Admission> getAllAdmissions() {
         return admissionRepo.findAll();
@@ -100,11 +94,14 @@ public class StudentService {
     }
 
     @Transactional
-    public Admission updateAdmissionStage(UUID uuid, Stage stage) {
+    public Admission updateAdmissionStage(UUID uuid, Stage stage, LocalDate joinDate) {
         Admission a = getAdmissionByUuid(uuid);
+        if (stage == Stage.ENROLLED && !feeService.hasConfirmedPayment(a.getUuid()))
+            throw new IllegalArgumentException("Cannot enrol " + a.getFirstName() + " " + a.getLastName()
+                    + " — no confirmed fee payment has been recorded for this application yet");
         a.setStage(stage);
         admissionRepo.save(a);
-        if (stage == Stage.ENROLLED) enrollStudent(a);
+        if (stage == Stage.ENROLLED) enrollStudent(a, joinDate);
         return a;
     }
 
@@ -119,9 +116,7 @@ public class StudentService {
         admissionRepo.deleteById(a.getId());
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    private void enrollStudent(Admission a) {
+    private void enrollStudent(Admission a, LocalDate joinDate) {
         assertCapacity(a.getGradeLevel(), a.getGrade(), a.getStream());
         Student s = Student.builder()
                 .admissionNumber(generateAdmissionNumber())
@@ -133,7 +128,8 @@ public class StudentService {
                 .address(a.getAddress())
                 .medicalNotes(a.getMedicalNotes())
                 .grade(a.getGrade())
-                .stream(a.getStream())
+                .stream(normalizeStream(a.getStream()))
+                .joinDate(joinDate != null ? joinDate : LocalDate.now())
                 .boarderStatus(a.getBoarderStatus())
                 .gradeLevel(a.getGradeLevel())
                 .parentName(a.getParentName())
@@ -143,33 +139,17 @@ public class StudentService {
                 .admission(a)
                 .status(Student.Status.ACTIVE)
                 .build();
-        s = studentRepo.save(s);
-        linkParentAccount(a, s);
-    }
-
-    /**
-     * Matches the admission's parent/guardian to an existing PARENT-role login by email/phone
-     * (so siblings share one account), or creates one. The Admission's transient fields carry
-     * the one-time temp password back to the caller only when a new account was created.
-     */
-    private void linkParentAccount(Admission a, Student s) {
-        ParentLinkResult result = userService.onboardParent(a.getParentName(), a.getParentEmail(), a.getParentPhone());
-        if (!result.isLinked()) return;
-
-        s.setParentUserUuid(result.getUser().getUuid());
         studentRepo.save(s);
-
-        a.setParentAccountCreated(result.isNewlyCreated());
-        if (result.isNewlyCreated()) {
-            a.setParentAccountUserName(result.getUser().getUserName());
-            a.setParentTemporaryPassword(result.getTemporaryPassword());
-        }
+        feeService.adoptAdmissionPayments(a.getUuid(), s.getAdmissionNumber(), s.getFirstName() + " " + s.getLastName(), s.getGrade(), s.getStream());
     }
 
     private String generateAdmissionNumber() {
-        int year = Year.now().getValue();
-        long count = studentRepo.count();
-        return year + "/" + String.format("%04d", count + 1);
+        long max = studentRepo.findAllAdmissionNumbers().stream()
+                .filter(a -> a != null && a.matches("\\d+"))
+                .mapToLong(Long::parseLong)
+                .max()
+                .orElse(0L);
+        return String.valueOf(max + 1);
     }
 
     private GradeLevel resolveGradeLevel(UUID gradeLevelUuid) {
@@ -177,8 +157,6 @@ public class StudentService {
         return gradeLevelRepo.findByUuid(gradeLevelUuid).orElse(null);
     }
 
-    /** Blocks seating a student past the grade/stream's configured capacity. No-op when the grade
-     *  level wasn't matched or has no capacity configured (unlimited). */
     private void assertCapacity(GradeLevel gradeLevel, String grade, String stream) {
         if (gradeLevel == null) return;
         Integer capacity = capacityFor(gradeLevel, stream);
@@ -210,7 +188,8 @@ public class StudentService {
         s.setAddress(req.getAddress());
         s.setMedicalNotes(req.getMedicalNotes());
         s.setGrade(req.getGrade());
-        s.setStream(req.getStream());
+        s.setStream(normalizeStream(req.getStream()));
+        if (req.getJoinDate() != null) s.setJoinDate(req.getJoinDate());
         s.setBoarderStatus(req.getBoarderStatus());
         s.setGradeLevel(resolveGradeLevel(req.getGradeLevelUuid()));
         s.setParentName(req.getParentName());
@@ -230,7 +209,7 @@ public class StudentService {
         a.setAddress(req.getAddress());
         a.setMedicalNotes(req.getMedicalNotes());
         a.setGrade(req.getGrade());
-        a.setStream(req.getStream());
+        a.setStream(normalizeStream(req.getStream()));
         a.setBoarderStatus(req.getBoarderStatus());
         a.setGradeLevel(resolveGradeLevel(req.getGradeLevelUuid()));
         a.setParentName(req.getParentName());
@@ -238,5 +217,12 @@ public class StudentService {
         a.setParentPhone(req.getParentPhone());
         a.setParentEmail(req.getParentEmail());
         return a;
+    }
+
+    /** "" for a streamless grade, never null — same convention TimetableEntry/ClassTeacherAssignment
+     *  already use for their own `stream` column, so an exact-match lookup against those never
+     *  silently misses a student just because this one came in null from the request. */
+    private String normalizeStream(String stream) {
+        return stream == null ? "" : stream;
     }
 }

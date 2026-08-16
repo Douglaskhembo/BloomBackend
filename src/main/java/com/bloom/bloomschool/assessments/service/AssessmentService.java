@@ -5,6 +5,7 @@ import com.bloom.bloomschool.assessments.dto.request.MarkEntryRequest;
 import com.bloom.bloomschool.assessments.dto.response.AssessmentResponse;
 import com.bloom.bloomschool.assessments.dto.response.MyClassResponse;
 import com.bloom.bloomschool.assessments.dto.response.StudentMarkRowResponse;
+import com.bloom.bloomschool.assessments.dto.response.SubjectPerformanceResponse;
 import com.bloom.bloomschool.assessments.entity.Assessment;
 import com.bloom.bloomschool.assessments.entity.AssessmentMark;
 import com.bloom.bloomschool.assessments.repository.AssessmentMarkRepository;
@@ -62,6 +63,36 @@ public class AssessmentService {
                     .build());
         }
         return new ArrayList<>(byKey.values());
+    }
+
+    /** Unscoped version of getMyClasses — every (grade, stream, subject) taught anywhere, with the
+     *  teaching teacher attached. Used by admin (browse any class) and by a class teacher (see
+     *  every subject for their own homeroom, not just the ones they personally teach). */
+    public List<MyClassResponse> getAllClasses() {
+        List<TimetableEntry> entries = entryRepo.findAll();
+        Map<String, MyClassResponse> byKey = new LinkedHashMap<>();
+        for (TimetableEntry e : entries) {
+            String key = e.getGradeLevel().getUuid() + "|" + e.getStream() + "|" + e.getSubject().getUuid() + "|" + e.getTeacher().getUuid();
+            if (byKey.containsKey(key)) continue;
+            long count = studentRepo.countByGradeAndStreamAndStatus(e.getGradeLevel().getName(), e.getStream(), Student.Status.ACTIVE);
+            byKey.put(key, MyClassResponse.builder()
+                    .gradeLevelUuid(e.getGradeLevel().getUuid())
+                    .grade(e.getGradeLevel().getName())
+                    .stream(e.getStream())
+                    .subjectUuid(e.getSubject().getUuid())
+                    .subjectName(e.getSubject().getName())
+                    .studentCount(count)
+                    .teacherUuid(e.getTeacher().getUuid())
+                    .teacherName(e.getTeacher().getFirstName() + " " + e.getTeacher().getLastName())
+                    .build());
+        }
+        return new ArrayList<>(byKey.values());
+    }
+
+    /** Every assessment for a class+subject regardless of creator — see AssessmentRepository. */
+    public List<AssessmentResponse> getClassAssessments(UUID gradeLevelUuid, String stream, UUID subjectUuid) {
+        return assessmentRepo.findByGradeLevel_UuidAndStreamAndSubject_Uuid(gradeLevelUuid, stream, subjectUuid)
+                .stream().map(this::toResponse).toList();
     }
 
     public List<StudentMarkRowResponse> getRoster(UUID gradeLevelUuid, String stream) {
@@ -158,6 +189,46 @@ public class AssessmentService {
             throw new AccessDeniedException("You can only delete assessments you created");
         markRepo.deleteAll(markRepo.findByAssessment_Uuid(uuid));
         assessmentRepo.delete(assessment);
+    }
+
+    /** School-wide average/high/low per subject, as a percentage of each assessment's maxScore.
+     *  Ungraded marks (score == null) are excluded rather than treated as zero. */
+    public SubjectPerformanceResponse getSubjectPerformance(String term, int year) {
+        List<AssessmentMark> marks = markRepo.findGradedByTermAndYear(term, year);
+
+        Map<Subject, DoubleSummaryStatistics> bySubject = new LinkedHashMap<>();
+        for (AssessmentMark m : marks) {
+            double pct = m.getScore() / m.getAssessment().getMaxScore() * 100;
+            bySubject.computeIfAbsent(m.getAssessment().getSubject(), s -> new DoubleSummaryStatistics()).accept(pct);
+        }
+
+        List<SubjectPerformanceResponse.SubjectStat> stats = bySubject.entrySet().stream()
+                .map(e -> SubjectPerformanceResponse.SubjectStat.builder()
+                        .subjectUuid(e.getKey().getUuid())
+                        .subjectName(e.getKey().getName())
+                        .average(round1(e.getValue().getAverage()))
+                        .highest(round1(e.getValue().getMax()))
+                        .lowest(round1(e.getValue().getMin()))
+                        .markCount(e.getValue().getCount())
+                        .build())
+                .sorted(Comparator.comparing(SubjectPerformanceResponse.SubjectStat::getSubjectName))
+                .toList();
+
+        double schoolAverage = marks.isEmpty() ? 0 : round1(
+                marks.stream().mapToDouble(m -> m.getScore() / m.getAssessment().getMaxScore() * 100).average().orElse(0));
+
+        return SubjectPerformanceResponse.builder()
+                .term(term)
+                .year(year)
+                .schoolAverage(schoolAverage)
+                .subjectsOffered((int) subjectRepo.countByActiveTrue())
+                .assessmentsCount((int) assessmentRepo.countByTermAndYear(term, year))
+                .subjects(stats)
+                .build();
+    }
+
+    private static double round1(double v) {
+        return Math.round(v * 10) / 10.0;
     }
 
     private void requireOwnsClass(Staff teacher, UUID subjectUuid, UUID gradeLevelUuid, String stream) {

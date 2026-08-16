@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.auth.controller;
 
 import com.bloom.bloomschool.auth.dto.Requests.CreateRoleRequest;
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.auth.service.RoleService;
 import com.bloom.bloomschool.auth.utils.ApiResponse;
 import com.bloom.bloomschool.auth.utils.GenericResponse;
@@ -18,37 +19,44 @@ public class RoleController {
 
     private final RoleService roleService;
     private final GenericResponse genericResponse;
+    private final PermissionResolver permissionResolver;
 
     @PostMapping("/createRole")
     public ResponseEntity<ApiResponse<Object>> createRole(@RequestBody CreateRoleRequest request) {
+        permissionResolver.requirePermission("ROLE_CREATE");
         roleService.createRole(request);
         return genericResponse.response(null, HttpStatus.CREATED);
     }
 
     @GetMapping("/uuid/{uuid}")
     public ResponseEntity<ApiResponse<Object>> getRoleByUuid(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("ROLE_VIEW");
         return genericResponse.response(roleService.getRoleByUuid(uuid), HttpStatus.OK);
     }
 
     @GetMapping("/name/{roleName}")
     public ResponseEntity<ApiResponse<Object>> getRoleByName(@PathVariable String roleName) {
+        permissionResolver.requirePermission("ROLE_VIEW");
         return genericResponse.response(roleService.getRoleByName(roleName), HttpStatus.OK);
     }
 
     @GetMapping("/allRoles")
     public ResponseEntity<ApiResponse<Object>> getAllRoles() {
+        permissionResolver.requirePermission("ROLE_VIEW");
         return genericResponse.response(roleService.getAllRoles(), HttpStatus.OK);
     }
 
     @PutMapping("/{uuid}")
     public ResponseEntity<ApiResponse<Object>> updateRole(@PathVariable UUID uuid,
                                                           @RequestBody CreateRoleRequest request) {
+        permissionResolver.requirePermission("ROLE_EDIT");
         roleService.updateRole(uuid, request);
         return genericResponse.response(null, HttpStatus.OK);
     }
 
     @DeleteMapping("/{uuid}")
     public ResponseEntity<ApiResponse<Object>> deleteRole(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("ROLE_DELETE");
         roleService.deleteRole(uuid);
         return genericResponse.response(null, HttpStatus.OK);
     }

@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.communication.controller;
 
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.communication.dto.SendMessageRequest;
 import com.bloom.bloomschool.communication.service.CommunicationService;
@@ -17,30 +18,39 @@ import java.util.UUID;
 public class CommunicationController {
 
     private final CommunicationService communicationService;
+    private final PermissionResolver permissionResolver;
 
+    /** The full admin-wide message/notice list — every baseline role (ADMIN/TEACHER/PARENT)
+     *  already holds COMMUNICATION_VIEW, but this specific "everything sent" view is reserved for
+     *  whoever can also manage communications, not just send/read their own. */
     @GetMapping("/messages")
     public ResponseEntity<ApiResponse<?>> getAllMessages() {
+        permissionResolver.requirePermission("COMMUNICATION_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok(communicationService.getAllMessages()));
     }
 
     @PostMapping("/messages")
     public ResponseEntity<ApiResponse<?>> sendMessage(@Valid @RequestBody SendMessageRequest req) {
+        permissionResolver.requirePermission("COMMUNICATION_SEND");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Message sent", communicationService.sendMessage(req)));
     }
 
     @GetMapping("/inbox")
     public ResponseEntity<ApiResponse<?>> getInbox() {
+        permissionResolver.requirePermission("COMMUNICATION_VIEW");
         return ResponseEntity.ok(ApiResponse.ok(communicationService.getInbox()));
     }
 
     @GetMapping("/inbox/unread-count")
     public ResponseEntity<ApiResponse<?>> getUnreadCount() {
+        permissionResolver.requirePermission("COMMUNICATION_VIEW");
         return ResponseEntity.ok(ApiResponse.ok(communicationService.getUnreadCount()));
     }
 
     @PatchMapping("/inbox/{uuid}/read")
     public ResponseEntity<ApiResponse<?>> markRead(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("COMMUNICATION_VIEW");
         communicationService.markRead(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Marked as read"));
     }

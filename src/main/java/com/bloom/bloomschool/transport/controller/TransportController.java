@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.transport.controller;
 
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.transport.dto.EnrollStudentRequest;
 import com.bloom.bloomschool.transport.dto.RouteRequest;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class TransportController {
 
     private final TransportService transportService;
+    private final PermissionResolver permissionResolver;
 
     // ── Routes ────────────────────────────────────────────────────────────────
 
@@ -28,22 +30,26 @@ public class TransportController {
 
     @PostMapping("/routes")
     public ResponseEntity<ApiResponse<?>> createRoute(@Valid @RequestBody RouteRequest req) {
+        permissionResolver.requirePermission("TRANSPORT_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Route created", transportService.createRoute(req)));
     }
 
     @PutMapping("/routes/{uuid}")
     public ResponseEntity<ApiResponse<?>> updateRoute(@PathVariable UUID uuid, @Valid @RequestBody RouteRequest req) {
+        permissionResolver.requirePermission("TRANSPORT_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Route updated", transportService.updateRoute(uuid, req)));
     }
 
     @DeleteMapping("/routes/{uuid}")
     public ResponseEntity<ApiResponse<?>> deleteRoute(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("TRANSPORT_MANAGE");
         transportService.deleteRoute(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Route deleted"));
     }
 
     @PatchMapping("/routes/{uuid}/toggle-status")
     public ResponseEntity<ApiResponse<?>> toggleStatus(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("TRANSPORT_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Status updated", transportService.toggleRouteStatus(uuid)));
     }
 
@@ -56,11 +62,13 @@ public class TransportController {
 
     @PostMapping("/enrollments")
     public ResponseEntity<ApiResponse<?>> enroll(@Valid @RequestBody EnrollStudentRequest req) {
+        permissionResolver.requirePermission("TRANSPORT_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Student enrolled", transportService.enrollStudent(req)));
     }
 
     @DeleteMapping("/enrollments/{uuid}")
     public ResponseEntity<ApiResponse<?>> unenroll(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("TRANSPORT_MANAGE");
         transportService.unenrollStudent(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Student removed from route"));
     }

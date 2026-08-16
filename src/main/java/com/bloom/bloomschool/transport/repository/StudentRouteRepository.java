@@ -9,7 +9,8 @@ import java.util.UUID;
 
 public interface StudentRouteRepository extends JpaRepository<StudentRoute, Long> {
     Optional<StudentRoute> findByUuid(UUID uuid);
-    Optional<StudentRoute> findByStudentUuid(UUID studentUuid);
-    List<StudentRoute> findByRouteUuid(UUID routeUuid);
-    boolean existsByStudentUuid(UUID studentUuid);
+    Optional<StudentRoute> findByStudentUuidAndActiveTrue(UUID studentUuid);
+    List<StudentRoute> findByActiveTrue();
+    List<StudentRoute> findByRouteUuidAndActiveTrue(UUID routeUuid);
+    boolean existsByStudentUuidAndActiveTrue(UUID studentUuid);
 }

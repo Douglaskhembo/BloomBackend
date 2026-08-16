@@ -8,7 +8,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "bloom_sch_student_routes", uniqueConstraints = @UniqueConstraint(columnNames = "student_id"))
+@Table(name = "bloom_sch_student_routes")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class StudentRoute extends BaseEntity {
 
@@ -31,4 +31,15 @@ public class StudentRoute extends BaseEntity {
 
     @Column(nullable = false)
     private String pickupPoint;
+
+    /**
+     * Deactivating (rather than deleting) preserves billing/enrollment history — FeeService only
+     * charges the TRANSPORT fee item for active rows, and a deactivated row frees the student up to
+     * be re-enrolled later. Uniqueness-per-active-student is enforced by a partial DB index (see
+     * migration notes), not a plain column constraint, since a student can have any number of past
+     * (inactive) rows but at most one active one.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
 }

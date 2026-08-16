@@ -7,7 +7,6 @@ import com.bloom.bloomschool.auth.dto.Requests.LoginRequest;
 import com.bloom.bloomschool.auth.dto.Requests.ResetPasswordRequest;
 import com.bloom.bloomschool.auth.dto.Responses.LoginResponse;
 import com.bloom.bloomschool.auth.model.PasswordHistory;
-import com.bloom.bloomschool.auth.model.Permission;
 import com.bloom.bloomschool.auth.model.Role;
 import com.bloom.bloomschool.auth.model.User;
 import com.bloom.bloomschool.auth.repo.PasswordHistoryRepository;
@@ -49,6 +48,7 @@ public class AuthService {
     private final MailService mailService;
     private final SchoolService schoolService;
     private final PasswordHistoryRepository passwordHistoryRepository;
+    private final PermissionResolver permissionResolver;
 
     private static final Map<String, String> REDIRECT = Map.of(
             "ADMIN",   "/admin",
@@ -61,7 +61,7 @@ public class AuthService {
         User user = userRepository.findByUserName(request.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid username or password."));
 
-        if (!user.isActive())
+        if (!user.isActive() && !user.isFirstLogin())
             throw new IllegalArgumentException("Account disabled. Please contact the administrator.");
 
         if (user.isAccountLocked())
@@ -177,11 +177,13 @@ public class AuthService {
         return jwtService.generateToken(user);
     }
 
+    /** Delegates to PermissionResolver so the login response always matches what the backend
+     *  actually enforces — this used to only union Role.permissions, silently omitting individual
+     *  UserPermission GRANT/REVOKE overrides, so a user granted an extra permission beyond their
+     *  role (e.g. a payroll approval signatory) never saw the corresponding button even though the
+     *  backend would have allowed the action. */
     private Set<String> extractPermissions(User user) {
-        return user.getRoles().stream()
-                .flatMap(role -> role.getPermissions().stream())
-                .map(Permission::getName)
-                .collect(Collectors.toSet());
+        return permissionResolver.effectivePermissionNames(user);
     }
 
     private LoginResponse buildLoginResponse(User user, String token, Set<String> permissions) {

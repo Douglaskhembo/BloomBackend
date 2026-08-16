@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.bills.controller;
 
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.bills.dto.BillRequest;
 import com.bloom.bloomschool.bills.service.BillService;
 import com.bloom.bloomschool.common.dto.ApiResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class BillController {
 
     private final BillService billService;
+    private final PermissionResolver permissionResolver;
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll(@RequestParam(required = false) String search) {
@@ -28,27 +30,32 @@ public class BillController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody BillRequest req) {
+        permissionResolver.requirePermission("BILLS_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Bill created", billService.create(req)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> update(@PathVariable Long id, @Valid @RequestBody BillRequest req) {
+        permissionResolver.requirePermission("BILLS_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Bill updated", billService.update(id, req)));
     }
 
     @PatchMapping("/{id}/mark-paid")
     public ResponseEntity<ApiResponse<?>> markPaid(@PathVariable Long id, String paymentRef) {
+        permissionResolver.requirePermission("BILLS_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Bill marked as paid", billService.markPaid(id, paymentRef)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Long id) {
+        permissionResolver.requirePermission("BILLS_MANAGE");
         billService.delete(id);
         return ResponseEntity.ok(ApiResponse.ok("Bill deleted"));
     }
 
     public ResponseEntity<ApiResponse<?>> softDelete(@PathVariable Long id) {
+        permissionResolver.requirePermission("BILLS_MANAGE");
         billService.softDelete(id);
         return  ResponseEntity.ok(ApiResponse.ok("Bill marked as deleted"));
     }

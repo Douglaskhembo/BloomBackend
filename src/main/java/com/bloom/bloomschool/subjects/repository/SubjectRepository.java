@@ -12,4 +12,5 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
     boolean existsByName(String name);
     List<Subject> findAllByUuidIn(Set<UUID> uuids);
     Optional<Subject> findByUuid(UUID uuid);
+    long countByActiveTrue();
 }

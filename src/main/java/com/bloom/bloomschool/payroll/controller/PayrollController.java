@@ -30,17 +30,20 @@ public class PayrollController {
 
     @PostMapping("/paye-bands")
     public ResponseEntity<ApiResponse<?>> createPayeBand(@Valid @RequestBody PayeBandRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("PAYE band created", payrollService.createPayeBand(req)));
     }
 
     @PutMapping("/paye-bands/{id}")
     public ResponseEntity<ApiResponse<?>> updatePayeBand(@PathVariable Long id, @Valid @RequestBody PayeBandRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("PAYE band updated", payrollService.updatePayeBand(id, req)));
     }
 
     @DeleteMapping("/paye-bands/{id}")
     public ResponseEntity<ApiResponse<?>> deletePayeBand(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deletePayeBand(id);
         return ResponseEntity.ok(ApiResponse.ok("PAYE band deleted"));
     }
@@ -54,17 +57,20 @@ public class PayrollController {
 
     @PostMapping("/nhif-tiers")
     public ResponseEntity<ApiResponse<?>> createNhifTier(@Valid @RequestBody NhifTierRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("NHIF tier created", payrollService.createNhifTier(req)));
     }
 
     @PutMapping("/nhif-tiers/{id}")
     public ResponseEntity<ApiResponse<?>> updateNhifTier(@PathVariable Long id, @Valid @RequestBody NhifTierRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("NHIF tier updated", payrollService.updateNhifTier(id, req)));
     }
 
     @DeleteMapping("/nhif-tiers/{id}")
     public ResponseEntity<ApiResponse<?>> deleteNhifTier(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deleteNhifTier(id);
         return ResponseEntity.ok(ApiResponse.ok("NHIF tier deleted"));
     }
@@ -78,22 +84,26 @@ public class PayrollController {
 
     @PostMapping("/allowance-types")
     public ResponseEntity<ApiResponse<?>> createAllowanceType(@Valid @RequestBody AllowanceTypeRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Allowance type created", payrollService.createAllowanceType(req)));
     }
 
     @PutMapping("/allowance-types/{id}")
     public ResponseEntity<ApiResponse<?>> updateAllowanceType(@PathVariable Long id, @Valid @RequestBody AllowanceTypeRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Allowance type updated", payrollService.updateAllowanceType(id, req)));
     }
 
     @PatchMapping("/allowance-types/{id}/toggle")
     public ResponseEntity<ApiResponse<?>> toggleAllowanceType(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleAllowanceType(id)));
     }
 
     @DeleteMapping("/allowance-types/{id}")
     public ResponseEntity<ApiResponse<?>> deleteAllowanceType(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deleteAllowanceType(id);
         return ResponseEntity.ok(ApiResponse.ok("Allowance type deleted"));
     }
@@ -107,22 +117,26 @@ public class PayrollController {
 
     @PostMapping("/other-deductions")
     public ResponseEntity<ApiResponse<?>> createOtherDeduction(@Valid @RequestBody OtherDeductionRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Deduction created", payrollService.createOtherDeduction(req)));
     }
 
     @PutMapping("/other-deductions/{id}")
     public ResponseEntity<ApiResponse<?>> updateOtherDeduction(@PathVariable Long id, @Valid @RequestBody OtherDeductionRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Deduction updated", payrollService.updateOtherDeduction(id, req)));
     }
 
     @PatchMapping("/other-deductions/{id}/toggle")
     public ResponseEntity<ApiResponse<?>> toggleOtherDeduction(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleOtherDeduction(id)));
     }
 
     @DeleteMapping("/other-deductions/{id}")
     public ResponseEntity<ApiResponse<?>> deleteOtherDeduction(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deleteOtherDeduction(id);
         return ResponseEntity.ok(ApiResponse.ok("Deduction deleted"));
     }
@@ -136,22 +150,26 @@ public class PayrollController {
 
     @PostMapping("/statutory-deductions")
     public ResponseEntity<ApiResponse<?>> createStatutoryDeduction(@Valid @RequestBody StatutoryDeductionRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Statutory deduction created", payrollService.createStatutoryDeduction(req)));
     }
 
     @PutMapping("/statutory-deductions/{id}")
     public ResponseEntity<ApiResponse<?>> updateStatutoryDeduction(@PathVariable Long id, @Valid @RequestBody StatutoryDeductionRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Statutory deduction updated", payrollService.updateStatutoryDeduction(id, req)));
     }
 
     @PatchMapping("/statutory-deductions/{id}/toggle")
     public ResponseEntity<ApiResponse<?>> toggleStatutoryDeduction(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleStatutoryDeduction(id)));
     }
 
     @DeleteMapping("/statutory-deductions/{id}")
     public ResponseEntity<ApiResponse<?>> deleteStatutoryDeduction(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deleteStatutoryDeduction(id);
         return ResponseEntity.ok(ApiResponse.ok("Statutory deduction deleted"));
     }
@@ -165,6 +183,7 @@ public class PayrollController {
 
     @PutMapping("/settings")
     public ResponseEntity<ApiResponse<?>> saveSettings(@Valid @RequestBody PayrollSettingsRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Settings saved", payrollService.saveSettings(req)));
     }
 
@@ -172,21 +191,25 @@ public class PayrollController {
 
     @GetMapping("/staff-salaries")
     public ResponseEntity<ApiResponse<?>> getAllSalaries() {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok(payrollService.getAllStaffSalaries()));
     }
 
     @GetMapping("/staff-salaries/{staffId}")
     public ResponseEntity<ApiResponse<?>> getSalary(@PathVariable String staffId) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok(payrollService.getStaffSalary(staffId)));
     }
 
     @PostMapping("/staff-salaries")
     public ResponseEntity<ApiResponse<?>> saveSalary(@Valid @RequestBody StaffSalaryRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Salary saved", payrollService.saveStaffSalary(req)));
     }
 
     @DeleteMapping("/staff-salaries/{staffId}")
     public ResponseEntity<ApiResponse<?>> deleteSalary(@PathVariable String staffId) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deleteStaffSalary(staffId);
         return ResponseEntity.ok(ApiResponse.ok("Salary record deleted"));
     }
@@ -200,21 +223,25 @@ public class PayrollController {
 
     @PostMapping("/banks")
     public ResponseEntity<ApiResponse<?>> createBank(@Valid @RequestBody BankRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Bank added", payrollService.createBank(req)));
     }
 
     @PutMapping("/banks/{id}")
     public ResponseEntity<ApiResponse<?>> updateBank(@PathVariable Long id, @Valid @RequestBody BankRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Bank updated", payrollService.updateBank(id, req)));
     }
 
     @PatchMapping("/banks/{id}/toggle")
     public ResponseEntity<ApiResponse<?>> toggleBank(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleBank(id)));
     }
 
     @DeleteMapping("/banks/{id}")
     public ResponseEntity<ApiResponse<?>> deleteBank(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deleteBank(id);
         return ResponseEntity.ok(ApiResponse.ok("Bank deleted"));
     }
@@ -228,22 +255,26 @@ public class PayrollController {
 
     @PostMapping("/mobile-money-providers")
     public ResponseEntity<ApiResponse<?>> createMobileMoneyProvider(@Valid @RequestBody MobileMoneyProviderRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Provider added", payrollService.createMobileMoneyProvider(req)));
     }
 
     @PutMapping("/mobile-money-providers/{id}")
     public ResponseEntity<ApiResponse<?>> updateMobileMoneyProvider(@PathVariable Long id, @Valid @RequestBody MobileMoneyProviderRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Provider updated", payrollService.updateMobileMoneyProvider(id, req)));
     }
 
     @PatchMapping("/mobile-money-providers/{id}/toggle")
     public ResponseEntity<ApiResponse<?>> toggleMobileMoneyProvider(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.toggleMobileMoneyProvider(id)));
     }
 
     @DeleteMapping("/mobile-money-providers/{id}")
     public ResponseEntity<ApiResponse<?>> deleteMobileMoneyProvider(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deleteMobileMoneyProvider(id);
         return ResponseEntity.ok(ApiResponse.ok("Provider deleted"));
     }
@@ -257,35 +288,43 @@ public class PayrollController {
 
     @PostMapping("/payment-types")
     public ResponseEntity<ApiResponse<?>> createPaymentType(@Valid @RequestBody PaymentTypeRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Payment type added", payrollService.createPaymentType(req)));
     }
 
     @PutMapping("/payment-types/{id}")
     public ResponseEntity<ApiResponse<?>> updatePaymentType(@PathVariable Long id, @Valid @RequestBody PaymentTypeRequest req) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Payment type updated", payrollService.updatePaymentType(id, req)));
     }
 
     @PatchMapping("/payment-types/{id}/toggle")
     public ResponseEntity<ApiResponse<?>> togglePaymentType(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Toggled", payrollService.togglePaymentType(id)));
     }
 
     @DeleteMapping("/payment-types/{id}")
     public ResponseEntity<ApiResponse<?>> deletePaymentType(@PathVariable Long id) {
+        permissionResolver.requirePermission("SALARY_MANAGE");
         payrollService.deletePaymentType(id);
         return ResponseEntity.ok(ApiResponse.ok("Payment type deleted"));
     }
 
     // ── Staff Payment Details (Finance-only bank/mobile-money info) ─────────────
+    // Sensitive PII (bank account/mobile money numbers) — gated on reads too, unlike most
+    // reference-data GETs in this controller.
 
     @GetMapping("/staff-payment-details")
     public ResponseEntity<ApiResponse<?>> getAllStaffPaymentDetails() {
+        permissionResolver.requirePermission("PAYROLL_STAFF_PAYMENT_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok(payrollService.getAllStaffPaymentDetails()));
     }
 
     @GetMapping("/staff-payment-details/{staffId}")
     public ResponseEntity<ApiResponse<?>> getStaffPaymentDetails(@PathVariable String staffId) {
+        permissionResolver.requirePermission("PAYROLL_STAFF_PAYMENT_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok(payrollService.getStaffPaymentDetails(staffId).orElse(null)));
     }
 

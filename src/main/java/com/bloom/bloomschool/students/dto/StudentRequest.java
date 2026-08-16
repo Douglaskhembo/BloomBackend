@@ -21,6 +21,7 @@ public class StudentRequest {
     private String medicalNotes;
     @NotBlank private String grade;
     private String stream;
+    private LocalDate joinDate;
     private BoarderStatus boarderStatus;
     private UUID gradeLevelUuid;
     private String parentName;

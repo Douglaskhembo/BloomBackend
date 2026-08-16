@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.grading.controller;
 
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.grading.dto.GradingEntriesRequest;
 import com.bloom.bloomschool.grading.dto.GradingStructureRequest;
@@ -18,7 +19,10 @@ import java.util.UUID;
 public class GradingController {
 
     private final GradingService gradingService;
+    private final PermissionResolver permissionResolver;
 
+    // GET is deliberately open — TeacherClasses.tsx and ClassPerformancePage.tsx (teacher portal)
+    // read this to resolve a score's grade/points/remark, same as every admin page.
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
         return ResponseEntity.ok(ApiResponse.ok(gradingService.getAll()));
@@ -26,17 +30,20 @@ public class GradingController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody GradingStructureRequest req) {
+        permissionResolver.requirePermission("SUBJECTS_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Grading structure created", gradingService.create(req)));
     }
 
     @PutMapping("/{uuid}")
     public ResponseEntity<ApiResponse<?>> replaceEntries(@PathVariable UUID uuid, @Valid @RequestBody GradingEntriesRequest req) {
+        permissionResolver.requirePermission("SUBJECTS_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok("Grading structure updated", gradingService.replaceEntries(uuid, req)));
     }
 
     @DeleteMapping("/{uuid}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("SUBJECTS_MANAGE");
         gradingService.delete(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Grading structure deleted"));
     }

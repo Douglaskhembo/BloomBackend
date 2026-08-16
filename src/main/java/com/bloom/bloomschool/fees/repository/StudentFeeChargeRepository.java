@@ -2,7 +2,6 @@ package com.bloom.bloomschool.fees.repository;
 
 import com.bloom.bloomschool.fees.entity.StudentFeeCharge;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,12 +11,9 @@ public interface StudentFeeChargeRepository extends JpaRepository<StudentFeeChar
     List<StudentFeeCharge> findByFeeStructureUuid(UUID uuid);
     List<StudentFeeCharge> findByFeeStructureUuidIn(Collection<UUID> uuids);
     List<StudentFeeCharge> findByAdmissionNumberAndFeeStructureUuidIn(String admissionNumber, Collection<UUID> uuids);
-    boolean existsByFeeStructureUuid(UUID uuid);
 
-    @Query("SELECT c.grade, c.stream, SUM(c.amount) FROM StudentFeeCharge c WHERE c.feeStructureUuid IN :structureUuids GROUP BY c.grade, c.stream")
-    List<Object[]> sumAmountByGradeStream(Collection<UUID> structureUuids);
-
-    @Query("SELECT c.admissionNumber, SUM(c.amount) FROM StudentFeeCharge c WHERE c.feeStructureUuid IN :structureUuids " +
-            "AND (:stream IS NULL OR c.stream = :stream) GROUP BY c.admissionNumber")
-    List<Object[]> sumAmountByAdmissionNumber(Collection<UUID> structureUuids, String stream);
+    /** A student's full charge history (every period, every academic year) — the basis for
+     *  computing a cumulative, FIFO-consistent balance as of any given (academicYear, term)
+     *  cutoff. See FeeReportService. */
+    List<StudentFeeCharge> findByAdmissionNumberIn(Collection<String> admissionNumbers);
 }

@@ -2,6 +2,7 @@ package com.bloom.bloomschool.attendance.controller;
 
 import com.bloom.bloomschool.attendance.dto.request.ClassTeacherRequest;
 import com.bloom.bloomschool.attendance.service.ClassTeacherService;
+import com.bloom.bloomschool.auth.service.PermissionResolver;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,20 +18,24 @@ import java.util.UUID;
 public class ClassTeacherController {
 
     private final ClassTeacherService classTeacherService;
+    private final PermissionResolver permissionResolver;
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
+        permissionResolver.requirePermission("ATTENDANCE_MANAGE");
         return ResponseEntity.ok(ApiResponse.ok(classTeacherService.getAll()));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> assign(@Valid @RequestBody ClassTeacherRequest req) {
+        permissionResolver.requirePermission("ATTENDANCE_MANAGE");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Class teacher assigned", classTeacherService.assign(req)));
     }
 
     @DeleteMapping("/{uuid}")
     public ResponseEntity<ApiResponse<?>> unassign(@PathVariable UUID uuid) {
+        permissionResolver.requirePermission("ATTENDANCE_MANAGE");
         classTeacherService.unassign(uuid);
         return ResponseEntity.ok(ApiResponse.ok("Assignment removed"));
     }

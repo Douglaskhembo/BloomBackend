@@ -7,10 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 public interface FeePaymentRepository extends JpaRepository<FeePayment, Long> {
     List<FeePayment> findByStudentIdOrderByPaymentDateDesc(String studentId);
     boolean existsByReference(String reference);
+
+    /** Pre-enrollment payments (application/deposit fees) captured against an admission. */
+    List<FeePayment> findByAdmissionUuidOrderByPaymentDateDesc(UUID admissionUuid);
+    boolean existsByAdmissionUuidAndVerificationStatus(UUID admissionUuid, FeePayment.VerificationStatus verificationStatus);
 
     @Query("SELECT SUM(p.amount) FROM FeePayment p WHERE p.studentId = :studentId AND p.verificationStatus = 'CONFIRMED'")
     Double sumAmountByStudentId(String studentId);
@@ -26,13 +31,10 @@ public interface FeePaymentRepository extends JpaRepository<FeePayment, Long> {
             String studentId, FeePayment.PaymentSource source, FeePayment.PaymentMethod method,
             FeePayment.VerificationStatus verificationStatus);
 
-    // Reporting aggregates. Note: FeePayment has no academicYear/term field, only paymentDate —
-    // these sums are necessarily cumulative-by-grade/stream, not scoped to a specific term's
-    // charges. See FeeReportService for how this is combined with StudentFeeCharge totals.
-    @Query("SELECT p.grade, p.stream, SUM(p.amount) FROM FeePayment p WHERE p.verificationStatus = 'CONFIRMED' " +
-            "AND (:grade IS NULL OR p.grade = :grade) GROUP BY p.grade, p.stream")
-    List<Object[]> sumAmountByGradeStream(String grade);
-
+    // Reporting aggregate. Note: FeePayment has no academicYear/term field, only paymentDate —
+    // this is necessarily an all-time total per student, not scoped to a specific term. See
+    // FeeReportService.isThroughCutoff for how this is combined with cumulative charge totals
+    // to derive a FIFO-consistent (oldest period cleared first) balance as of any cutoff.
     @Query("SELECT p.studentId, SUM(p.amount) FROM FeePayment p WHERE p.verificationStatus = 'CONFIRMED' " +
             "AND p.studentId IN :studentIds GROUP BY p.studentId")
     List<Object[]> sumAmountByStudentIds(Collection<String> studentIds);
