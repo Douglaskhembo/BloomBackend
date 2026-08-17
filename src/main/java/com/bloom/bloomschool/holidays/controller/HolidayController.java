@@ -18,7 +18,6 @@ public class HolidayController {
     private final HolidayService holidayService;
     private final PermissionResolver permissionResolver;
 
-    // GET left open — public holidays are shown on teacher/parent calendars too, not sensitive.
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
         return ResponseEntity.ok(ApiResponse.ok(holidayService.getAll()));

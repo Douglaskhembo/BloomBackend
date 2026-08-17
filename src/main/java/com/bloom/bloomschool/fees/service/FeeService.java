@@ -142,7 +142,6 @@ public class FeeService {
         return feePaymentRepo.findByStudentIdOrderByPaymentDateDesc(studentId);
     }
 
-    /** Pre-enrollment payments (application/deposit fees) captured against an admission. */
     public List<FeePayment> getPaymentsByAdmission(UUID admissionUuid) {
         return feePaymentRepo.findByAdmissionUuidOrderByPaymentDateDesc(admissionUuid);
     }
@@ -152,13 +151,6 @@ public class FeeService {
         return feePaymentRepo.existsByAdmissionUuidAndVerificationStatus(admissionUuid, FeePayment.VerificationStatus.CONFIRMED);
     }
 
-    /**
-     * Re-keys any payments captured pre-enrollment (against the Admission, before a Student/
-     * admissionNumber existed) onto the newly minted studentId, so they show up in the normal
-     * per-student balance/history views (which match on studentId, not admissionUuid) once the
-     * applicant is enrolled. admissionUuid is left in place on the rows for audit/history — see
-     * StudentService.enrollStudent, called right after the Student is created.
-     */
     @Transactional
     public void adoptAdmissionPayments(UUID admissionUuid, String studentId, String studentName, String grade, String stream) {
         List<FeePayment> payments = feePaymentRepo.findByAdmissionUuidOrderByPaymentDateDesc(admissionUuid);
@@ -176,12 +168,6 @@ public class FeeService {
         return total != null ? total : 0.0;
     }
 
-    /**
-     * This is the staff-facing manual capture endpoint — walk-in cash, cheque, or bank-slip payments
-     * (and a fallback for M-Pesa/bank transfers when the live gateway/webhook integration is down).
-     * Gateway-matched payments are created directly by PaymentReconciliationService instead, never
-     * through here, so everything recorded via this path is tagged {@code source = MANUAL}.
-     */
     @Transactional
     public FeePayment recordPayment(FeePaymentRequest req) {
         boolean hasStudentId = req.getStudentId() != null && !req.getStudentId().isBlank();
@@ -265,7 +251,7 @@ public class FeeService {
         feePaymentRepo.deleteById(id);
     }
 
-    // ── Fee Structures (Maker / Approver / Approved workflow) ───────────────────
+    // Fee Structures (Maker / Approver / Approved workflow)
 
     public List<FeeStructure> getAllFeeStructures() {
         return feeStructureRepo.findAllByOrderBySubmittedAtDesc();
@@ -275,22 +261,8 @@ public class FeeService {
         return feeStructureAuditRepo.findAllByOrderByAtDesc();
     }
 
-    // ── Student Fee Charges ──────────────────────────────────────────────────
+    //Student Fee Charges
 
-    /**
-     * The persisted, itemized charges currently owed — one entry per (academicYear, grade, period)
-     * resolves to the latest APPROVED structure version for that period, and only that version's
-     * charges count (older versions' rows stay in the table for audit but are excluded here).
-     * Self-healing: a structure approved before StudentFeeCharge existed has no rows yet, so this
-     * lazily generates them the first time anyone asks — no separate backfill migration needed.
-     * <p>
-     * Billing only ever runs from the past up to today: a period whose configured TermPeriod
-     * hasn't started yet is skipped entirely (never generated, never returned), so a future term's
-     * approved structure doesn't inflate a student's balance/arrears before it actually begins.
-     * That also means there's no separate "roll over to the new term" job to run — the moment
-     * today crosses into a term's start date, the very next call to this method (or any page that
-     * triggers it) picks the period up and generates/returns its charges on its own.
-     */
     @Transactional
     public List<StudentFeeCharge> getCurrentCharges(String admissionNumber, String grade) {
         List<FeeStructure> approved = feeStructureRepo.findAllByStatus(FeeStructure.Status.APPROVED);
@@ -319,8 +291,7 @@ public class FeeService {
         return fs.getReviewedAt() != null ? fs.getReviewedAt() : fs.getUpdatedAt();
     }
 
-    /** "Term 1"/"Term 2"/"Term 3" resolve straight to their configured TermPeriod; "Full Year"
-     *  spans whatever terms are configured for that academic year (earliest start, latest end). */
+
     private Optional<LocalDate> periodStartDate(int academicYear, String term) {
         if ("Full Year".equals(term))
             return termPeriodRepo.findByAcademicYear(academicYear).stream().map(TermPeriod::getStartDate).min(LocalDate::compareTo);
@@ -333,17 +304,11 @@ public class FeeService {
         return termPeriodRepo.findByAcademicYearAndTerm(academicYear, term).map(TermPeriod::getEndDate);
     }
 
-    /** A period with no TermPeriod configured at all can't be judged "future", so it's left visible
-     *  rather than silently hidden — only a period whose configured start date is genuinely still
-     *  ahead of today gets excluded. */
+
     private boolean periodHasStarted(int academicYear, String term) {
         return periodStartDate(academicYear, term).map(start -> !start.isAfter(LocalDate.now())).orElse(true);
     }
 
-    /** The date a student is considered to have joined the school, for billing purposes — prefers
-     *  the explicit, admin-editable `Student.joinDate`. Falls back to `createdDate` (when the row
-     *  was inserted) only for legacy rows created before that field existed; missing both,
-     *  billing doesn't withhold anything on their account. */
     private LocalDate joinDateOf(Student s) {
         if (s.getJoinDate() != null) return s.getJoinDate();
         return s.getCreatedDate() != null
@@ -351,18 +316,6 @@ public class FeeService {
                 : LocalDate.MIN;
     }
 
-    /**
-     * Generates one charge row per (eligible student x enabled line) that doesn't already have one
-     * under this structure version — called on every getCurrentCharges lookup, so a student who
-     * becomes newly eligible after the structure was first processed (enrolled later, put on a
-     * transport route, flagged BOARDER) picks up their charge on the next call instead of being
-     * permanently skipped. Keyed per (studentUuid, itemId), not per structure, so it never
-     * duplicates a charge that already exists and never touches a different structure version.
-     * <p>
-     * A student who joined the school after this period already ended is skipped for it entirely —
-     * they weren't enrolled during any part of that term, so it must never appear on their bill,
-     * even though they're now ACTIVE in the grade the structure targets.
-     */
     private void generateCharges(FeeStructure fs) {
         List<FeeStructureLine> enabled = fs.getLines().stream().filter(FeeStructureLine::isEnabled).toList();
         if (enabled.isEmpty()) return;

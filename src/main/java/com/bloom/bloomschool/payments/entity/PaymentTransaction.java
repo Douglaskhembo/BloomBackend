@@ -7,11 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Raw log of every inbound gateway event (M-Pesa STK/C2B, bank webhook) plus its
- * reconciliation outcome. This is the audit trail; a successfully matched transaction
- * also produces a {@link com.bloom.bloomschool.fees.entity.FeePayment} row.
- */
+
 @Entity
 @Table(name = "bloom_sch_payment_transactions")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

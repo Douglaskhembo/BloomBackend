@@ -19,9 +19,6 @@ public class LeaveController {
     private final LeaveService leaveService;
     private final PermissionResolver permissionResolver;
 
-    // ── Leave Types ───────────────────────────────────────────────────────────
-    // GET left open — every applicant needs the list of leave types to file a request.
-
     @GetMapping("/leave-types")
     public ResponseEntity<ApiResponse<?>> getLeaveTypes() {
         return ResponseEntity.ok(ApiResponse.ok(leaveService.getAllLeaveTypes()));
@@ -54,10 +51,6 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.ok("Leave type deleted"));
     }
 
-    // ── Leave Requests ────────────────────────────────────────────────────────
-
-    /** staffId present = self-service (own requests, any authenticated staff); absent = the full
-     *  admin listing, which requires review rights. */
     @GetMapping("/leave-requests")
     public ResponseEntity<ApiResponse<?>> getRequests(@RequestParam(required = false) String staffId) {
         if (staffId != null) return ResponseEntity.ok(ApiResponse.ok(leaveService.getRequestsByStaff(staffId)));

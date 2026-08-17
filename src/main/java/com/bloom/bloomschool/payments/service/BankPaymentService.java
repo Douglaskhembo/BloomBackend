@@ -13,16 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-/**
- * Handles inbound bank webhook notifications (Equity, KCB, Co-op). Each bank's exact payload
- * field names and signature scheme differ and aren't fully known here — this parses the raw
- * JSON body into a Map and best-effort extracts common field-name variants, storing the full
- * raw payload on every {@link PaymentTransaction} either way so nothing is silently dropped.
- *
- * IMPORTANT: before going live with a given bank, confirm its actual webhook payload shape and
- * signature header/algorithm against that bank's current API docs/sandbox, and tighten
- * {@link #extractString} / {@link #extractAmount} candidate keys to match exactly.
- */
+
 @Service
 @RequiredArgsConstructor
 public class BankPaymentService {

@@ -20,11 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Thin client over the Daraja OAuth, STK Push and C2B URL-registration endpoints.
- * Uses RestTemplate (blocking) since this project has no WebFlux dependency — fine
- * for the low, bursty call volume these endpoints see.
- */
+
 @Component
 @RequiredArgsConstructor
 public class MpesaClient {

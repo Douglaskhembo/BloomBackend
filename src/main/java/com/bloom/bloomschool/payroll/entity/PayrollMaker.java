@@ -7,12 +7,7 @@ import lombok.*;
 
 import java.util.UUID;
 
-/**
- * A user authorized to generate/submit payroll runs (the "maker" side of the maker-checker workflow).
- * Multiple makers are allowed (e.g. Finance Officer + a backup) — set up under Payroll Setup, same as
- * approval steps. Being added here is what grants the ability (auto-grants PAYROLL_RUN), rather than
- * requiring the permission to be granted elsewhere first.
- */
+
 @Entity
 @Table(name = "bloom_sch_payroll_makers")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

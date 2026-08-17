@@ -8,11 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Public inbound webhook endpoints for bank payment notifications. See
- * {@link BankPaymentService} for the caveat on payload shape / signature scheme accuracy —
- * confirm each bank's real spec before enabling it (banks.<bank>.enabled=true) in production.
- */
+
 @RestController
 @RequestMapping("/payments/banks")
 @RequiredArgsConstructor

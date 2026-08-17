@@ -2,10 +2,7 @@ package com.bloom.bloomschool.payments.dto;
 
 import lombok.Data;
 
-/**
- * Shape Safaricom posts to both the C2B Validation and Confirmation URLs.
- * Field names match the stable, publicly documented Daraja C2B spec.
- */
+
 @Data
 public class MpesaC2BRequest {
     private String TransactionType;

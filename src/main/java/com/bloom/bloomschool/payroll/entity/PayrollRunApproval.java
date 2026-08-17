@@ -7,7 +7,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/** Full audit trail of every action taken against a PayrollRun's approval workflow. */
 @Entity
 @Table(name = "bloom_sch_payroll_run_approvals")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

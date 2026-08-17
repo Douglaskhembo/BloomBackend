@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** Authenticated admin/staff visibility into gateway transactions, plus manual fix-up for UNMATCHED ones. */
 @RestController
 @RequestMapping("/payments/transactions")
 @RequiredArgsConstructor

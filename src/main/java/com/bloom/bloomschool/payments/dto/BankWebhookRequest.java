@@ -5,11 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Normalized shape every bank-specific webhook payload gets mapped into before
- * hitting the shared reconciliation logic — keeps PaymentReconciliationService
- * bank-agnostic.
- */
+
 @Data
 @Builder
 @NoArgsConstructor

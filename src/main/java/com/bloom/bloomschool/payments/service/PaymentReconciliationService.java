@@ -19,13 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Single place every payment channel (M-Pesa STK, M-Pesa C2B, bank webhooks) funnels through
- * to turn a gateway event into a {@link FeePayment}. Matching is done purely on the account
- * reference the payer typed in against {@link Student#getAdmissionNumber()} — if it doesn't
- * match a known student the transaction is stored as UNMATCHED for a staff member to fix via
- * {@link #manualReconcile}, rather than silently dropped.
- */
+
 @Service
 @RequiredArgsConstructor
 @Transactional

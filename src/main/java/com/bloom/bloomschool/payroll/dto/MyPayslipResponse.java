@@ -3,12 +3,7 @@ package com.bloom.bloomschool.payroll.dto;
 import lombok.Builder;
 import lombok.Data;
 
-/**
- * A single staff member's own payslip line, scoped to their own data only — never the full
- * PayrollRun (which would leak every other staff member's pay). Only APPROVED/SENT_TO_BANK runs
- * are ever surfaced here; a run still being drafted/approved isn't final and shouldn't be visible
- * to the employee it concerns.
- */
+
 @Data
 @Builder
 public class MyPayslipResponse {

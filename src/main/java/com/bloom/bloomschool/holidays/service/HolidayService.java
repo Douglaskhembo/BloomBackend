@@ -24,7 +24,6 @@ public class HolidayService {
         return holidayRepo.findAll();
     }
 
-    /** Dates of every active holiday, for use by the Leave module's day-counting logic. */
     public Set<LocalDate> getActiveHolidayDates() {
         return holidayRepo.findAll().stream()
                 .filter(Holiday::isActive)

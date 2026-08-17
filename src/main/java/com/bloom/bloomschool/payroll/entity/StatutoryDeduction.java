@@ -28,11 +28,6 @@ public class StatutoryDeduction extends BaseEntity {
     @Builder.Default
     private ValueType type = ValueType.PERCENTAGE;
 
-    /**
-     * Which statutory calculation this row feeds. NSSF, HOUSING_LEVY and SHIF rows are summed
-     * (percentage of (gross - thresholdAmount), or fixed, each floored at minAmount and capped at
-     * maxAmount if set) to compute net pay. OTHER/TIERED rows are informational only.
-     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -40,15 +35,7 @@ public class StatutoryDeduction extends BaseEntity {
 
     private double value;
     private Double maxAmount; // null = no cap
-
-    /** Floor on the final computed deduction amount, e.g. SHIF's KES 300 minimum. Null = no floor. */
     private Double minAmount;
-
-    /**
-     * Lower bound subtracted from gross before applying the percentage — lets a tier apply only to
-     * the *excess* above this amount (e.g. NSSF Tier II only taxes gross above the Tier I ceiling).
-     * Null/0 = applies to the full gross, same as before this field existed.
-     */
     private Double thresholdAmount;
 
     private boolean employerContribution;

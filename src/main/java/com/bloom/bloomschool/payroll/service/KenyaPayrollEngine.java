@@ -8,13 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Kenya statutory payroll engine. PAYE bands, NSSF/Housing Levy/SHIF rates and personal relief
- * are all configured via the Payroll Setup screens (PayeBand, StatutoryDeduction,
- * PayrollSettings) rather than hardcoded — mirrors the frontend lib/payroll/kenya.ts so both
- * sides stay in sync. SHIF (replacing NHIF since Oct 2024) is a flat percentage of gross like
- * NSSF/Housing Levy, not a tiered lookup, so it's a StatutoryDeduction row, not its own table.
- */
 @Component
 @RequiredArgsConstructor
 public class KenyaPayrollEngine {
@@ -59,13 +52,6 @@ public class KenyaPayrollEngine {
                 .build();
     }
 
-    /**
-     * Sums active, non-tiered deductions in the given category. Percentage rows apply to
-     * (gross - thresholdAmount) rather than the full gross, so a tier can tax only the amount in
-     * excess of a lower bound (e.g. NSSF Tier II only applies above the Tier I ceiling) — a null/0
-     * threshold behaves exactly as before this concept existed. The result is then capped at
-     * maxAmount and floored at minAmount if either is set (SHIF's KES 300 minimum, for example).
-     */
     private double sumStatutory(double gross, List<StatutoryDeduction> deductions, StatutoryDeduction.Category category) {
         double total = 0;
         for (StatutoryDeduction d : deductions) {

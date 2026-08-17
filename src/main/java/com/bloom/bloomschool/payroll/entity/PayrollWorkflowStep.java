@@ -9,12 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * One step in the admin-configured payroll approval chain (e.g. "Finance Manager Review",
- * "Signatory A", "Final Approver"). Steps execute strictly in sequenceOrder after the maker submits
- * a run. assignedUsers are specific named people (bank-signatory style) rather than a role, since
- * signatories are named individuals swapped out when they leave — reassign the step here instead.
- */
+
 @Entity
 @Table(name = "bloom_sch_payroll_workflow_steps")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

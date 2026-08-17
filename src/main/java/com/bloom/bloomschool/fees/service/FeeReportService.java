@@ -19,20 +19,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Aggregation reports over the existing fee data (charges/payments) — no new schema, just
- * group-by queries, but with one deliberate design point: {@code FeePayment} carries no
- * academicYear/term (only a paymentDate), so a student's total paid is necessarily one all-time
- * pool, never scoped to a single term. Rather than naively diffing that pool against a single
- * term's billed amount (which produces a different, inconsistent "balance" every time the term
- * filter changes — a payment made for Term 2 would just as happily zero out a Term 1 balance and
- * vice versa), every report here treats a selected (academicYear, term) as a CUTOFF: "billed"
- * means the student's cumulative charges from their join date up through that cutoff, and "paid"
- * is their all-time total capped at that cumulative figure. Subtracting a single pool from a
- * running cumulative total is mathematically equivalent to strictly allocating each shilling paid
- * against the oldest outstanding period first (prior academic years, then Term 1, Term 2, Term 3)
- * without needing a separate payment-to-charge allocation ledger — see isThroughCutoff.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,10 +29,6 @@ public class FeeReportService {
     private final FeePaymentRepository feePaymentRepository;
     private final StudentRepository studentRepository;
 
-    /** Term ordering within an academic year, for the cutoff comparison below. "Full Year"
-     *  billing is treated as due from the start of the year (rank 1) — a school that bills
-     *  per-term never has a "Full Year" structure for the same grade/year, so there's no real
-     *  ambiguity between the two schemes in practice. */
     private static final Map<String, Integer> TERM_RANK = Map.of(
             "Term 1", 1, "Term 2", 2, "Term 3", 3, "Full Year", 1);
 
@@ -147,9 +129,6 @@ public class FeeReportService {
         return paid;
     }
 
-    /** Sums a student's own charges from every period up to and including the given cutoff —
-     *  every prior academic year in full, plus the cutoff year through the cutoff term. A null
-     *  cutoff year means "no cutoff", i.e. the student's entire charge history. */
     private double cumulativeBilledThrough(List<StudentFeeCharge> charges, Integer cutoffYear, String cutoffTerm) {
         return charges.stream()
                 .filter(c -> isThroughCutoff(c.getAcademicYear(), c.getPeriod(), cutoffYear, cutoffTerm))

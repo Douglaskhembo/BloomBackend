@@ -312,10 +312,6 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.ok("Payment type deleted"));
     }
 
-    // ── Staff Payment Details (Finance-only bank/mobile-money info) ─────────────
-    // Sensitive PII (bank account/mobile money numbers) — gated on reads too, unlike most
-    // reference-data GETs in this controller.
-
     @GetMapping("/staff-payment-details")
     public ResponseEntity<ApiResponse<?>> getAllStaffPaymentDetails() {
         permissionResolver.requirePermission("PAYROLL_STAFF_PAYMENT_MANAGE");

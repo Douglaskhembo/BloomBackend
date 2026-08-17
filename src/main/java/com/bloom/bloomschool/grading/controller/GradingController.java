@@ -21,8 +21,6 @@ public class GradingController {
     private final GradingService gradingService;
     private final PermissionResolver permissionResolver;
 
-    // GET is deliberately open — TeacherClasses.tsx and ClassPerformancePage.tsx (teacher portal)
-    // read this to resolve a score's grade/points/remark, same as every admin page.
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
         return ResponseEntity.ok(ApiResponse.ok(gradingService.getAll()));
