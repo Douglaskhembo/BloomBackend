@@ -20,9 +20,6 @@ public class CommunicationController {
     private final CommunicationService communicationService;
     private final PermissionResolver permissionResolver;
 
-    /** The full admin-wide message/notice list — every baseline role (ADMIN/TEACHER/PARENT)
-     *  already holds COMMUNICATION_VIEW, but this specific "everything sent" view is reserved for
-     *  whoever can also manage communications, not just send/read their own. */
     @GetMapping("/messages")
     public ResponseEntity<ApiResponse<?>> getAllMessages() {
         permissionResolver.requirePermission("COMMUNICATION_MANAGE");

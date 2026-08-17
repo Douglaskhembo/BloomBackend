@@ -8,12 +8,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Runs schema fixes Hibernate's {@code ddl-auto: update} can't express from JPA annotations alone
- * (partial/conditional unique indexes, or a CHECK constraint that needs regenerating after adding
- * an enum value) — this project has no Flyway/Liquibase, so these run as idempotent native SQL on
- * every boot instead. Safe to re-run: every statement is a no-op if the schema already matches.
- */
+
 @Component
 @Slf4j
 @Order(0) // must run before DataSeeder (@Order(1)) — seeding a SHIF row needs this constraint fixed first

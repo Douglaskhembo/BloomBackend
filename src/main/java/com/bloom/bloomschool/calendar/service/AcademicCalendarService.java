@@ -29,8 +29,6 @@ public class AcademicCalendarService {
         return termPeriodRepo.findAllByOrderByAcademicYearDescTermAsc();
     }
 
-    /** Which academic year/term today falls inside, per the configured term periods — null/null
-     *  when nothing's been configured for the current date, so callers know not to auto-default. */
     public CurrentTermResponse getCurrentTerm() {
         LocalDate today = LocalDate.now();
         return termPeriodRepo.findFirstByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today)
@@ -79,8 +77,6 @@ public class AcademicCalendarService {
             throw new IllegalArgumentException("End date cannot be before start date");
     }
 
-    /** Terms within the same academic year must not overlap — a maker/approver auto-default can
-     *  only ever mean one term at a time. */
     private void validateNoOverlap(TermPeriod candidate, Long excludingId) {
         for (TermPeriod other : termPeriodRepo.findByAcademicYear(candidate.getAcademicYear())) {
             if (excludingId != null && other.getId().equals(excludingId)) continue;

@@ -19,10 +19,6 @@ public class AcademicCalendarController {
     private final AcademicCalendarService calendarService;
     private final PermissionResolver permissionResolver;
 
-    // ── Term Periods ─────────────────────────────────────────────────────────
-    // GETs deliberately open — "what term is it" / "what are the term dates" is needed broadly
-    // across admin, teacher and parent portals (report defaults, calendars), and isn't sensitive.
-
     @GetMapping("/term-periods")
     public ResponseEntity<ApiResponse<?>> getTermPeriods() {
         return ResponseEntity.ok(ApiResponse.ok(calendarService.getAllTermPeriods()));

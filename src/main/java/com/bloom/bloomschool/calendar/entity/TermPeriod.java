@@ -7,8 +7,6 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/** One term's calendar dates for a given academic year — re-entered every year since Kenya's
- *  school calendar shifts with the government education calendar, never assumed fixed. */
 @Entity
 @Table(name = "bloom_sch_term_periods", uniqueConstraints = @UniqueConstraint(columnNames = {"academic_year", "term"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

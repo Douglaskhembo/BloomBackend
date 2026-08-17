@@ -11,12 +11,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-/**
- * AES-256-GCM encryption for sensitive byte-array columns (currently: fingerprint templates).
- * A random 12-byte IV is generated per value and prepended to the ciphertext+auth-tag, so no
- * separate IV column is needed. Key comes from app.biometrics.encryption-key — override via the
- * BIOMETRIC_ENCRYPTION_KEY env var in any real deployment; the checked-in default is dev-only.
- */
 @Converter
 @Component
 public class AesGcmByteConverter implements AttributeConverter<byte[], byte[]> {

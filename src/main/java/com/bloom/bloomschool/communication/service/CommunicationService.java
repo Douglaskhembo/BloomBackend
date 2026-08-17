@@ -24,11 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Only IN_APP delivery is real — recipients see messages in their in-app inbox. SMS/WhatsApp/
- * Email are recorded as the intended channel but not actually dispatched anywhere, since no
- * gateway (Africa's Talking, Twilio, SMTP, etc.) is configured in this project.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -87,7 +82,6 @@ public class CommunicationService {
         recipientRepo.save(r);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private List<MessageRecipient> resolveRecipients(Message.AudienceType audience, String gradeFilter) {
         return switch (audience) {

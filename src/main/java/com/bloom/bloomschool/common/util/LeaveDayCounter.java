@@ -13,15 +13,10 @@ public final class LeaveDayCounter {
         return d == DayOfWeek.SATURDAY || d == DayOfWeek.SUNDAY;
     }
 
-    /** Number of weekdays (Mon-Fri) in the inclusive range, ignoring holidays. */
     public static long countWeekdays(LocalDate from, LocalDate to) {
         return countDays(from, to, true, false, Set.of());
     }
 
-    /**
-     * Counts days in the inclusive range {@code [from, to]}, optionally excluding weekends
-     * and/or dates present in {@code holidayDates}.
-     */
     public static long countDays(LocalDate from, LocalDate to, boolean excludeWeekends, boolean excludeHolidays, Set<LocalDate> holidayDates) {
         long count = 0;
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
@@ -32,12 +27,6 @@ public final class LeaveDayCounter {
         return count;
     }
 
-    /**
-     * Leave-specific day count in the inclusive range {@code [from, to]}: weekdays always count
-     * as a full day; Saturday/Sunday are governed by {@code weekendPolicy} (with Saturday
-     * possibly consuming only half a day); holiday dates are optionally excluded regardless of
-     * weekday/weekend. Result may be fractional (e.g. {@code 4.5}).
-     */
     public static double countLeaveDays(LocalDate from, LocalDate to, WeekendCountPolicy weekendPolicy, boolean excludeHolidays, Set<LocalDate> holidayDates) {
         double count = 0;
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {

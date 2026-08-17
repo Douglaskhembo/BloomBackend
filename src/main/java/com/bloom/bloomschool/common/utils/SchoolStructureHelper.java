@@ -11,17 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Central helper for checking whether the school's structure
- * (branches / departments) is configured and has active records.
- *
- * A feature is considered "enabled" when at least one active record
- * of that type exists in the system.
- *
- * Use this in any service that conditionally enforces branch or department
- * assignment, and expose getConfig() via the school controller so the
- * frontend can hide/show the relevant select fields accordingly.
- */
+
 @Component
 @RequiredArgsConstructor
 public class SchoolStructureHelper {

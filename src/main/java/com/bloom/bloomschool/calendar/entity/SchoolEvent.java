@@ -7,7 +7,6 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/** A non-holiday school calendar marker (mid-term break, opening/closing day, exam week, ...). */
 @Entity
 @Table(name = "bloom_sch_school_events")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

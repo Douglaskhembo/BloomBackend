@@ -27,8 +27,6 @@ public class Message extends BaseEntity {
     @Column(nullable = false, length = 4000)
     private String body;
 
-    /** Delivery channel is recorded for reference only — only IN_APP is actually delivered
-     * (no SMS/WhatsApp/email gateway is configured in this project). */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
