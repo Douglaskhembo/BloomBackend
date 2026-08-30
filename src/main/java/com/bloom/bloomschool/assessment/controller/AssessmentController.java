@@ -5,6 +5,7 @@ import com.bloom.bloomschool.assessment.dto.AssessmentMarksDto;
 import com.bloom.bloomschool.assessment.dto.MarkEntryRequestDto;
 import com.bloom.bloomschool.assessment.service.AssessmentService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/get-assessment/{uuid}")
-    public ResponseEntity<AssessmentDto> getAssessment(@PathVariable UUID uuid) {
+    public ResponseEntity<AssessmentDto> getAssessment(@PathVariable UUID uuid) throws BadRequestException{
         return ResponseEntity.ok(service.getAssessment(uuid));
     }
 
@@ -50,7 +51,7 @@ public class AssessmentController {
     @PutMapping("/update-assessment/{uuid}")
     public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AssessmentDto req){
         service.updateAssessment(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);     // <-- was ACCEPTED
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteAdmission-assessment/{uuid}")

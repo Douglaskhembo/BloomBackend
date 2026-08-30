@@ -3,6 +3,7 @@ package com.bloom.bloomschool.staff.controller;
 import com.bloom.bloomschool.staff.dto.StaffDto;
 import com.bloom.bloomschool.staff.service.StaffService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,20 +37,17 @@ public class StaffController {
     @PutMapping("/updateStaff/{uuid}")
     public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody StaffDto req){
         service.update(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);   // was ACCEPTED
-    }
+        return new ResponseEntity<>(HttpStatus.OK);}
 
     @PatchMapping("/toggle-status/{uuid}")
     public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid){
         service.toggleStatus(uuid);
-        return new ResponseEntity<>(HttpStatus.OK);   // was noContent
-    }
+        return new ResponseEntity<>(HttpStatus.OK); }
 
     @DeleteMapping("/deleteStaff/{uuid}")
     public ResponseEntity<Void> deleteStaff(@PathVariable UUID uuid){
         service.deleteStaff(uuid);
         return ResponseEntity.noContent().build();
     }
+
 }
-
-

@@ -175,7 +175,8 @@ public class AssessmentService {
 
         existingAssessment.setName(req.getName());
         existingAssessment.setTerm(req.getTerm());
-        existingAssessment.setMaxScore(req.getMaxScore() != null ? req.getMaxScore() : 100);        existingAssessment.setYear(req.getYear());
+        existingAssessment.setMaxScore(req.getMaxScore());
+        existingAssessment.setYear(req.getYear());
         existingAssessment.setStream(req.getStream());
         existingAssessment.setAssessmentType(req.getAssessmentType());
         existingAssessment.setGrade(grade);
@@ -197,6 +198,7 @@ public class AssessmentService {
                 .name(body.getName())
                 .term(body.getTerm())
                 .maxScore(body.getMaxScore() != null ? body.getMaxScore() : 100)                .year(body.getYear())
+                .year(body.getYear())
                 .stream(body.getStream())
                 .assessmentType(body.getAssessmentType())
                 .grade(grade)

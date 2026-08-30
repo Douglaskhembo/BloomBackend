@@ -3,6 +3,7 @@ package com.bloom.bloomschool.gradeLevel.controller;
 import com.bloom.bloomschool.gradeLevel.dto.GradeStructureDto;
 import com.bloom.bloomschool.gradeLevel.service.GradeStructureService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class GradeStructureController {
     @PutMapping("/updateGrade-structure/{uuid}")
     public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody GradeStructureDto req){
         service.updateGradeStructure(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);   // was ACCEPTED
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteGrade-structure/{uuid}")

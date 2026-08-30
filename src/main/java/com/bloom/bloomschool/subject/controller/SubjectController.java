@@ -14,7 +14,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/subject")
 @RequiredArgsConstructor
 public class SubjectController {
-
     private final SubjectService service;
 
     @GetMapping("/allSubjects")
