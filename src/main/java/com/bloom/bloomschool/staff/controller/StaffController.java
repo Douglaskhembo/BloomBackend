@@ -40,12 +40,13 @@ public class StaffController {
         return new ResponseEntity<>(HttpStatus.OK);}
 
     @PatchMapping("/toggle-status/{uuid}")
-    public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid){
+    public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid) {
         service.toggleStatus(uuid);
-        return new ResponseEntity<>(HttpStatus.OK); }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
     @DeleteMapping("/deleteStaff/{uuid}")
-    public ResponseEntity<Void> deleteStaff(@PathVariable UUID uuid){
+    public ResponseEntity<Void> deleteStaff(@PathVariable UUID uuid) {
         service.deleteStaff(uuid);
         return ResponseEntity.noContent().build();
     }

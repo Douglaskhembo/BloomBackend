@@ -27,9 +27,13 @@ public interface StudentRepository extends JpaRepository<Student, Long>{
     int getStreamCapacity(@Param("gradeUuid") UUID gradeUuid,
                                   @Param("stream") String stream,
                                   @Param("status") StudentStatus studentStatus);
+    List<Student> findByStatus(StudentStatus status);
 
     @Query("SELECT COUNT(st) FROM Student st WHERE st.gradeEntity.uuid = :gradeUuid AND st.status = :status")
     int getGradeCapacity(@Param("gradeUuid") UUID gradeUuid,
                                  @Param("status") StudentStatus studentStatus);
     boolean existsByUuid(UUID uuid);
+    boolean existsByAdmissionNumber(String admissionNumber);
+
+    boolean existsByEntryNumber(String entryNumber);
 }

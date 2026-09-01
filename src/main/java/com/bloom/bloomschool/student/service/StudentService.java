@@ -13,13 +13,15 @@ import com.bloom.bloomschool.document.enums.OwnerType;
 import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
 import com.bloom.bloomschool.student.dto.*;
 import com.bloom.bloomschool.student.entity.Student;
-import com.bloom.bloomschool.student.enums.StudentStatus;
+import com.bloom.bloomschool.student.entity.StudentStatus;
 import com.bloom.bloomschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
 
 
 import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
