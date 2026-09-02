@@ -3,15 +3,19 @@ spring:
     name: BloomSchool
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/bloom_school_db
-    username: user1
-    password: user1
+    url: jdbc:postgresql://localhost:5432/bloomSchool_db
+    username: postgres
+    password: Mniowwb@2025
     driver-class-name: org.postgresql.Driver
+
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        
 server:
-  port: 9090
-  shutdown: GRACEFUL
+  port: 8081
