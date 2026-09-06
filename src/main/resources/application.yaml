@@ -3,9 +3,9 @@ spring:
     name: BloomSchool
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/bloom_test}
-    username: ${DB_USERNAME:bloom}
-    password: ${DB_PASSWORD:bloom}
+    url: jdbc:postgresql://localhost:5432/bloom_school_db
+    username: user1
+    password: user1
     driver-class-name: org.postgresql.Driver
 
   jpa:

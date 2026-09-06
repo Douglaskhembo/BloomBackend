@@ -60,12 +60,27 @@ public class AssessmentService {
                 .build();
     }
 
+    //Save marks, get marks.
 
     @Transactional
-    public void saveMarks(UUID assessmentUuid, MarkEntryRequestDto req){
-        Assessment assessment = repo.findByUuid(assessmentUuid)
+    public void saveMarks(UUID assesmentUuid, MarkEntryRequestDto req){
+        Assessment assessment = repo.findByUuid(assesmentUuid)
                 .orElseThrow(() ->new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));
          int maxScore = assessment.getMaxScore();
+
+        for(MarkEntryRequestDto.Entry entry : req.getEntries()){
+            Student student = studentRepo.findByUuid(entry.getStudentUuid())
+                    .orElseThrow(() ->new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+            if(entry.getScore() == null || entry.getScore() < 0 || entry.getScore() > maxScore){
+                throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Score is not valid");
+            }
+            AssessmentMarks entity = new AssessmentMarks();
+            entity.setScore(entry.getScore());
+            entity.setStudent(student);
+            entity.setAssessment(assessment);
+            assessmentMarkRepo.save(entity);
+        }
+    }
 
         for(MarkEntryRequestDto.Entry entry : req.getEntries()){
             Student student = studentRepo.findByUuid(entry.getStudentUuid())
