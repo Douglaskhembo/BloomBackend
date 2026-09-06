@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     Optional<Assessment> findByUuid(UUID uuid);
+
+    boolean existsByUuid(UUID assesmentUuid);
 }
