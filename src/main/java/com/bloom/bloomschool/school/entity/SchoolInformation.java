@@ -11,7 +11,7 @@ import java.util.UUID;
 @Data
 @Builder
 @Entity
-@Table(name = "school_information")
+@Table(name = "bloom_school_information")
 public class SchoolInformation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -4,14 +4,14 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
 @Entity
-@Table(name = "bloom_student")
+@Table(name = "bloom_school_student")
 public class Student {
 
         @Id
@@ -57,8 +57,6 @@ public class Student {
         }
 
         @PreUpdate
-        protected void onUpdate() {
+        protected void onUpdate() {this.updatedAt = LocalDateTime.now();}
 
-                this.updatedAt = LocalDateTime.now();
-        }
 }

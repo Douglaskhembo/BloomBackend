@@ -9,7 +9,7 @@ import java.util.*;
 @Data
 @Builder
 @Entity
-@Table(name = "school_department")
+@Table(name = "bloom_school_department")
 public class Department {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
