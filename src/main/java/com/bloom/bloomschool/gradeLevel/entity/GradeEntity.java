@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Entity
 @Table(name = "bloom_school_grade")
-public class GradeEntity {
+public class  GradeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column( updatable = false, unique = true, nullable = false)
