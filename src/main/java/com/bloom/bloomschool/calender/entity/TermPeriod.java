@@ -11,7 +11,7 @@ import java.util.*;
 @Getter
 @Setter
 @Builder
-@Table(name = "term_periods")
+@Table(name = "bloom_school_term_periods")
 @Entity
 public class TermPeriod {
     @Id
