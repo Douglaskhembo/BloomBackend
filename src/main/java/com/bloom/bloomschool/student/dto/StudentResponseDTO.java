@@ -1,11 +1,10 @@
 package com.bloom.bloomschool.student.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
-import java.util.UUID;
+import java.util.*;
+import com.bloom.bloomschool.attendance.dto.DailyAttendanceResponseDTO;
 
 @Data
 @Builder
@@ -19,4 +18,5 @@ public class StudentResponseDTO {
     private String entryNumber;
     private LocalDate dateOfBirth;
     private String status;
+    private List<DailyAttendanceResponseDTO> attendances;
 }

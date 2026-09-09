@@ -2,6 +2,8 @@ package com.bloom.bloomschool.assessment.controller;
 
 
 import com.bloom.bloomschool.assessment.dto.AssessmentDto;
+import com.bloom.bloomschool.assessment.dto.AssessmentMarksDto;
+import com.bloom.bloomschool.assessment.dto.MarkEntryRequestDto;
 import com.bloom.bloomschool.assessment.service.AssessmentService;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -28,9 +30,20 @@ public class AssessmentController {
         return ResponseEntity.ok(service.getAssessment(uuid));
     }
 
+    @GetMapping("/get-all-marks")
+    public ResponseEntity<List<AssessmentMarksDto>> getMarks(){
+        return ResponseEntity.ok(service.getMarks());
+    }
+
     @PostMapping("/create-assessment")
     public ResponseEntity<?> create(@RequestBody AssessmentDto req){
         service.createAssessment(req);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("create-assessment-marks/{uuid}")
+    public ResponseEntity<?> createMarks(@PathVariable UUID uuid, @RequestBody MarkEntryRequestDto req){
+        service.saveMarks(uuid, req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

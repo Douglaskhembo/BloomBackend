@@ -10,7 +10,7 @@ import java.util.*;
 @Data
 @Builder
 @Entity
-@Table(name = "school_branch")
+@Table(name = "bloom_school_branch")
 public class Branch {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
