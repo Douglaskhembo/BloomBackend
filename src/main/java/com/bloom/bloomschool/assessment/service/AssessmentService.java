@@ -1,7 +1,11 @@
 package com.bloom.bloomschool.assessment.service;
 
 import com.bloom.bloomschool.assessment.dto.AssessmentDto;
+import com.bloom.bloomschool.assessment.dto.AssessmentMarksDto;
+import com.bloom.bloomschool.assessment.dto.MarkEntryRequestDto;
 import com.bloom.bloomschool.assessment.entity.Assessment;
+import com.bloom.bloomschool.assessment.entity.AssessmentMarks;
+import com.bloom.bloomschool.assessment.repository.AssessmentMarkRepository;
 import com.bloom.bloomschool.assessment.repository.AssessmentRepository;
 import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
@@ -9,6 +13,9 @@ import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
 import com.bloom.bloomschool.staff.dto.StaffDto;
 import com.bloom.bloomschool.staff.entity.StaffEntity;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
+import com.bloom.bloomschool.student.dto.StudentRequestDTO;
+import com.bloom.bloomschool.student.entity.Student;
+import com.bloom.bloomschool.student.repository.StudentRepository;
 import com.bloom.bloomschool.subject.dto.SubjectDto;
 import com.bloom.bloomschool.subject.entity.SubjectEntity;
 import com.bloom.bloomschool.subject.repository.SubjectRepository;
@@ -16,11 +23,11 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -29,10 +36,49 @@ public class AssessmentService {
     private final GradeRepository gradeRepo;
     private final StaffRepository staffRepo;
     private final SubjectRepository subjectRepo;
+    private final AssessmentMarkRepository assessmentMarkRepo;
+    private final StudentRepository studentRepo;
+
+    public List<AssessmentMarksDto> getMarks(){
+        List<AssessmentMarks> assessmentMarks = assessmentMarkRepo.findAll();
+        if(CollectionUtils.isEmpty(assessmentMarks)){return List.of();}
+        return assessmentMarks.stream().map(this::convertMarksToDto).toList();
+    }
+
+    private AssessmentMarksDto convertMarksToDto(AssessmentMarks body){
+        Student student = body.getStudent();
+        StudentRequestDTO studentRequestDTO = StudentRequestDTO.builder()
+                .studentUuid(student.getUuid())
+                .admissionNumber(student.getAdmissionNumber())
+                .studentName(student.getFirstName() + " " + student.getLastName())
+                .build();
 
 
-    //Save marks, get marks.
+        return AssessmentMarksDto.builder().score(body.getScore())
+                .studentRequestDTO(studentRequestDTO)
+                .build();
+    }
 
+
+    @Transactional
+    public void saveMarks(UUID assesmentUuid, MarkEntryRequestDto req){
+        Assessment assessment = repo.findByUuid(assesmentUuid)
+                .orElseThrow(() ->new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));
+         int maxScore = assessment.getMaxScore();
+
+        for(MarkEntryRequestDto.Entry entry : req.getEntries()){
+            Student student = studentRepo.findByUuid(entry.getStudentUuid())
+                    .orElseThrow(() ->new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+            if(entry.getScore() == null || entry.getScore() < 0 || entry.getScore() > maxScore){
+                throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Score is not valid");
+            }
+            AssessmentMarks entity = new AssessmentMarks();
+            entity.setScore(entry.getScore());
+            entity.setStudent(student);
+            entity.setAssessment(assessment);
+            assessmentMarkRepo.save(entity);
+        }
+    }
 
     public List<AssessmentDto> getAll(){
         List<Assessment> assessment = repo.findAll();
