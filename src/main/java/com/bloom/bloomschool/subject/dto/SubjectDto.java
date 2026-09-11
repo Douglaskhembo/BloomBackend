@@ -16,7 +16,7 @@ import java.util.UUID;
 public class SubjectDto {
     private String name;
     private String subjectCode;
-    private boolean isActive;
+    private boolean status;
     private List<UUID> gradesUuid;
     private List<GradeDto> gradeDtos;
 }

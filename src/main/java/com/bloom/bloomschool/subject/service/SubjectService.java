@@ -49,7 +49,7 @@ public class SubjectService {
         return SubjectDto.builder()
                 .name(subject.getName())
                 .subjectCode(subject.getSubjectCode())
-                .isActive(subject.getIsActive())
+                .status(subject.getIsActive())
                 .gradeDtos(gradeDtos)
                 .build();
     }
@@ -65,7 +65,7 @@ public class SubjectService {
         repo.save(SubjectEntity.builder()
                         .name(req.getName())
                         .subjectCode(req.getSubjectCode())
-                        .isActive(req.isActive())
+                        .isActive(req.isStatus())
                         .grades(convert(req.getGradesUuid()))
                 .build());
 
