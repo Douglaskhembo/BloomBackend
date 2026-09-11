@@ -108,7 +108,7 @@ public class AssessmentService {
         SubjectDto subjectDto = SubjectDto.builder()
                 .name(subjectEntity.getName())
                 .subjectCode(subjectEntity.getSubjectCode())
-                .isActive(subjectEntity.getIsActive())
+                .status(subjectEntity.getIsActive())
                 .build();
 
         StaffEntity staffEntity = body.getStaff();

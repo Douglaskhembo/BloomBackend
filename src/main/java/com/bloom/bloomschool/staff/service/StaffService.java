@@ -43,7 +43,7 @@ public class StaffService{
                 .map(dto -> SubjectDto.builder()
                         .name(dto.getName())
                         .subjectCode(dto.getSubjectCode())
-                        .isActive(dto.getIsActive())
+                        .status(dto.getIsActive())
                                 .build())
                 .toList();
         return StaffDto.builder()
