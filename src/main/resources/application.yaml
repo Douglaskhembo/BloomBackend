@@ -3,7 +3,7 @@ spring:
     name: BloomSchool
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/bloom_school_db
+    url: jdbc:postgresql://localhost:5432/bloom_school_db_2
     username: admin
     password: pass
     driver-class-name: org.postgresql.Driver

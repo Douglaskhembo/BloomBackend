@@ -21,4 +21,5 @@ public class GradeDto {
     private List<Integer> streamCapacity;
     private int streams = 1;
     private List<UUID> subjectUuids;
+    private UUID uuid;
 }
