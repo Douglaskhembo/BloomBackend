@@ -40,7 +40,7 @@ public class SubjectService {
                         .name(grade.getName())
                         .displayOrder(grade.getDisplayOrder())
                         .capacity(grade.getCapacity())
-                        .isActive(grade.getIsActive())
+                        .active(grade.isActive())
                         .streamName(grade.getStreamName())
                         .streamCapacity(grade.getStreamCapacity())
                         .streams(grade.getStreams())

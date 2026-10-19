@@ -4,6 +4,7 @@ import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GradeService {
@@ -37,10 +39,11 @@ public class GradeService {
                 .name(body.getName())
                 .displayOrder(body.getDisplayOrder())
                 .capacity(body.getCapacity())
-                .isActive(body.getIsActive())
+                .active(body.isActive())
                 .streamName(body.getStreamName())
                 .streamCapacity(body.getStreamCapacity())
                 .streams(body.getStreams())
+                .uuid(body.getUuid())
                 .build();
     }
     @Transactional
@@ -53,7 +56,7 @@ public class GradeService {
                 .name(req.getName())
                 .displayOrder(req.getDisplayOrder())
                 .capacity(req.getCapacity())
-                .isActive(req.getIsActive())
+                .active(req.isActive())
                 .streamName(req.getStreamName())
                 .streamCapacity(req.getStreamCapacity())
                 .streams(req.getStreams())
@@ -71,7 +74,7 @@ public class GradeService {
         existingGrade.setName(req.getName());
         existingGrade.setDisplayOrder(req.getDisplayOrder());
         existingGrade.setCapacity(req.getCapacity());
-        existingGrade.setIsActive(req.getIsActive());
+        existingGrade.setActive(req.isActive());
         existingGrade.setStreamName(req.getStreamName());
         existingGrade.setStreamCapacity(req.getStreamCapacity());
         existingGrade.setStreams(req.getStreams());
@@ -82,14 +85,14 @@ public class GradeService {
     public void toggleStatus(UUID uuid){
         GradeEntity existingGrade = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
-        existingGrade.setIsActive(!existingGrade.getIsActive());
+        existingGrade.setActive(!existingGrade.isActive());
         repo.save(existingGrade);
     }
 
     @Transactional
     public void deleteGrade(UUID uuid){
         GradeEntity existingGrade = repo.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
+                .orElseThrow(() -> new RuntimeException("System error occurred please contact Admin"));
         repo.delete(existingGrade);
     }
 
