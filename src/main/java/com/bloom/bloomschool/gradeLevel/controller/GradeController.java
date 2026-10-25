@@ -27,6 +27,7 @@ public class GradeController {
 
     @PostMapping("/createGrade")
     public ResponseEntity<?> create(@RequestBody GradeDto req){
+        System.out.println("Data>>>>>" +req);
         service.createGrade(req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }

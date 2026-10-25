@@ -26,10 +26,11 @@ public class  GradeEntity {
 
     private int displayOrder;
     
-    private int capacity;
+    private Integer capacity;
 
     @Column(nullable = false)
-    private Boolean isActive;
+    @Builder.Default
+    private boolean active = true;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "bloom_school_grade_streams",

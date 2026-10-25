@@ -1,9 +1,6 @@
 package com.bloom.bloomschool.gradeLevel.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,13 +9,16 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class GradeDto {
     private String name;
-    private int displayOrder;
-    private int capacity;
-    private Boolean isActive;
+    private Integer displayOrder;
+    private Integer capacity;
+    private boolean active;
     private List<String> streamName;
     private List<Integer> streamCapacity;
-    private int streams;
+    private int streams = 1;
     private List<UUID> subjectUuids;
+    private UUID uuid;
 }

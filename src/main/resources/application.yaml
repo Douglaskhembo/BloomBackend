@@ -2,10 +2,11 @@ spring:
   application:
     name: BloomSchool
 
+  # Defaults are for local development; override with env vars on the hosted server.
   datasource:
-    url: jdbc:postgresql://localhost:5432/bloom_school_db
-    username: admin
-    password: pass
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/bloom_school_db_2}
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:pass}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -16,6 +17,28 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        
+
 server:
-  port: 9090
+  port: ${PORT:9090}
+  # Respect X-Forwarded-* headers so Swagger "Try it out" uses https on the hosted URL
+  forward-headers-strategy: framework
+
+app:
+  cors:
+    # Comma-separated list of frontend origins allowed to call the API
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8080,http://localhost:3000,http://localhost:5173}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  packages-to-scan: com.bloom.bloomschool
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
