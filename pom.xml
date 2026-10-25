@@ -22,10 +22,11 @@
         <!ELEMENT connection (#PCDATA)>
         <!ELEMENT developerConnection (#PCDATA)>
         <!ELEMENT tag (#PCDATA)>
-        <!ELEMENT properties (java.version)*>
+        <!ELEMENT properties (java.version|springdoc.version)*>
+        <!ELEMENT springdoc.version (#PCDATA)>
         <!ELEMENT java.version (#PCDATA)>
         <!ELEMENT dependencies (dependency)*>
-        <!ELEMENT dependency (groupId|artifactId|scope|optional)*>
+        <!ELEMENT dependency (groupId|artifactId|version|scope|optional)*>
         <!ELEMENT scope (#PCDATA)>
         <!ELEMENT optional (#PCDATA)>
         <!ELEMENT build (plugins)*>
@@ -72,6 +73,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <springdoc.version>3.1.1</springdoc.version>
     </properties>
     <dependencies>
         <dependency>
@@ -89,6 +91,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <dependency>
