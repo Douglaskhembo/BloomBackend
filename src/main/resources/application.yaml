@@ -3,9 +3,9 @@ spring:
     name: BloomSchool
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/bloom_school_db_2}
-    username: ${DB_USERNAME:admin}
-    password: ${DB_PASSWORD:pass}
+    url: jdbc:postgresql://localhost:5432/bloom_school_db
+    username: user1
+    password: user1
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -16,7 +16,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
+        
 server:
   port: ${PORT:9090}
   # Respect X-Forwarded-* headers so Swagger "Try it out" uses https on the hosted URL

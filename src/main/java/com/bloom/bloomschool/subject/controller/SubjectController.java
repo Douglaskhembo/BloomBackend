@@ -9,11 +9,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-//Test on postman
+
 @RestController
 @RequestMapping("/api/v1/subject")
 @RequiredArgsConstructor
 public class SubjectController {
+
     private final SubjectService service;
 
     @GetMapping("/allSubjects")
