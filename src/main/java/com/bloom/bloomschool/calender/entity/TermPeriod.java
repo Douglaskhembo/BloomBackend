@@ -39,3 +39,4 @@ public class TermPeriod {
     private LocalDate endDate;
 
 }
+//Communication entity--message{subject,body,grade_filter,sender_name,recipient_count,2.enums(channel_type INUP,SMS,WHATSAPP,EMAIL,audience_type,ALL_PARENTS,ALLTEACHERS,ALLSTAFFS,PARENTBYGRADE)
