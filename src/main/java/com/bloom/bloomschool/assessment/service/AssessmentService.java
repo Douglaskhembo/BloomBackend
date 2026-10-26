@@ -60,8 +60,8 @@ public class AssessmentService {
 
 
     @Transactional
-    public void saveMarks(UUID assesmentUuid, MarkEntryRequestDto req){
-        Assessment assessment = repo.findByUuid(assesmentUuid)
+    public void saveMarks(UUID assessmentUuid, MarkEntryRequestDto req){
+        Assessment assessment = repo.findByUuid(assessmentUuid)
                 .orElseThrow(() ->new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));
          int maxScore = assessment.getMaxScore();
 

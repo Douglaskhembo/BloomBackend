@@ -13,6 +13,9 @@ import java.util.UUID;
 
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long>{
+    Optional<Student> findByUuid(UUID uuid);
+
+    Optional<Student> findByAdmissionNumber(String admissionNumber);
 
     @Query(value = "SELECT * FROM bloom_school_student st WHERE st.uuid = :uuid", nativeQuery = true)
     Optional<Student> findByUuid(@Param("uuid") UUID uuid);
@@ -33,6 +36,11 @@ public interface StudentRepository extends JpaRepository<Student, Long>{
             """, nativeQuery = true)
     boolean existsByUuid(@Param("uuid") UUID uuid);
 
+    boolean existsByEntryNumber(String entryNumber);
 
 
+    @Query("SELECT s.document_type_uuid FROM Student s WHERE s.uuid =:StudentUuid")
+    List<UUID> getDocumentUuids(@Param("StudentUuid") UUID studentUuid);
+
+    boolean existsByUuid(UUID uuid);
 }

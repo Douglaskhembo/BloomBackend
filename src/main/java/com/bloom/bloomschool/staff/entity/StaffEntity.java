@@ -57,4 +57,13 @@ public class StaffEntity {
     @Builder.Default
     private List<SubjectEntity> subjects = new ArrayList<>();
 
+//Keep??
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "bloom_staff_documents",
+            joinColumns = @JoinColumn(name = "staff_uuid")
+    )
+    @Column(name = "document_type_uuid", nullable = false)
+    private Set<UUID> providedDocumentTypeUuids = new HashSet<>();
+
 }
