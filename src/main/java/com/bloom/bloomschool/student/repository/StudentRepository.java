@@ -1,8 +1,10 @@
 package com.bloom.bloomschool.student.repository;
 
 import com.bloom.bloomschool.student.entity.Student;
-import com.bloom.bloomschool.student.entity.StudentStatus;
+import com.bloom.bloomschool.student.enums.StudentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,4 +28,7 @@ public interface StudentRepository extends JpaRepository<Student, Long>{
     boolean existsByAdmissionNumber(String admissionNumber);
 
     boolean existsByEntryNumber(String entryNumber);
+
+    @Query("SELECT s.document_type_uuid FROM Student s WHERE s.uuid =:StudentUuid")
+    List<UUID> getDocumentUuids(@Param("StudentUuid") UUID studentUuid);
 }

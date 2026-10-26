@@ -15,6 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class StaffDto {
+    private UUID uuid;
     private String firstName;
     private String lastName;
     private String email;

@@ -30,7 +30,7 @@ public class GradeEntity {
 
     @Column(nullable = false)
     private Boolean isActive;
-
+//@Embedable class??
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "bloom_school_grade_streams",
     joinColumns = @JoinColumn(name = "grade_level_id"))

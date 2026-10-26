@@ -14,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AssessmentDto {
+    private UUID uuid;
     private String name;
     private String term;
     private int maxScore;

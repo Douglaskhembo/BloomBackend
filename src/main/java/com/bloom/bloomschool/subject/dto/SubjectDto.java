@@ -14,9 +14,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class SubjectDto {
+    private UUID uuid;
     private String name;
     private String subjectCode;
-    private boolean isActive;
+    private Boolean isActive;
     private List<UUID> gradesUuid;
     private List<GradeDto> gradeDtos;
 }

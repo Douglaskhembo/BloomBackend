@@ -16,4 +16,6 @@ public interface GradeRepository extends JpaRepository<GradeEntity, UUID>{
     boolean existsByName(String name);
 
     List<GradeEntity> findAllByUuidIn(List<UUID> uuids);
+
+    boolean existsByNameAndUuidNot(String name, UUID uuid);
 }

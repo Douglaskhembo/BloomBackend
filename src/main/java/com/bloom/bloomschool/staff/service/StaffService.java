@@ -33,9 +33,9 @@ public class StaffService{
     }
 
     @Transactional
-    public StaffDto getByUuid(UUID uuid) throws BadRequestException{
+    public StaffDto getByUuid(UUID uuid) {
         return convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new BadRequestException("No staff found")));
+                .orElseThrow(() -> new RuntimeException("No staff found")));
     }
 
     private StaffDto convertToDto(StaffEntity body){
@@ -47,6 +47,7 @@ public class StaffService{
                                 .build())
                 .toList();
         return StaffDto.builder()
+                .uuid(body.getUuid())
                 .firstName(body.getFirstName())
                 .lastName(body.getLastName())
                 .email(body.getEmail())
@@ -89,11 +90,11 @@ public class StaffService{
         StaffEntity existingStaff = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No staff member found with this uuid"));
         
-        if (repo.existsByEmail(req.getEmail())){
+        if (repo.existsByEmailAndUuidNot(req.getEmail(), uuid)){
             throw new RuntimeException("A Staff member with this email already exists");
         }
 
-        if (req.getPhoneNumber() != null && repo.existsByPhoneNumber(req.getPhoneNumber())){
+        if (req.getPhoneNumber() != null && repo.existsByPhoneNumberAndUuidNot(req.getPhoneNumber(), uuid)){
             throw new RuntimeException("A Staff member with this phone number already exists");
         }
         List<SubjectEntity> existingSubjects = subjectRepo.findAllById(req.getSubjectUuids());
@@ -108,6 +109,7 @@ public class StaffService{
         existingStaff.setIsActive(req.getIsActive());
         existingStaff.setSubjects(existingSubjects);
 
+        repo.save(existingStaff);
     }
 
     @Transactional

@@ -16,6 +16,15 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        
+
+  daraja:
+    shortcode: ${MPESA_SHORTCODE:174379} #Shortcode 174379 for testing
+    consumer-key: ${MPESA_CONSUMER_KEY:5hT9iNLZkXdNZrfXxbgEwMR9PLFzQdHzLQxiXVw1yIOETcwN}
+    consumer-secret: ${MPESA_CONSUMER_SECRET:EDCiGGLi8lb0X0sSHDep69O5gNjSg19NGyGUYeQZATJD1lGcyvYe5nMhF3uSAFAb}
+    passkey: ${MPESA_PASSKEY:bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919} #passkey used with the sandbox shortcode also for testing
+    base-url: ${MPESA_BASE_URL:https://sandbox.safaricom.co.ke}
+    callback-url: ${MPESA_CALLBACK_URL:https://ngrok-free.app}
+
+
 server:
   port: 9090

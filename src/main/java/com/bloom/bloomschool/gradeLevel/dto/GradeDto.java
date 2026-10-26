@@ -13,6 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class GradeDto {
+    private UUID uuid;
     private String name;
     private int displayOrder;
     private int capacity;

@@ -1,9 +1,12 @@
 package com.bloom.bloomschool.student.entity;
 
+import com.bloom.bloomschool.student.enums.StudentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @NoArgsConstructor
@@ -45,6 +48,7 @@ public class Student {
 
         private LocalDateTime updatedAt;
 
+        private LocalDate joinDate;
         @PrePersist
         protected void onCreate() {
                 this.createdAt = LocalDateTime.now();
@@ -62,4 +66,12 @@ public class Student {
                 this.updatedAt = LocalDateTime.now();
         }
 
+        //Keep?
+        @ElementCollection(fetch = FetchType.LAZY)
+        @CollectionTable(
+                name = "bloom_student_documents",
+                joinColumns = @JoinColumn(name = "student_uuid")
+        )
+        @Column(name = "document_type_uuid", nullable = false)
+        private Set<UUID> providedDocumentTypeUuids = new HashSet<>();
 }

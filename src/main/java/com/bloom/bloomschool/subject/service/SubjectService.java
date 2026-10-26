@@ -29,9 +29,9 @@ public class SubjectService {
         return subjectEntities.stream().map(this::convertToDto).toList();
     }
 
-    public SubjectDto get_subject(UUID uuid) throws BadRequestException {
+    public SubjectDto get_subject(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new BadRequestException("No subject found")));
+                .orElseThrow(() -> new RuntimeException("No subject found")));
     }
 
     private SubjectDto convertToDto(SubjectEntity subject){
@@ -47,6 +47,7 @@ public class SubjectService {
                         .build())
                 .toList();
         return SubjectDto.builder()
+                .uuid(subject.getUuid())
                 .name(subject.getName())
                 .subjectCode(subject.getSubjectCode())
                 .isActive(subject.getIsActive())
@@ -65,7 +66,7 @@ public class SubjectService {
         repo.save(SubjectEntity.builder()
                         .name(req.getName())
                         .subjectCode(req.getSubjectCode())
-                        .isActive(req.isActive())
+                        .isActive(req.getIsActive())
                         .grades(convert(req.getGradesUuid()))
                 .build());
 
@@ -80,11 +81,11 @@ public class SubjectService {
     public void update(UUID uuid, SubjectDto req){
         SubjectEntity existingSubject = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No subject with this uuid found"));
-        if(repo.existsByName(req.getName())){
+        if(repo.existsByNameAndUuidNot(req.getName(), uuid)){
             throw new RuntimeException("A subject with this name exists");
         }
 
-        if(repo.existsBySubjectCode(req.getSubjectCode())){
+        if(repo.existsBySubjectCodeAndUuidNot(req.getSubjectCode(), uuid)){
             throw new RuntimeException("A subject with this code exists");
         }
 

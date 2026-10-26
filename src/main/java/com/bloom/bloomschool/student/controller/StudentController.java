@@ -31,11 +31,11 @@ public class StudentController {
     }
 
     // Create a student
-    @PostMapping
-    public ResponseEntity<?> createStudent(@RequestBody StudentRequestDTO request) {
-        studentService.createStudent(request);
-        return new ResponseEntity<>(HttpStatus.CREATED);
-    }
+//    @PostMapping
+//    public ResponseEntity<?> createStudent(@RequestBody StudentRequestDTO request) {
+//        studentService.createStudent(request);
+//        return new ResponseEntity<>(HttpStatus.CREATED);
+//    }
 
     // Update student data
     @PutMapping("/{uuid}")

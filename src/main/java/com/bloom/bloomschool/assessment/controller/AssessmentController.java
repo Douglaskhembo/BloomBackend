@@ -1,12 +1,10 @@
 package com.bloom.bloomschool.assessment.controller;
 
-
 import com.bloom.bloomschool.assessment.dto.AssessmentDto;
 import com.bloom.bloomschool.assessment.dto.AssessmentMarksDto;
 import com.bloom.bloomschool.assessment.dto.MarkEntryRequestDto;
 import com.bloom.bloomschool.assessment.service.AssessmentService;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +24,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/get-assessment/{uuid}")
-    public ResponseEntity<AssessmentDto> getAssessment(@PathVariable UUID uuid) throws BadRequestException{
+    public ResponseEntity<AssessmentDto> getAssessment(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getAssessment(uuid));
     }
 
@@ -41,8 +39,10 @@ public class AssessmentController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PostMapping("create-assessment-marks/{uuid}")
-    public ResponseEntity<?> createMarks(@PathVariable UUID uuid, @RequestBody MarkEntryRequestDto req){
+    @PostMapping("/create-assessment-marks/{uuid}")     // <-- added leading slash
+    public ResponseEntity<?> createMarks(
+            @PathVariable UUID uuid,
+            @RequestBody MarkEntryRequestDto req){
         service.saveMarks(uuid, req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
@@ -50,14 +50,12 @@ public class AssessmentController {
     @PutMapping("/update-assessment/{uuid}")
     public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AssessmentDto req){
         service.updateAssessment(uuid, req);
-        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(HttpStatus.OK);     // <-- was ACCEPTED
     }
 
-    @DeleteMapping("/delete-assessment/{uuid}")
+    @DeleteMapping("/deleteAdmission-assessment/{uuid}")
     public ResponseEntity<?> delete(@PathVariable UUID uuid){
         service.deleteAssessment(uuid);
         return ResponseEntity.noContent().build();
     }
-
-
 }
