@@ -6,9 +6,7 @@ import com.bloom.bloomschool.subject.entity.SubjectEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Builder
 @NoArgsConstructor
@@ -58,5 +56,14 @@ public class StaffEntity {
             inverseJoinColumns = @JoinColumn(name = "subject_uuid")
     )
     private List<SubjectEntity> subjects = new ArrayList<>();
+
+//Keep??
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "bloom_staff_documents",
+            joinColumns = @JoinColumn(name = "staff_uuid")
+    )
+    @Column(name = "document_type_uuid", nullable = false)
+    private Set<UUID> providedDocumentTypeUuids = new HashSet<>();
 
 }

@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.student.entity;
 
+import com.bloom.bloomschool.student.enums.StudentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -44,5 +45,24 @@ public class Student {
         private LocalDateTime createdAt;
 
         private LocalDateTime updatedAt;
+
+        private LocalDate joinDate;
+        @PrePersist
+        protected void onCreate() {
+                this.createdAt = LocalDateTime.now();
+                if (this.uuid == null) {
+                        this.uuid = UUID.randomUUID();
+                }
+                if (this.status == null) {
+                        this.status = StudentStatus.ACTIVE;
+                }
+        }
+
+        @PreUpdate
+        protected void onUpdate() {
+
+                this.updatedAt = LocalDateTime.now();
+        }
+
 
 }

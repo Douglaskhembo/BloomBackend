@@ -1,4 +1,4 @@
-package com.bloom.bloomschool.student.entity;
+package com.bloom.bloomschool.student.enums;
 
 public enum StudentStatus {
     ACTIVE,

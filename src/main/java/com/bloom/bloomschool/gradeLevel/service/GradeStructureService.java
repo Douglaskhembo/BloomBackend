@@ -28,9 +28,9 @@ public class GradeStructureService {
         return gradingStructures.stream().map(this::convertToDto).toList();
     }
 
-    public GradeStructureDto get_structure(UUID uuid) throws BadRequestException {
+    public GradeStructureDto get_structure(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new BadRequestException("No subject structure found")));
+                .orElseThrow(() -> new RuntimeException("No subject structure found")));
     }
 
 
@@ -46,6 +46,7 @@ public class GradeStructureService {
                 .toList();
 
         return GradeStructureDto.builder()
+                .uuid(body.getUuid())
                 .grade(body.getGrade())
                 .gradingEntries(gradeEntryDtos)
                 .build();
@@ -65,12 +66,12 @@ public class GradeStructureService {
     @Transactional
     public void createGradeStructure(GradeStructureDto req){
         if(repo.existsByGrade(req.getGrade())){
-            throw new RuntimeException("A grade with this name exists");
+            throw new RuntimeException("A grade structure with this grade already exists");
         }
 
         List<GradingEntry> gradingEntries = req.getGradingEntries().stream()
                         .map(this::convertToGradeEntity)
-                                .toList();
+                        .toList();
 
         repo.save(
                 GradingStructure.builder()
@@ -83,12 +84,14 @@ public class GradeStructureService {
     @Transactional
     public void updateGradeStructure(UUID uuid, GradeStructureDto req){
         GradingStructure existingGradeStructure = repo.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
+                .orElseThrow(() -> new RuntimeException("No grade structure with this uuid found"));
 
         List<GradingEntry> gradingEntries = req.getGradingEntries().stream()
                 .map(this::convertToGradeEntity).toList();
         existingGradeStructure.setGrade(req.getGrade());
         existingGradeStructure.setGradingEntries(gradingEntries);
+
+        repo.save(existingGradeStructure);
     }
 
     @Transactional

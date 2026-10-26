@@ -12,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class GradeDto {
+    private UUID uuid;
     private String name;
     private Integer displayOrder;
     private Integer capacity;
