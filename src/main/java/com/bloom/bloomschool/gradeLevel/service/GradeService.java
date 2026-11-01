@@ -4,7 +4,10 @@ import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
 import com.bloom.bloomschool.student.enums.ApplicationStage;
+import com.bloom.bloomschool.student.enums.StudentStatus;
 import com.bloom.bloomschool.student.repository.AdmissionsRepository;
+import com.bloom.bloomschool.student.repository.StudentRepository;
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -22,7 +25,9 @@ public class GradeService {
 
     private final GradeRepository repo;
     private final AdmissionsRepository admissionsRepo;
+    private final StudentRepository studentRepo;
 
+    @Transactional(readOnly = true)
     public List<GradeDto> get_all_grades(){
         List<GradeEntity> gradeEntity = repo.findAll();
         if(CollectionUtils.isEmpty(gradeEntity)){
@@ -32,6 +37,7 @@ public class GradeService {
                 .map(this::convertToDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public GradeDto get_grade(UUID uuid) {
         return  convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No grade found")));
@@ -101,38 +107,29 @@ public class GradeService {
         repo.delete(existingGrade);
     }
 
-    public boolean isStreamFull(UUID uuid, String streamName) {
-        GradeEntity existingGrade = repo.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
+    public void isStreamFull(GradeEntity gradeEntity, String streamName) {
+        if(gradeEntity == null) return;
 
-        List<String> streamNames = existingGrade.getStreamName();
-        List<Integer> streamCapacities = existingGrade.getStreamCapacity();
+        Integer capacity = checkCapacity(gradeEntity, streamName);
+        long current = (streamName == null || streamName.isEmpty())
+                ? studentRepo.getGradeCapacity(gradeEntity.getUuid(), StudentStatus.ACTIVE)
+                : studentRepo.getStreamCapacity(gradeEntity.getUuid(), streamName, StudentStatus.ACTIVE);
 
-        if (streamNames == null || streamNames.isEmpty()) {
-            throw new RuntimeException("No streams saved");
-        }
-        if (streamCapacities == null || streamCapacities.isEmpty()) {
-            throw new RuntimeException("Stream capacity not filled");
+        if (current >= capacity){
+            throw new RuntimeException("Full capacity");
         }
 
-        int streamIndex = streamNames.indexOf(streamName);
-        if (streamIndex == -1) {
-            throw new RuntimeException("The stream '" + streamName + "' does not exist for this grade");
-        }
-
-        if (streamIndex >= streamCapacities.size()) {
-            throw new RuntimeException("Configuration error: Stream capacity mapping missing for index " + streamIndex);
-        }
-
-        int streamCapacity = streamCapacities.get(streamIndex);
-        int occupiedStreamCapacity = admissionsRepo.getOccupiedStreamCapacity(uuid, streamName, ApplicationStage.ENROLLED);
-
-        if (occupiedStreamCapacity >= streamCapacity) {
-            throw new RuntimeException("Stream full, contact admin /assign different stream");
-        }
-
-        return false;
     }
+    private Integer checkCapacity(GradeEntity gradeEntity, String streamName){
+        if(gradeEntity.getStreams() <= 1) return gradeEntity.getCapacity();
 
+        List<String> names = gradeEntity.getStreamName();
+        List<Integer> capacities = gradeEntity.getStreamCapacity();
+
+        int capacity = names.indexOf(streamName);
+        if(capacity < 0 || capacity >= capacities.size()) throw new RuntimeException("Invalid stream: " + streamName);
+
+        return capacities.get(capacity);
+    }
 
 }

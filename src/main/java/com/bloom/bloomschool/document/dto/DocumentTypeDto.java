@@ -1,7 +1,6 @@
-package com.bloom.bloomschool.student.dto;
+package com.bloom.bloomschool.document.dto;
 
-import com.bloom.bloomschool.student.enums.DocumentCategory;
-import com.bloom.bloomschool.student.enums.OwnerType;
+import com.bloom.bloomschool.document.enums.DocumentCategory;
 import lombok.*;
 
 import java.util.UUID;
@@ -19,5 +18,4 @@ public class DocumentTypeDto {
     private boolean mandatory;
     private boolean active;
     private DocumentCategory documentCategory;
-    private OwnerType ownerType;
 }

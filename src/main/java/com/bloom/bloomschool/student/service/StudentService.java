@@ -1,19 +1,22 @@
 package com.bloom.bloomschool.student.service;
 
-import com.bloom.bloomschool.feestructure.repository.FeePaymentRepository;
+import com.bloom.bloomschool.document.enums.DocumentCategory;
+import com.bloom.bloomschool.document.service.DocumentTypeService;
+import com.bloom.bloomschool.document.service.ProvidedDocumentService;
 import com.bloom.bloomschool.feestructure.service.FeePaymentService;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.service.GradeService;
 import com.bloom.bloomschool.student.entity.Admissions;
-import com.bloom.bloomschool.student.entity.DocumentType;
+import com.bloom.bloomschool.document.entity.DocumentType;
 import com.bloom.bloomschool.student.enums.ApplicationStage;
-import com.bloom.bloomschool.student.enums.OwnerType;
+import com.bloom.bloomschool.document.enums.OwnerType;
 import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
 import com.bloom.bloomschool.student.dto.*;
 import com.bloom.bloomschool.student.entity.Student;
 import com.bloom.bloomschool.student.enums.StudentStatus;
 import com.bloom.bloomschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
 import com.bloom.bloomschool.setup.service.ServiceGenerator;
 import com.bloom.bloomschool.student.dto.AdmissionsDto;
 import com.bloom.bloomschool.student.repository.AdmissionsRepository;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,7 +43,7 @@ public class StudentService {
     private final ServiceGenerator serviceGenerator;
     private final AdmissionsRepository admissionsRepo;
     private final FeePaymentService feePaymentService;
-    private final DocumentTypeService documentTypeService;
+    private final ProvidedDocumentService providedDocumentService;
     private final GradeService gradeService;
     @Transactional
     public void createAdmission(AdmissionsDto req){
@@ -83,6 +87,7 @@ public class StudentService {
         if(body.getGradeEntity() != null){
             GradeEntity gradeEntity = body.getGradeEntity();
             gradeDto = GradeDto.builder()
+                    .uuid(gradeEntity.getUuid())
                     .name(gradeEntity.getName())
                     .capacity(gradeEntity.getCapacity())
                     .isActive(gradeEntity.getIsActive())
@@ -90,6 +95,7 @@ public class StudentService {
         }
 
         return AdmissionsDto.builder()
+                .uuid(body.getUuid())
                 .applicationId(body.getApplicationId())
                 .firstName(body.getFirstName())
                 .lastName(body.getLastName())
@@ -128,6 +134,11 @@ public class StudentService {
         existingAdmissions.setParentEmail(req.getParentEmail());
         existingAdmissions.setParentPhoneNumber(req.getParentPhoneNumber());
 
+        if (req.getGradeUuid() != null) {
+            GradeEntity grade = gradeRepo.findByUuid(req.getGradeUuid())
+                    .orElseThrow(() -> new ResourceNotFoundException("Grade not found"));
+            existingAdmissions.setGradeEntity(grade);
+        }
         admissionsRepo.save(existingAdmissions);
     }
 
@@ -143,17 +154,21 @@ public class StudentService {
         Admissions admissions = admissionsRepo.findByUuid(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Admission record not found"));
 
-        if(stage == ApplicationStage.ENROLLED && feePaymentService.hasConfirmedPayment(uuid)){
+        if (admissions.getApplicationStage() == ApplicationStage.ENROLLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This applicant is already enrolled");
+        }
+
+        if(stage == ApplicationStage.ENROLLED && !feePaymentService.hasConfirmedPayment(uuid)){
             throw new RuntimeException("Cannot enroll "+ admissions.getFirstName() + " "+ admissions.getLastName()
             +" no confirmed fee payment for this admission");
         }
 
          if (stage == ApplicationStage.ENROLLED){
-             List<DocumentType> missing = documentTypeService.getMandatory(OwnerType.STUDENT, uuid);
+             List<DocumentType> missing = providedDocumentService.getMissingMandatory(OwnerType.STUDENT, uuid);
             if(!missing.isEmpty()){
                 String names = missing.stream().map(DocumentType::getName).reduce((x, y) -> x + ", "+y)
                         .orElse("");
-                throw  new RuntimeException("Cannot enroll "+ admissions.getFirstName()+ " "+admissions.getLastName()+ " mandatory documents not provided");
+                throw  new RuntimeException("Cannot enroll "+ admissions.getFirstName()+ " "+admissions.getLastName()+ " mandatory documents not provided: "+names);
             }
         }
 
@@ -161,24 +176,27 @@ public class StudentService {
         admissionsRepo.save(admissions);
 
         if(stage == ApplicationStage.ENROLLED) createStudentOnAdmission(admissions, joinDate);
-
-
     }
 
     private void createStudentOnAdmission(Admissions body, LocalDate joinDate){
-        if(!gradeService.isStreamFull(body.getGradeEntity().getUuid(), body.getStream())) {
-            studentRepo.save(Student.builder()
-                    .admissionNumber(serviceGenerator.generateYearlyReference("ADM"))
-                    .firstName(body.getFirstName())
-                    .lastName(body.getLastName())
-                    .dateOfBirth(body.getDateOfBirth())
-                    .entryNumber(serviceGenerator.generateYearlyReference("ENT"))
-                    .studentEmail(null)
-                    .status(StudentStatus.ACTIVE)
-                    .createdAt(LocalDateTime.now())
-                    .joinDate(joinDate)
-                    .build());
-        }
+        gradeService.isStreamFull(body.getGradeEntity(), body.getStream());
+
+        Student saved = studentRepo.save(Student.builder()
+                .admissionNumber(serviceGenerator.generateYearlyReference("ADM"))
+                .firstName(body.getFirstName())
+                .lastName(body.getLastName())
+                .dateOfBirth(body.getDateOfBirth())
+                .entryNumber(serviceGenerator.generateYearlyReference("ENT"))
+                .studentEmail(null)
+                .status(StudentStatus.ACTIVE)
+                .createdAt(LocalDateTime.now())
+                .joinDate(joinDate != null ? joinDate : LocalDate.now())
+                .gradeEntity(body.getGradeEntity())
+                .stream(body.getStream())
+                .build());
+
+        body.setStudent(saved);
+        admissionsRepo.save(body);
     }
 
 
@@ -214,25 +232,6 @@ public class StudentService {
                 .build();
     }
 
-//    @Transactional
-//    public void createStudent(StudentRequestDTO req) {
-//        if (studentRepo.existsByAdmissionNumber(req.getAdmissionNumber())) {
-//            throw new RuntimeException("Student with this admission number already exists!!");
-//        }
-//        if (studentRepo.existsByEntryNumber(req.getEntryNumber())){
-//            throw new RuntimeException("Student with this entry number already exists!!");
-//        }
-//                 studentRepo.save(Student.builder()
-//                .firstName(req.getFirstName())
-//                .lastName(req.getLastName())
-//                .admissionNumber(req.getAdmissionNumber())
-//                .studentEmail(req.getStudentEmail())
-//                .entryNumber(req.getEntryNumber())
-//                .dateOfBirth(req.getDateOfBirth())
-//                .status(StudentStatus.ACTIVE)
-//                .build());
-//
-//    }
 
     @Transactional
     public void updateStudent(UUID uuid, StudentRequestDTO req) {

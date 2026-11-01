@@ -22,7 +22,5 @@ public interface StaffRepository extends JpaRepository<StaffEntity, UUID> {
 
     boolean existsByPhoneNumber(String phoneNumber);
 
-    @Query("SELECT s.document_type_uuid FROM StaffEntity s WHERE s.uuid =:StaffUuid")
-    List<UUID> getDocumentUuids(@Param("StaffUuid") UUID staffUuid);
 
 }

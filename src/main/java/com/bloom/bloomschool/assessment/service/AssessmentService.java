@@ -38,7 +38,7 @@ public class AssessmentService {
     private final SubjectRepository subjectRepo;
     private final AssessmentMarkRepository assessmentMarkRepo;
     private final StudentRepository studentRepo;
-
+    @Transactional(readOnly = true)
     public List<AssessmentMarksDto> getMarks(){
         List<AssessmentMarks> assessmentMarks = assessmentMarkRepo.findAll();
         if(CollectionUtils.isEmpty(assessmentMarks)){return List.of();}
@@ -84,7 +84,7 @@ public class AssessmentService {
             assessmentMarkRepo.save(mark);
         }
     }
-
+    @Transactional(readOnly = true)
     public List<AssessmentDto> getAll(){
         List<Assessment> assessment = repo.findAll();
         if (CollectionUtils.isEmpty(assessment)){
@@ -92,7 +92,7 @@ public class AssessmentService {
         }
         return assessment.stream().map(this::convertToDto).toList();
     }
-
+    @Transactional(readOnly = true)
     public AssessmentDto getAssessment(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -175,8 +175,7 @@ public class AssessmentService {
 
         existingAssessment.setName(req.getName());
         existingAssessment.setTerm(req.getTerm());
-        existingAssessment.setMaxScore(req.getMaxScore());
-        existingAssessment.setYear(req.getYear());
+        existingAssessment.setMaxScore(req.getMaxScore() != null ? req.getMaxScore() : 100);        existingAssessment.setYear(req.getYear());
         existingAssessment.setStream(req.getStream());
         existingAssessment.setAssessmentType(req.getAssessmentType());
         existingAssessment.setGrade(grade);
@@ -197,8 +196,7 @@ public class AssessmentService {
         return Assessment.builder()
                 .name(body.getName())
                 .term(body.getTerm())
-                .maxScore(body.getMaxScore())
-                .year(body.getYear())
+                .maxScore(body.getMaxScore() != null ? body.getMaxScore() : 100)                .year(body.getYear())
                 .stream(body.getStream())
                 .assessmentType(body.getAssessmentType())
                 .grade(grade)

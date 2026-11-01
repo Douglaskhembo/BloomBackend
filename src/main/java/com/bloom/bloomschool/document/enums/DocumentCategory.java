@@ -1,4 +1,4 @@
-package com.bloom.bloomschool.student.enums;
+package com.bloom.bloomschool.document.enums;
 
 public enum DocumentCategory {
     STUDENT,

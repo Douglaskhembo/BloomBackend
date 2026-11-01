@@ -15,7 +15,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "bloom_school_assessment")
+@Table(name = "bloom_school_assessment"
+,uniqueConstraints = @UniqueConstraint(columnNames = {"name","term","year","subject_id","grade_id"}))
 public class Assessment {
 
     @Id
@@ -23,13 +24,10 @@ public class Assessment {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID uuid;
 
-    @Column(unique = true)
     private String name;
-    @Column(unique = true)
     private String term;
-
+    @Builder.Default
     private int maxScore = 100;
-    @Column(unique = true)
     private int year;
 
     private String stream;
@@ -38,11 +36,11 @@ public class Assessment {
     private AssessmentType assessmentType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "grade_id", unique = true)
+    @JoinColumn(name = "grade_id")
     private GradeEntity grade;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", unique = true)
+    @JoinColumn(name = "subject_id")
     private SubjectEntity subject;
 
     @ManyToOne(fetch = FetchType.LAZY)

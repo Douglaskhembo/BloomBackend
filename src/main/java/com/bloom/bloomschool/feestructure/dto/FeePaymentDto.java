@@ -36,4 +36,5 @@ public class FeePaymentDto {
     private StudentRequestDTO studentRequestDTO;
     private UUID studentUuid;
     private String studentName;
+    private UUID admissionUuid;
 }

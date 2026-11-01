@@ -1,8 +1,7 @@
-package com.bloom.bloomschool.student.entity;
+package com.bloom.bloomschool.document.entity;
 
 
-import com.bloom.bloomschool.student.enums.DocumentCategory;
-import com.bloom.bloomschool.student.enums.OwnerType;
+import com.bloom.bloomschool.document.enums.DocumentCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,12 +27,10 @@ public class DocumentType {
 
     private boolean mandatory;
 
-    private boolean active;
+    @Builder.Default
+    private boolean active = true;
 
     @Enumerated(EnumType.STRING)
     private DocumentCategory documentCategory;
-
-    @Enumerated(EnumType.STRING)
-    private OwnerType ownerType;
 
 }

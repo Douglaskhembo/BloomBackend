@@ -48,7 +48,9 @@ public class AdmissionsController {
     }
 
     @PatchMapping("/updateAdmissionStatus/{uuid}")
-    public ResponseEntity<?> updateAdmissionStatus(@PathVariable UUID uuid, @RequestBody ApplicationStage stage, @RequestBody LocalDate joinDate){
+    public ResponseEntity<?> updateAdmissionStatus(@PathVariable UUID uuid,
+                                                   @RequestParam ApplicationStage stage,
+                                                   @RequestParam(required = false) LocalDate joinDate){
         service.updateAdmissionStage(uuid, stage, joinDate);
         return new ResponseEntity<>(HttpStatus.OK);
     }

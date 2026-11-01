@@ -1,7 +1,7 @@
-package com.bloom.bloomschool.student.controller;
+package com.bloom.bloomschool.document.controller;
 
-import com.bloom.bloomschool.student.dto.DocumentTypeDto;
-import com.bloom.bloomschool.student.service.DocumentTypeService;
+import com.bloom.bloomschool.document.dto.DocumentTypeDto;
+import com.bloom.bloomschool.document.service.DocumentTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

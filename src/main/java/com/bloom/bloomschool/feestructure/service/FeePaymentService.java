@@ -8,7 +8,9 @@ import com.bloom.bloomschool.feestructure.enumerations.FeeVerificationStatus;
 import com.bloom.bloomschool.feestructure.repository.FeePaymentRepository;
 import com.bloom.bloomschool.setup.service.ServiceGenerator;
 import com.bloom.bloomschool.student.dto.StudentRequestDTO;
+import com.bloom.bloomschool.student.entity.Admissions;
 import com.bloom.bloomschool.student.entity.Student;
+import com.bloom.bloomschool.student.repository.AdmissionsRepository;
 import com.bloom.bloomschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,7 +27,7 @@ public class FeePaymentService{
     private final FeePaymentRepository repo;
     private final ServiceGenerator serviceGenerator;
     private final StudentRepository studentRepository;
-
+    private final AdmissionsRepository admissionsRepository;
     public List<FeePaymentDto> getAll(){
         List<FeePayment> feePayments = repo.findAllByOrderByPaymentDateDesc();
         return feePayments.stream().map(this::convertToDto).toList();
@@ -79,11 +81,19 @@ public class FeePaymentService{
     }
 
     public void create(FeePaymentDto req){
-        if(req.getStudentUuid() == null){
+        if(req.getStudentUuid() == null && req.getAdmissionUuid() == null){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fee payment must be attached to a student");
         }
-        Student student = studentRepository.findByUuid(req.getStudentUuid())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+        Student student = null;
+        if (req.getStudentUuid() != null) {
+            student = studentRepository.findByUuid(req.getStudentUuid())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+        }
+        Admissions admission = null;
+        if (req.getAdmissionUuid() != null) {
+            admission = admissionsRepository.findByUuid(req.getAdmissionUuid())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admission not found"));
+        }
 
         boolean isCash = req.getPaymentMethod() == FeePaymentMethod.CASH;
         String reference;
@@ -118,6 +128,7 @@ public class FeePaymentService{
                 .student(student)
                 .receiptNo(serviceGenerator.generateReference("RCPT"))
                 .amount(req.getAmount())
+                .admissions(admission)
                 .build();
 
         repo.save(feePayment);

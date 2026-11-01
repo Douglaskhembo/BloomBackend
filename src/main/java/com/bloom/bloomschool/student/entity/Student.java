@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.student.entity;
 
+import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.student.enums.StudentStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -64,5 +65,10 @@ public class Student {
                 this.updatedAt = LocalDateTime.now();
         }
 
+        @ManyToOne
+        @JoinColumn(name = "bloom_student_grade")
+        private GradeEntity gradeEntity;
+
+        private String stream;
 
 }

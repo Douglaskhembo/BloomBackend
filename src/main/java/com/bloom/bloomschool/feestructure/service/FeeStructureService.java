@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -87,7 +88,7 @@ public class FeeStructureService {
                 .comment(body.getComment())
                 .rejectReason(body.getRejectReason())
                 .feeStructureLines(body.getFeeStructureLines())
-                .baseline(body.getFeeStructureLines())
+                .baseline(new ArrayList<>(body.getFeeStructureLines()))
                 .build();
     }
 

@@ -1,13 +1,13 @@
-package com.bloom.bloomschool.student.service;
+package com.bloom.bloomschool.document.service;
 
 
 import com.bloom.bloomschool.staff.repository.StaffRepository;
-import com.bloom.bloomschool.student.dto.DocumentTypeDto;
-import com.bloom.bloomschool.student.entity.DocumentType;
-import com.bloom.bloomschool.student.enums.DocumentCategory;
-import com.bloom.bloomschool.student.enums.OwnerType;
+import com.bloom.bloomschool.document.dto.DocumentTypeDto;
+import com.bloom.bloomschool.document.entity.DocumentType;
+import com.bloom.bloomschool.document.enums.DocumentCategory;
+import com.bloom.bloomschool.document.enums.OwnerType;
 import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
-import com.bloom.bloomschool.student.repository.DocumentTypeRepository;
+import com.bloom.bloomschool.document.repository.DocumentTypeRepository;
 import com.bloom.bloomschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,12 +38,12 @@ public class DocumentTypeService {
     }
     private DocumentTypeDto convertToDto(DocumentType body){
         return DocumentTypeDto.builder()
+                .uuid(body.getUuid())
                 .name(body.getName())
                 .description(body.getDescription())
                 .mandatory(body.isMandatory())
                 .active(body.isActive())
                 .documentCategory(body.getDocumentCategory())
-                .ownerType(body.getOwnerType())
                 .build();
     }
 
@@ -57,7 +57,6 @@ public class DocumentTypeService {
                 .mandatory(req.isMandatory())
                 .active(req.isActive())
                 .documentCategory(req.getDocumentCategory())
-                .ownerType(req.getOwnerType())
                 .build());
         return convertToDto(documentType);
     }
@@ -70,7 +69,6 @@ public class DocumentTypeService {
         existingDocument.setName(req.getName());
         existingDocument.setDescription(req.getDescription());
         existingDocument.setMandatory(req.isMandatory());
-        existingDocument.setOwnerType(req.getOwnerType());
         DocumentType documentType=  repo.save(existingDocument);
         return convertToDto(documentType);
     }
@@ -90,16 +88,7 @@ public class DocumentTypeService {
         repo.delete(existingDocument);
     }
 
-    public List<DocumentType> getMandatory(OwnerType ownerType, UUID ownerUuid){
-        DocumentCategory category = ownerType == OwnerType.STAFF ? DocumentCategory.STAFF : DocumentCategory.STUDENT;
-        List<DocumentType> mandatory = repo.getMandatory(category);
-
-        Set<UUID> providedDocuments = ownerType == OwnerType.STAFF ?
-                new HashSet<>(staffRepo.getDocumentUuids(ownerUuid))
-                : new HashSet<>(studentRepo.getDocumentUuids(ownerUuid));
-
-        return mandatory.stream()
-                .filter(dt -> !providedDocuments.contains(dt.getUuid()))
-                .collect(Collectors.toList());
+    public List<DocumentType> getMandatory(DocumentCategory category){
+        return repo.getMandatory(category);
     }
 }

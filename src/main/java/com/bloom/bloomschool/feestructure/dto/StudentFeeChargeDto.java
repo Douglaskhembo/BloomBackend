@@ -31,9 +31,9 @@ public class StudentFeeChargeDto {
     private double amount;
     private LocalDate dueDate;
     private LocalDateTime generatedAt;
-    private FeeStructureEntity feeStructureEntity;
-    private Student student;
-    private FeeItemEntity feeItemEntities;
+    private UUID feeStructureUuid;
+    private UUID studentUuid;
+    private UUID feeItemUuid;
     private FeeStructureDto feeStructureDto;
     private StudentRequestDTO studentRequestDTO;
     private FeeItemDto feeItemDto;

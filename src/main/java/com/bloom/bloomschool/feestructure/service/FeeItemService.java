@@ -69,9 +69,22 @@ public class FeeItemService {
                 .build();
     }
 
+    private Set<GradeEntity> resolveGrades(List<UUID> uuids){
+        if (uuids == null || uuids.isEmpty()) return new HashSet<>();
+
+        List<UUID> distinct = uuids.stream().distinct().toList();
+        List<GradeEntity> found = gradeRepo.findAllByUuidIn(distinct);
+
+        if (found.size() != distinct.size()) {
+            Set<UUID> foundIds = found.stream().map(GradeEntity::getUuid).collect(Collectors.toSet());
+            List<UUID> missing = distinct.stream().filter(id -> !foundIds.contains(id)).toList();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Grade(s) not found: " + missing);
+        }
+        return new HashSet<>(found);
+    }
     @Transactional
     public void createFeeItem(FeeItemDto body){
-        Set<GradeEntity> gradeEntity =new HashSet<>(gradeRepo.findAllByUuidIn(body.getGradeUuids()));
+        Set<GradeEntity> gradeEntity =resolveGrades(body.getGradeUuids());
 
         if (repo.existsByName(body.getName())) {
             throw new RuntimeException("A fee item with this name already exists");
@@ -101,7 +114,7 @@ public class FeeItemService {
             throw new RuntimeException("A fee item with this name already exists");
         }
 
-        Set<GradeEntity> gradeEntity =new HashSet<>(gradeRepo.findAllByUuidIn(body.getGradeUuids()));
+        Set<GradeEntity> gradeEntity =resolveGrades(body.getGradeUuids());
 
         existingFeeItem.setName(body.getName());
         existingFeeItem.setDescription(body.getDescription());

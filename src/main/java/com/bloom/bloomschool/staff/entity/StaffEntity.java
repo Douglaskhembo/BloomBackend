@@ -45,8 +45,7 @@ public class StaffEntity {
     @Enumerated(EnumType.STRING)
     @Column()
     private EmploymentType employmentType;
-
-    @Column()
+    @Builder.Default
     private Boolean isActive = true;
 
     @ManyToMany
@@ -55,15 +54,7 @@ public class StaffEntity {
             joinColumns = @JoinColumn(name = "staff_uuid"),
             inverseJoinColumns = @JoinColumn(name = "subject_uuid")
     )
+    @Builder.Default
     private List<SubjectEntity> subjects = new ArrayList<>();
-
-//Keep??
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "bloom_staff_documents",
-            joinColumns = @JoinColumn(name = "staff_uuid")
-    )
-    @Column(name = "document_type_uuid", nullable = false)
-    private Set<UUID> providedDocumentTypeUuids = new HashSet<>();
 
 }

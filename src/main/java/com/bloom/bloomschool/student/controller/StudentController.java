@@ -30,13 +30,6 @@ public class StudentController {
         return ResponseEntity.ok(studentService.getStudentByUuid(uuid));
     }
 
-    // Create a student
-//    @PostMapping
-//    public ResponseEntity<?> createStudent(@RequestBody StudentRequestDTO request) {
-//        studentService.createStudent(request);
-//        return new ResponseEntity<>(HttpStatus.CREATED);
-//    }
-
     // Update student data
     @PutMapping("/{uuid}")
     public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody StudentRequestDTO req) {

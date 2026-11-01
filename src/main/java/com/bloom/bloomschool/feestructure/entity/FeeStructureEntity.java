@@ -14,20 +14,21 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "bloom_school_fee_Structure")
+@Table(name = "bloom_school_fee_Structure",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"academic_year","grade","term"}))
 public class FeeStructureEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, unique = true, updatable = false)
     private UUID uuid;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private int academicYear;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String grade;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String term;
 
     @Enumerated(EnumType.STRING)
