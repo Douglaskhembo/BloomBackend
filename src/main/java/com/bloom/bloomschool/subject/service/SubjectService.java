@@ -89,6 +89,7 @@ public class SubjectService {
         return new ArrayList<>(found);
     }
 
+
     @Transactional
     public void update(UUID uuid, SubjectDto req){
         SubjectEntity existingSubject = repo.findByUuid(uuid)

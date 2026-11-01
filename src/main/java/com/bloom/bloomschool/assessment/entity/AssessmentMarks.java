@@ -24,10 +24,10 @@ public class AssessmentMarks{
     private Double score;
 
     @ManyToOne
-    @JoinColumn(name = "assessment_id", unique = true)
+    @JoinColumn(name = "assessment_id")
     private Assessment assessment;
 
     @ManyToOne
-    @JoinColumn(name = "student_id", unique = true)
+    @JoinColumn(name = "student_id")
     private Student student;
 }

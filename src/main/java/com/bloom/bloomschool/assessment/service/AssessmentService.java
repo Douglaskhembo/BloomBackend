@@ -60,7 +60,6 @@ public class AssessmentService {
                 .build();
     }
 
-    //Save marks, get marks.
 
     @Transactional
     public void saveMarks(UUID assesmentUuid, MarkEntryRequestDto req){

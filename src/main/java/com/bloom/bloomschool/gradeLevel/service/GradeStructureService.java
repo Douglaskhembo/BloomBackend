@@ -99,8 +99,6 @@ public class GradeStructureService {
                 .map(this::convertToGradeEntity)
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        List<GradingEntry> gradingEntries = req.getGradingEntries().stream()
-                .map(this::convertToGradeEntity).toList();
         existingGradeStructure.setGrade(req.getGrade());
         existingGradeStructure.getGradingEntries().clear();
         existingGradeStructure.getGradingEntries().addAll(entries);
