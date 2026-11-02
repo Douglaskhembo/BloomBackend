@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.users.entity;
 
+import com.bloom.bloomschool.staff.entity.StaffEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,11 +26,6 @@ public class User {
     @Column(unique = true, nullable = false, updatable = false)
     private UUID uuid;
 
-    @PrePersist
-    public void generateUuid(){
-        if (uuid == null) uuid = UUID.randomUUID();
-    }
-
     @Column(unique = true, nullable = false)
     private String username;
 
@@ -49,19 +45,25 @@ public class User {
 
     private String sessionToken;
 
-    @Builder.Default
-    private Boolean active = false;
+    private String profileRef;
+
+    @OneToOne
+    @JoinColumn(name = "staff_id")
+    private StaffEntity staff;
 
     @Builder.Default
-    private Boolean firstLogin = true;
+    private boolean active = false;
 
     @Builder.Default
-    private Boolean accountLocked = false;
+    private boolean firstLogin = true;
+
+    @Builder.Default
+    private boolean accountLocked = false;
 
     @Builder.Default
     private Integer failedLoginAttempts = 0;
 
-    private Boolean enable2FA;
+    private boolean enable2FA;
 
     @Column(nullable = false)
     private LocalDateTime passwordExpiry;
@@ -75,5 +77,15 @@ public class User {
     )
     @Builder.Default
     private Set<Roles> roles = new HashSet<>();
+
+    @PrePersist
+    public void prePersist() {
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID();
+        }
+        if (this.passwordExpiry == null) {
+            this.passwordExpiry = LocalDateTime.now().plusDays(90);
+        }
+    }
 
 }

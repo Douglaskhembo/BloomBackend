@@ -28,6 +28,8 @@ public class UserRequestDTO {
 
     private String phoneNumber;
 
+    private String profileRef;
+
     private UUID staffUuid;
 
     private Boolean enable2FA;

@@ -1,7 +1,9 @@
 package com.bloom.bloomschool.users.controller;
 
-import com.bloom.bloomschool.users.dto.UserRequestDTO;
-import com.bloom.bloomschool.users.dto.UserResponseDTO;
+import com.bloom.bloomschool.auth.dto.PermissionsBean;
+import com.bloom.bloomschool.auth.utils.ApiResponse;
+import com.bloom.bloomschool.auth.utils.GenericResponse;
+import com.bloom.bloomschool.users.dto.*;
 import com.bloom.bloomschool.users.service.UserService;
 import lombok.*;
 import org.springframework.http.ResponseEntity;
@@ -10,16 +12,19 @@ import org.springframework.http.HttpStatus;
 
 import java.util.UUID;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/users")
 public class UserController {
     private final UserService userService;
+    private final GenericResponse genericResponse;
 
     // Get All Users
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> getUsers(){
+
         return ResponseEntity.ok(userService.getUsers());
     }
 
@@ -39,6 +44,13 @@ public class UserController {
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody UserRequestDTO req){
         userService.createUser(req);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    //Onboard Staff
+    @PostMapping("/onboard-staff")
+    public ResponseEntity<?> onboardStaff(@RequestBody UserRequestDTO req){
+        userService.onboardStaff(req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -62,19 +74,41 @@ public class UserController {
         userService.toggle2FA(uuid);
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
+    @GetMapping("/{uuid}/effective-permissions")
+    public ResponseEntity<ApiResponse<Object>> effectivePermissions(@PathVariable UUID uuid){
 
-    //Assign permission to a user
-    @PostMapping("/{userUuid}/permissions/{permissionUuid}")
-    public ResponseEntity<?> assignPermissionToUser(@PathVariable UUID userUuid, @PathVariable UUID permissionUuid, @RequestParam String overrideType){
-        userService.assignPermissionToUser(userUuid,permissionUuid,overrideType);
-        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+        return genericResponse.response(userService.getEffectiveUserPermissions(uuid),HttpStatus.OK);
+    }
+    @PostMapping("/grant-permission")
+    public ResponseEntity<ApiResponse<Object>> grantPermission(@RequestBody PermissionsBean permBean){
+        userService.grantUserPermission(permBean);
+        return genericResponse.response(null, HttpStatus.OK);
     }
 
-    //Delete permission
-    @DeleteMapping("/{userUuid}/permissions/{permissionUuid}")
-    public ResponseEntity<?> removePermissionFromUser(@PathVariable UUID userUuid, @PathVariable UUID permissionUuid) {
-        userService.removePermissionFromUser(userUuid, permissionUuid);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/revoke-permission")
+    public ResponseEntity<ApiResponse<Object>> revokePermission(@RequestBody PermissionsBean permBean){
+        userService.revokeUserPermission(permBean);
+        return genericResponse.response(null, HttpStatus.OK);
+    }
+    //Assign Role
+    @PostMapping("/assign-role")
+    public ResponseEntity<ApiResponse<Object>> assignRole(@RequestBody UserRolesRequestDTO req){
+        userService.assignRolesToUser(req);
+        return genericResponse.response(null, HttpStatus.OK);
+    }
+
+    //UnAssign Role
+    @DeleteMapping("/unassign-role")
+    public ResponseEntity<ApiResponse<Object>> unassignRole(@RequestBody UserRolesRequestDTO req){
+        userService.unAssignRoleFromUser(req);
+        return genericResponse.response(null, HttpStatus.OK);
+    }
+
+    //Assign Role to a module
+    @PostMapping("/modules/assign-role")
+    public ResponseEntity<ApiResponse<Object>> assignRoleToModule(@RequestBody ModuleRoleRequestDTO req){
+        userService.mapRolesToModule(req);
+        return genericResponse.response(null, HttpStatus.OK);
     }
 
     // Delete User

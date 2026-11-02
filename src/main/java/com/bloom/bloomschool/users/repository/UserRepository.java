@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.users.repository;
 
+import com.bloom.bloomschool.staff.entity.StaffEntity;
 import com.bloom.bloomschool.users.entity.User;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +23,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsernameAndEmail(String username, String email);
 
     boolean existsByEmail(String email);
+
+    boolean existsByProfileRef(String profileRef);
+
+    boolean existsByStaff(StaffEntity staff);
+
+
 }

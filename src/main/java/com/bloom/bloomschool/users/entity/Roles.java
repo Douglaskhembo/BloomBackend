@@ -33,10 +33,10 @@ public class Roles {
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
-            name = "bloom_roles_permission",
+            name = "bloom_roles_module",
             joinColumns = @JoinColumn(name = "roles_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
+            inverseJoinColumns = @JoinColumn(name = "modules_id")
     )
     @Builder.Default
-    private Set<Permissions> permission = new HashSet<>();
+    private Set<Modules> modules = new HashSet<>();
 }

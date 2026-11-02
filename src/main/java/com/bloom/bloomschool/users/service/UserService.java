@@ -1,29 +1,22 @@
 package com.bloom.bloomschool.users.service;
 
-import com.bloom.bloomschool.users.entity.Permissions;
-import com.bloom.bloomschool.users.entity.Roles;
-import com.bloom.bloomschool.users.entity.User;
-import com.bloom.bloomschool.users.dto.UserResponseDTO;
-import com.bloom.bloomschool.users.dto.UserRequestDTO;
-import com.bloom.bloomschool.users.dto.RolesResponseDTO;
-import com.bloom.bloomschool.users.entity.UserPermissions;
-import com.bloom.bloomschool.users.repository.PermissionsRepository;
-import com.bloom.bloomschool.users.repository.RoleRepository;
-import com.bloom.bloomschool.users.repository.UserPermissionsRepository;
-import com.bloom.bloomschool.users.repository.UserRepository;
-import com.bloom.bloomschool.auth.dto.RegisterRequestDTO;
+import com.bloom.bloomschool.auth.dto.PermissionsBean;
+import com.bloom.bloomschool.staff.entity.StaffEntity;
+import com.bloom.bloomschool.staff.repository.StaffRepository;
+import com.bloom.bloomschool.users.dto.*;
+import com.bloom.bloomschool.users.entity.*;
+import com.bloom.bloomschool.users.repository.*;
 import com.bloom.bloomschool.student.exceptions.BadRequestException;
 import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityExistsException;
+
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +28,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserPermissionsRepository userPermRepo;
     private final PermissionsRepository permRepo;
+    private final StaffRepository staffRepo;
+    private final ModulesRepository modulesRepo;
 
     private User findEntity(UUID uuid){
         return userRepo.findByUuid(uuid)
@@ -65,10 +60,10 @@ public class UserService {
     @Transactional
     public void createUser(UserRequestDTO req){
         if (userRepo.existsByUsername(req.getUsername())) {
-            throw new RuntimeException("User Already Exists!!");
+            throw new RuntimeException("Username Already Taken!");
         }
         if(userRepo.existsByEmail(req.getEmail())){
-            throw new RuntimeException("Email already registered");
+            throw new RuntimeException("Email Already Taken!");
         }
         Set<Roles> roles = roleHelper(req.getRoleUuids());
 
@@ -83,7 +78,7 @@ public class UserService {
                 .active(false)
                 .firstLogin(true)
                 .enable2FA(req.getEnable2FA() != null ? req.getEnable2FA() : false)
-                .password(tempPassword)
+                .password(passwordEncoder.encode(tempPassword))
                 .passwordExpiry(LocalDateTime.now().plusHours(24))
                 .roles(roles)
                 .build());
@@ -94,44 +89,72 @@ public class UserService {
         if (uuids == null || uuids.isEmpty()) return new HashSet<>();
         return uuids.stream()
                 .map(u -> roleRepo.findByUuid(u)
-                        .orElseThrow(() -> new ResourceNotFoundException("uuid does not exist")))
+                        .orElseThrow(() -> new ResourceNotFoundException("Role does not exist")))
                 .collect(Collectors.toSet());
     }
 
     private void seedInheritedPermissions(User user, Set<Roles> roles){
         for (Roles role : roles){
-            for(Permissions permission : role.getPermission()){
-                if(userPermRepo.findByUserIdAndPermissionId(user.getUserId(), permission.getPermissionsId()) == null){
-                    userPermRepo.save(UserPermissions.builder()
-                                    .user(user)
-                                    .permission(permission)
-                                    .overrideType(null)
-                            .build());
+            if (role.getModules() != null ){
+                for (Modules module :role.getModules()){
+                    if (module.getPermissions() != null){
+                        for(Permissions permission : module.getPermissions()){
+                            if(userPermRepo.findByUserIdAndPermissionId(user.getUserId(), permission.getPermissionsId()) == null){
+                                userPermRepo.save(UserPermissions.builder()
+                                        .user(user)
+                                        .permission(permission)
+                                        .overrideType(null)
+                                        .build());
+                            }
+                        }
+                    }
                 }
             }
+
         }
 
     }
 
     @Transactional
-    public void registerUser(RegisterRequestDTO request) {
-        if (userRepo.existsByUsername(request.getUsername())) {
-            throw new BadRequestException("Username already exists");
+    public void onboardStaff(UserRequestDTO req) {
+
+        StaffEntity staff = staffRepo.findByUuid(req.getStaffUuid())
+                  .orElseThrow(() -> new ResourceNotFoundException("Staff member not found!"));
+
+        String staffRef = req.getStaffUuid().toString();
+
+        if (userRepo.existsByProfileRef(staffRef)){
+            throw new EntityExistsException("User account Already exists for this staff");
         }
 
-        User user = User.builder()
-                .username(request.getUsername())
-                .otherNames(request.getOtherNames())
-                .email(request.getEmail())
-                .phoneNumber(request.getPhoneNumber())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .active(true)
-                .accountLocked(false)
-                .firstLogin(false)
-                .enable2FA(false)
-                .build();
+        if (userRepo.existsByUsername(req.getUsername())) {
+            throw new BadRequestException("Username Already Taken!");
+        }
 
-        userRepo.save(user);
+        if (userRepo.existsByEmail(req.getEmail())) {
+            throw new BadRequestException("User account already exists for this staff's member email!");
+        }
+
+        Set<Roles> roles = roleHelper(req.getRoleUuids());
+        String tempPassword = UUID.randomUUID().toString().substring(0, 10);
+
+        User user = userRepo.save(User.builder()
+                .username(req.getUsername())
+                .otherNames(req.getOtherNames())
+                .firstName(req.getFirstName())
+                .email(req.getEmail())
+                .phoneNumber(req.getPhoneNumber())
+                .staff(staff)
+                .profileRef(staffRef)
+                .active(false)
+                .firstLogin(true)
+                .enable2FA(req.getEnable2FA())
+                .password(passwordEncoder.encode(tempPassword))
+                .passwordExpiry(LocalDateTime.now().plusHours(24))
+                .roles(roles)
+                .build());
+
+        seedInheritedPermissions(user, roles);
     }
 
     // Update User
@@ -156,10 +179,18 @@ public class UserService {
         if (request.getFirstName() != null) u.setFirstName(request.getFirstName());
         if (request.getPhoneNumber() != null) u.setPhoneNumber(request.getPhoneNumber());
 
+        StaffEntity staff = staffRepo.findByUuid(request.getStaffUuid())
+                .orElseThrow(()-> new ResourceNotFoundException("Staff not found!"));
+        String staffRef = request.getStaffUuid().toString();
+        if (userRepo.existsByProfileRef(staffRef) && !staffRef.equals(request.getProfileRef())){
+            throw new BadRequestException("User account already exists for this staff member");
+        }
+        u.setStaff(staff);
+        u.setProfileRef(staffRef);
+
         if (request.getRoleUuids() != null){
             Set<Roles> newRoles = roleHelper(request.getRoleUuids());
             u.setRoles(newRoles);
-            seedInheritedPermissions(u, newRoles);
         }
 
         userRepo.save(u);
@@ -168,58 +199,23 @@ public class UserService {
     // Toggle Status
     @Transactional
     public void toggleUserActive(UUID uuid) {
-        User u = findEntity(uuid);
-        boolean currentActive = Boolean.TRUE.equals(u.getActive());
-        u.setActive(!currentActive);
+        User u = userRepo.findByUuid(uuid)
+                .orElseThrow(()-> new BadRequestException("Entity not found"));
+        u.setActive(!u.isActive());
+
         userRepo.save(u);
     }
 
     //Toggle 2FA
     @Transactional
     public void toggle2FA(UUID uuid){
-        User u = findEntity(uuid);
-        boolean enable2FA = Boolean.TRUE.equals(u.getEnable2FA());
-        u.setEnable2FA(!enable2FA);
-        userRepo.save(u);
+
+        User u = userRepo.findByUuid(uuid)
+                .orElseThrow(()-> new BadRequestException("Entity not found"));
+
+       u.setEnable2FA(!u.isEnable2FA());
+       userRepo.save(u);
     }
-
-    //Assign or update permission to a user
-    @Transactional
-    public void assignPermissionToUser(UUID userUuid, UUID permissionUuid, String overrideType){
-        User u = findEntity(userUuid);
-
-        Permissions p = permRepo.findByUuid(permissionUuid)
-                .orElseThrow(()-> new ResourceNotFoundException("Permission Does Not Exist"));
-
-        if(!"ALLOW".equalsIgnoreCase(overrideType) && !"DENY".equalsIgnoreCase(overrideType)){
-            throw new BadRequestException("OverrideType must be ALLOW or DENY");
-        }
-
-        UserPermissions up = userPermRepo.findByUserAndPermission(u, p)
-                .orElse(UserPermissions.builder()
-                        .user(u)
-                        .permission(p)
-                        .build());
-        up.setOverrideType(overrideType.toUpperCase());
-        userPermRepo.save(up);
-
-    }
-
-    //Remove Permission from user
-    @Transactional
-    public void removePermissionFromUser(UUID userUuid, UUID permissionUuid){
-        User u = findEntity(userUuid);
-
-        Permissions p = permRepo.findByUuid(permissionUuid)
-                .orElseThrow(()-> new ResourceNotFoundException("Permissions Do Not exist"));
-
-        UserPermissions up = userPermRepo.findByUserAndPermission(u, p)
-                .orElseThrow(()-> new ResourceNotFoundException("User Permission Not Found!"));
-
-        userPermRepo.delete(up);
-
-    }
-
 
     // Delete User
     @Transactional
@@ -237,11 +233,11 @@ public class UserService {
                 .email(u.getEmail())
                 .phoneNumber(u.getPhoneNumber())
                 .sessionToken(u.getSessionToken())
-                .active(u.getActive())
-                .firstLogin(u.getFirstLogin())
-                .accountLocked(u.getAccountLocked())
+                .active(u.isActive())
+                .firstLogin(u.isFirstLogin())
+                .accountLocked(u.isAccountLocked())
                 .failedLoginAttempts(u.getFailedLoginAttempts())
-                .enable2FA(u.getEnable2FA())
+                .enable2FA(u.isEnable2FA())
                 .passwordExpiry(u.getPasswordExpiry())
                 .roles(mapRolesToDTO(u.getRoles()))
                 .build();
@@ -258,5 +254,159 @@ public class UserService {
                     .build());
         }
         return roleResponseDTOs;
+    }
+
+    public List<PermissionsBean>  getEffectiveUserPermissions(UUID uuid) {
+        User user = userRepo.findByUuid(uuid)
+                .orElseThrow(()-> new ResourceNotFoundException("User does not exist"));
+        List<PermissionsBean> permList = new ArrayList<>();
+
+        List<Object[]> permObj =  userPermRepo.findByUserPermissions(user.getUserId());
+        for(Object[] obj: permObj){
+            PermissionsBean pBean = new PermissionsBean();
+            pBean.setPermissionUuid(obj[0] != null ? (UUID) obj[0] : null);
+            pBean.setName((String) obj[1]);
+            pBean.setPermissionDescription((String) obj[2]);
+            pBean.setAccessType((String) obj[3]);
+            pBean.setModuleUuid(obj[4] != null ? (UUID) obj[4] : null);
+            pBean.setOverrideType(obj[5] == null ? "INHERITED" :(String) obj[5]);
+            permList.add(pBean);
+        }
+        return permList;
+    }
+//Grant permission
+    @Transactional
+    public void grantUserPermission(PermissionsBean permBean) {
+        if(permBean.getUserUuid() == null) throw new IllegalArgumentException("User uuid is required!");
+        if (permBean.getPermissionUuids() == null) throw new IllegalArgumentException("Permission  uuid is required!");
+        User user = userRepo.findByUuid(permBean.getUserUuid())
+                .orElseThrow(()-> new ResourceNotFoundException("User does not exist"));
+        for(UUID permUuid :permBean.getPermissionUuids()){
+            Permissions perm = permRepo.findByUuid(permUuid)
+                    .orElseThrow(()-> new ResourceNotFoundException("Permission not found: "+ permUuid));
+            UserPermissions uPerm = userPermRepo.findByUserIdAndPermissionId(user.getUserId(), perm.getPermissionsId());
+            if(uPerm != null){
+                if ("GRANT".equalsIgnoreCase(uPerm.getOverrideType())) continue;
+                uPerm.setOverrideType("GRANT");
+            } else{
+                uPerm = UserPermissions.builder()
+                        .user(user)
+                        .permission(perm)
+                        .overrideType("GRANT")
+                        .build();
+            }
+            userPermRepo.save(uPerm);
+        }
+    }
+
+    @Transactional
+    public void revokeUserPermission(PermissionsBean permBean) {
+        if (permBean.getUserUuid() == null) throw new IllegalArgumentException("User uuid is required!");
+        if (permBean.getPermissionUuid() == null) throw new IllegalArgumentException("Permission uuid is required!");
+
+        User user = userRepo.findByUuid(permBean.getUserUuid())
+                .orElseThrow(() -> new ResourceNotFoundException("User does not exist!"));
+
+        Permissions perm = permRepo.findByUuid(permBean.getPermissionUuid())
+                .orElseThrow(() -> new ResourceNotFoundException("Permission does not exist!"));
+
+        UserPermissions uPerm = userPermRepo.findByUserIdAndPermissionId(user.getUserId(), perm.getPermissionsId());
+
+        if (uPerm != null) {
+            uPerm.setOverrideType("REVOKE");
+        } else {
+            uPerm = UserPermissions.builder()
+                    .user(user)
+                    .permission(perm)
+                    .overrideType("REVOKE")
+                    .build();
+        }
+
+        userPermRepo.save(uPerm);
+    }
+
+    @Transactional
+    public void assignRolesToUser(UserRolesRequestDTO req){
+        if (req.getRoleUuids() == null || req.getRoleUuids().isEmpty()){
+            throw new IllegalArgumentException("At least role uuid must be provided");
+        }
+        if (req.getUserUuid() == null){
+            throw new IllegalArgumentException("At least a user uuid must be supplied");
+        }
+
+        User user = userRepo.findByUuid(req.getUserUuid())
+                .orElseThrow(()-> new ResourceNotFoundException("User does not exist!"));
+
+        Set<Roles> incomingRoles = roleHelper(req.getRoleUuids());
+
+        Set<Roles> newRoles = incomingRoles.stream()
+                .filter(role -> !user.getRoles().contains(role))
+                .collect(Collectors.toSet());
+
+        if (!newRoles.isEmpty()){
+            user.getRoles().addAll(newRoles);
+        }
+        userRepo.save(user);
+
+        seedInheritedPermissions(user, incomingRoles);
+    }
+
+    @Transactional
+    public void unAssignRoleFromUser(UserRolesRequestDTO req){
+        if (req.getRoleUuids() == null || req.getRoleUuids().isEmpty()) {
+            throw new IllegalArgumentException("At least a role uuid must be supplied");
+        }
+        if (req.getUserUuid() == null){
+            throw new IllegalArgumentException("At least a user must be provided");
+        }
+
+        User user = userRepo.findByUuid(req.getUserUuid())
+                .orElseThrow(() -> new ResourceNotFoundException("User does not Exist"));
+
+        Set<Roles> rolesToUnAssign = roleHelper(req.getRoleUuids());
+
+        for (Roles role : rolesToUnAssign){
+            if (user.getRoles().contains(role)){
+                user.getRoles().remove(role);
+
+                if (role.getModules() != null) {
+                    for (Modules module : role.getModules()) {
+                        if (module.getPermissions() != null) {
+                            for (Permissions permission : module.getPermissions()){
+                                UserPermissions uPerm = userPermRepo.findByUserIdAndPermissionId(
+                                        user.getUserId(),
+                                        permission.getPermissionsId()
+                                );
+
+                                if (uPerm != null) {
+                                    if (uPerm.getOverrideType() == null) {
+                                        userPermRepo.delete(uPerm);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        userRepo.save(user);
+    }
+
+    public void mapRolesToModule(ModuleRoleRequestDTO req) {
+        if (req.getRoleUuid() == null){
+            throw new IllegalArgumentException("At least a role uuid must be provided");
+        }
+        if (req.getModuleUuids() == null || req.getModuleUuids().isEmpty()){
+            throw new IllegalArgumentException("At least module uuid must be provided");
+        }
+        Roles roles = roleRepo.findByUuid(req.getRoleUuid())
+                .orElseThrow(()-> new ResourceNotFoundException("Role does not exist"));
+
+        for (UUID moduleUuid :req.getModuleUuids()){
+            Modules module = modulesRepo.findByUuid(moduleUuid)
+                    .orElseThrow(()-> new ResourceNotFoundException("Module does not Exist"));
+            roles.getModules().add(module);
+        }
+        roleRepo.save(roles);
     }
 }

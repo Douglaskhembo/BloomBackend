@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public interface UserPermissionsRepository extends JpaRepository<UserPermissions, Long> {
@@ -23,4 +24,12 @@ public interface UserPermissionsRepository extends JpaRepository<UserPermissions
             @Param("userId") Long userId,
             @Param("permissionsId") Long permissionsId
     );
+    @Query(value = """
+            select ps.uuid, ps.name, ps.description, ps.access_type, ms.uuid, up.override_type
+            from bloom_school_user_permissions up
+            left join bloom_school_permissions as ps on up.permission_id = ps.permissions_id
+            left join bloom_school_modules as ms on ps.module_id = ms.modules_id
+            where up.user_id = :userId
+    """, nativeQuery = true)
+    List<Object[]> findByUserPermissions(@Param("userId") Long userId);
 }

@@ -51,7 +51,7 @@ public class RolesService {
     @Transactional
     public void createRole(RolesRequestDTO req) {
         if (roleRepo.existsByName(req.getName())) {
-            throw new BadRequestException("Role Does Not Exist!");
+            throw new BadRequestException("Role Already Exist!");
         }
         roleRepo.save(Roles.builder()
                 .name(req.getName())
