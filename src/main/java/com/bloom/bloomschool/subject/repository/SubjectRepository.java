@@ -14,4 +14,7 @@ public interface SubjectRepository extends JpaRepository<SubjectEntity, UUID> {
     boolean existsByName(String name);
 
     boolean existsBySubjectCode(String subjectCode);
+
+    boolean existsByNameAndUuidNot(String name, UUID uuid);
+    boolean existsBySubjectCodeAndUuidNot(String subjectCode, UUID uuid);
 }

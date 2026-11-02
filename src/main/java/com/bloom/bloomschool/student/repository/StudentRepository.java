@@ -1,8 +1,10 @@
 package com.bloom.bloomschool.student.repository;
 
 import com.bloom.bloomschool.student.entity.Student;
-import com.bloom.bloomschool.student.entity.StudentStatus;
+import com.bloom.bloomschool.student.enums.StudentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,11 +23,13 @@ public interface StudentRepository extends JpaRepository<Student, Long>{
 
     List<Student> findAll();
 
-    List<Student> findByStatus(StudentStatus status);
+    @Query("SELECT COUNT(st) FROM Student st WHERE st.gradeEntity.uuid = :gradeUuid AND st.stream = :stream AND st.status = :status")
+    int getStreamCapacity(@Param("gradeUuid") UUID gradeUuid,
+                                  @Param("stream") String stream,
+                                  @Param("status") StudentStatus studentStatus);
 
-    boolean existsByAdmissionNumber(String admissionNumber);
-
-    boolean existsByEntryNumber(String entryNumber);
-
+    @Query("SELECT COUNT(st) FROM Student st WHERE st.gradeEntity.uuid = :gradeUuid AND st.status = :status")
+    int getGradeCapacity(@Param("gradeUuid") UUID gradeUuid,
+                                 @Param("status") StudentStatus studentStatus);
     boolean existsByUuid(UUID uuid);
 }

@@ -3,6 +3,11 @@ package com.bloom.bloomschool.gradeLevel.service;
 import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
+import com.bloom.bloomschool.student.enums.ApplicationStage;
+import com.bloom.bloomschool.student.enums.StudentStatus;
+import com.bloom.bloomschool.student.repository.AdmissionsRepository;
+import com.bloom.bloomschool.student.repository.StudentRepository;
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -19,7 +24,10 @@ import java.util.UUID;
 public class GradeService {
 
     private final GradeRepository repo;
+    private final AdmissionsRepository admissionsRepo;
+    private final StudentRepository studentRepo;
 
+    @Transactional(readOnly = true)
     public List<GradeDto> get_all_grades(){
         List<GradeEntity> gradeEntity = repo.findAll();
         if(CollectionUtils.isEmpty(gradeEntity)){
@@ -29,13 +37,15 @@ public class GradeService {
                 .map(this::convertToDto).toList();
     }
 
-    public GradeDto get_grade(UUID uuid) throws BadRequestException{
+    @Transactional(readOnly = true)
+    public GradeDto get_grade(UUID uuid) {
         return  convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new BadRequestException("No grade found")));
+                .orElseThrow(() -> new RuntimeException("No grade found")));
     }
 
     private GradeDto convertToDto(GradeEntity body){
         return GradeDto.builder()
+                .uuid(body.getUuid())
                 .name(body.getName())
                 .displayOrder(body.getDisplayOrder())
                 .capacity(body.getCapacity())
@@ -68,7 +78,7 @@ public class GradeService {
     public void update(UUID uuid, GradeDto req){
         GradeEntity existingGrade = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
-        if(repo.existsByName(req.getName())){
+        if(repo.existsByNameAndUuidNot(req.getName(), uuid)){
             throw new RuntimeException("A grade with this name exists");
         }
         existingGrade.setName(req.getName());
@@ -79,6 +89,7 @@ public class GradeService {
         existingGrade.setStreamCapacity(req.getStreamCapacity());
         existingGrade.setStreams(req.getStreams());
 
+        repo.save(existingGrade);
     }
 
     @Transactional
@@ -94,6 +105,31 @@ public class GradeService {
         GradeEntity existingGrade = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("System error occurred please contact Admin"));
         repo.delete(existingGrade);
+    }
+
+    public void isStreamFull(GradeEntity gradeEntity, String streamName) {
+        if(gradeEntity == null) return;
+
+        Integer capacity = checkCapacity(gradeEntity, streamName);
+        long current = (streamName == null || streamName.isEmpty())
+                ? studentRepo.getGradeCapacity(gradeEntity.getUuid(), StudentStatus.ACTIVE)
+                : studentRepo.getStreamCapacity(gradeEntity.getUuid(), streamName, StudentStatus.ACTIVE);
+
+        if (current >= capacity){
+            throw new RuntimeException("Full capacity");
+        }
+
+    }
+    private Integer checkCapacity(GradeEntity gradeEntity, String streamName){
+        if(gradeEntity.getStreams() <= 1) return gradeEntity.getCapacity();
+
+        List<String> names = gradeEntity.getStreamName();
+        List<Integer> capacities = gradeEntity.getStreamCapacity();
+
+        int capacity = names.indexOf(streamName);
+        if(capacity < 0 || capacity >= capacities.size()) throw new RuntimeException("Invalid stream: " + streamName);
+
+        return capacities.get(capacity);
     }
 
 }

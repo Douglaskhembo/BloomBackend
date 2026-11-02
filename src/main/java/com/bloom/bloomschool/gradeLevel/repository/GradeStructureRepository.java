@@ -13,4 +13,6 @@ public interface GradeStructureRepository extends JpaRepository<GradingStructure
     Optional<GradingStructure> findByUuid(UUID uuid);
 
     boolean existsByGrade(String grade);
+
+    boolean existsByGradeAndUuidNot(String grade, UUID uuid);
 }

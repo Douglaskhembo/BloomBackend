@@ -14,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class SubjectDto {
+    private UUID uuid;
     private String name;
     private String subjectCode;
     private boolean status;
