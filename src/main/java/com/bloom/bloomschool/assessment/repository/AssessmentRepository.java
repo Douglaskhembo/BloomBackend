@@ -11,5 +11,9 @@ import java.util.UUID;
 public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     Optional<Assessment> findByUuid(UUID uuid);
 
-    boolean existsByUuid(UUID assesmentUuid);
+    boolean existsByNameAndTermAndYearAndSubjectUuidAndGradeUuid(
+            String name, String term, int year, UUID subjectUuid, UUID gradeUuid);
+
+    boolean existsByNameAndTermAndYearAndSubjectUuidAndGradeUuidAndUuidNot(
+            String name, String term, int year, UUID subjectUuid, UUID gradeUuid, UUID uuid);
 }

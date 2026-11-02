@@ -4,8 +4,10 @@ import com.bloom.bloomschool.assessment.entity.AssessmentMarks;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface AssessmentMarkRepository extends JpaRepository<AssessmentMarks, UUID > {
+    Optional<AssessmentMarks> findByAssessmentUuidAndStudentUuid(UUID assessmentUuid, UUID studentUuid);
 }

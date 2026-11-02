@@ -12,6 +12,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "bloom_school_assessment_marks",
+uniqueConstraints = @UniqueConstraint(columnNames = {"assessment_id", "student_id"}))
 public class AssessmentMarks{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

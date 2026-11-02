@@ -8,11 +8,14 @@ import com.bloom.bloomschool.subject.entity.SubjectEntity;
 import com.bloom.bloomschool.subject.repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,9 +32,9 @@ public class SubjectService {
         return subjectEntities.stream().map(this::convertToDto).toList();
     }
 
-    public SubjectDto get_subject(UUID uuid) throws BadRequestException {
+    public SubjectDto get_subject(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new BadRequestException("No subject found")));
+                .orElseThrow(() -> new RuntimeException("No subject found")));
     }
 
     private SubjectDto convertToDto(SubjectEntity subject){
@@ -47,6 +50,7 @@ public class SubjectService {
                         .build())
                 .toList();
         return SubjectDto.builder()
+                .uuid(subject.getUuid())
                 .name(subject.getName())
                 .subjectCode(subject.getSubjectCode())
                 .status(subject.getIsActive())
@@ -73,18 +77,28 @@ public class SubjectService {
 
     private List<GradeEntity> convert(List<UUID> uuids){
         if (uuids == null || uuids.isEmpty()) return new ArrayList<>();
-        return new ArrayList<>(gradeRepo.findAllByUuidIn(uuids));
+
+        List<UUID> distinct = uuids.stream().distinct().toList();
+        List<GradeEntity> found = gradeRepo.findAllByUuidIn(distinct);
+
+        if (found.size() != distinct.size()) {
+            Set<UUID> foundIds = found.stream().map(GradeEntity::getUuid).collect(Collectors.toSet());
+            List<UUID> missing = distinct.stream().filter(id -> !foundIds.contains(id)).toList();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Grade(s) not found: " + missing);
+        }
+        return new ArrayList<>(found);
     }
+
 
     @Transactional
     public void update(UUID uuid, SubjectDto req){
         SubjectEntity existingSubject = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No subject with this uuid found"));
-        if(repo.existsByName(req.getName())){
+        if(repo.existsByNameAndUuidNot(req.getName(), uuid)){
             throw new RuntimeException("A subject with this name exists");
         }
 
-        if(repo.existsBySubjectCode(req.getSubjectCode())){
+        if(repo.existsBySubjectCodeAndUuidNot(req.getSubjectCode(), uuid)){
             throw new RuntimeException("A subject with this code exists");
         }
 

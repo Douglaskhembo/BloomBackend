@@ -38,7 +38,7 @@ public class AssessmentService {
     private final SubjectRepository subjectRepo;
     private final AssessmentMarkRepository assessmentMarkRepo;
     private final StudentRepository studentRepo;
-
+    @Transactional(readOnly = true)
     public List<AssessmentMarksDto> getMarks(){
         List<AssessmentMarks> assessmentMarks = assessmentMarkRepo.findAll();
         if(CollectionUtils.isEmpty(assessmentMarks)){return List.of();}
@@ -53,16 +53,17 @@ public class AssessmentService {
                 .studentName(student.getFirstName() + " " + student.getLastName())
                 .build();
 
-
-        return AssessmentMarksDto.builder().score(body.getScore())
+        return AssessmentMarksDto.builder()
+                .score(body.getScore())
+                .assessmentDtos(convertToDto(body.getAssessment()))
                 .studentRequestDTO(studentRequestDTO)
                 .build();
     }
 
 
     @Transactional
-    public void saveMarks(UUID assesmentUuid, MarkEntryRequestDto req){
-        Assessment assessment = repo.findByUuid(assesmentUuid)
+    public void saveMarks(UUID assessmentUuid, MarkEntryRequestDto req){
+        Assessment assessment = repo.findByUuid(assessmentUuid)
                 .orElseThrow(() ->new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));
          int maxScore = assessment.getMaxScore();
 
@@ -72,14 +73,18 @@ public class AssessmentService {
             if(entry.getScore() == null || entry.getScore() < 0 || entry.getScore() > maxScore){
                 throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Score is not valid");
             }
-            AssessmentMarks entity = new AssessmentMarks();
-            entity.setScore(entry.getScore());
-            entity.setStudent(student);
-            entity.setAssessment(assessment);
-            assessmentMarkRepo.save(entity);
+            AssessmentMarks mark = assessmentMarkRepo
+                    .findByAssessmentUuidAndStudentUuid(assessmentUuid, entry.getStudentUuid())
+                    .orElseGet(AssessmentMarks::new);
+
+            mark.setScore(entry.getScore());
+            mark.setStudent(student);
+            mark.setAssessment(assessment);
+
+            assessmentMarkRepo.save(mark);
         }
     }
-
+    @Transactional(readOnly = true)
     public List<AssessmentDto> getAll(){
         List<Assessment> assessment = repo.findAll();
         if (CollectionUtils.isEmpty(assessment)){
@@ -87,10 +92,11 @@ public class AssessmentService {
         }
         return assessment.stream().map(this::convertToDto).toList();
     }
-
-    public AssessmentDto getAssessment(UUID uuid) throws BadRequestException{
+    @Transactional(readOnly = true)
+    public AssessmentDto getAssessment(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new BadRequestException("No Assessment found")));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "No Assessment found")));
     }
 
     private AssessmentDto convertToDto(Assessment body){
@@ -124,6 +130,7 @@ public class AssessmentService {
                 .build();
 
         return AssessmentDto.builder()
+                .uuid(body.getUuid())
                 .name(body.getName())
                 .term(body.getTerm())
                 .maxScore(body.getMaxScore())
@@ -136,19 +143,46 @@ public class AssessmentService {
                 .build();
     }
 
+    @Transactional
     public void createAssessment(AssessmentDto req){
+        if (repo.existsByNameAndTermAndYearAndSubjectUuidAndGradeUuid(req.getName(), req.getTerm(), req.getYear(),
+                req.getSubjectUuid(), req.getGradeUuid())){
+            throw new RuntimeException("An assessment with the same name, term, year, subject and grade already exists");
+        }
         repo.save(convertToEntity(req));
     }
+
+    @Transactional
     public void updateAssessment(UUID uuid, AssessmentDto req){
         Assessment existingAssessment = repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));
 
+        if (repo.existsByNameAndTermAndYearAndSubjectUuidAndGradeUuidAndUuidNot(
+                req.getName(), req.getTerm(), req.getYear(),
+                req.getSubjectUuid(), req.getGradeUuid(), uuid)) {
+            throw new RuntimeException(
+                    "An assessment with the same name, term, year, subject and grade already exists");
+        }
+
+        GradeEntity grade = gradeRepo.findByUuid(req.getGradeUuid())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grade not found"));
+
+        StaffEntity staff = staffRepo.findByUuid(req.getStaffUuid())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
+
+        SubjectEntity subject = subjectRepo.findByUuid(req.getSubjectUuid())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
+
         existingAssessment.setName(req.getName());
         existingAssessment.setTerm(req.getTerm());
-        existingAssessment.setMaxScore(req.getMaxScore());
-        existingAssessment.setYear(req.getYear());
+        existingAssessment.setMaxScore(req.getMaxScore() != null ? req.getMaxScore() : 100);        existingAssessment.setYear(req.getYear());
         existingAssessment.setStream(req.getStream());
         existingAssessment.setAssessmentType(req.getAssessmentType());
+        existingAssessment.setGrade(grade);
+        existingAssessment.setSubject(subject);
+        existingAssessment.setStaff(staff);
+
+        repo.save(existingAssessment);
     }
     private Assessment convertToEntity(AssessmentDto body){
         GradeEntity grade = gradeRepo.findByUuid(body.getGradeUuid())
@@ -162,8 +196,7 @@ public class AssessmentService {
         return Assessment.builder()
                 .name(body.getName())
                 .term(body.getTerm())
-                .maxScore(body.getMaxScore())
-                .year(body.getYear())
+                .maxScore(body.getMaxScore() != null ? body.getMaxScore() : 100)                .year(body.getYear())
                 .stream(body.getStream())
                 .assessmentType(body.getAssessmentType())
                 .grade(grade)
@@ -172,6 +205,7 @@ public class AssessmentService {
                 .build();
     }
 
+    @Transactional
     public void deleteAssessment(UUID uuid){
         Assessment existingAssessment = repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));

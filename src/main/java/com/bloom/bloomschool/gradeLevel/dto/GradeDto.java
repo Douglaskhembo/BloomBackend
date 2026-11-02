@@ -12,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class GradeDto {
+    private UUID uuid;
     private String name;
     private Integer displayOrder;
     private Integer capacity;
@@ -20,5 +21,4 @@ public class GradeDto {
     private List<Integer> streamCapacity;
     private int streams = 1;
     private List<UUID> subjectUuids;
-    private UUID uuid;
 }

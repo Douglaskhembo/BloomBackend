@@ -6,9 +6,7 @@ import com.bloom.bloomschool.subject.entity.SubjectEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Builder
 @NoArgsConstructor
@@ -47,8 +45,7 @@ public class StaffEntity {
     @Enumerated(EnumType.STRING)
     @Column()
     private EmploymentType employmentType;
-
-    @Column()
+    @Builder.Default
     private Boolean isActive = true;
 
     @ManyToMany
@@ -57,6 +54,7 @@ public class StaffEntity {
             joinColumns = @JoinColumn(name = "staff_uuid"),
             inverseJoinColumns = @JoinColumn(name = "subject_uuid")
     )
+    @Builder.Default
     private List<SubjectEntity> subjects = new ArrayList<>();
 
 }

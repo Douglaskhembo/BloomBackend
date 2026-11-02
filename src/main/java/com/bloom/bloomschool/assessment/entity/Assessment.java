@@ -15,7 +15,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "bloom_school_assessment")
+@Table(name = "bloom_school_assessment"
+,uniqueConstraints = @UniqueConstraint(columnNames = {"name","term","year","subject_id","grade_id"}))
 public class Assessment {
 
     @Id
@@ -24,11 +25,9 @@ public class Assessment {
     private UUID uuid;
 
     private String name;
-
     private String term;
-
+    @Builder.Default
     private int maxScore = 100;
-
     private int year;
 
     private String stream;

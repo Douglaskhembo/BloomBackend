@@ -8,18 +8,23 @@ import com.bloom.bloomschool.gradeLevel.entity.GradingStructure;
 import com.bloom.bloomschool.gradeLevel.repository.GradeStructureRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class GradeStructureService {
     private final GradeStructureRepository repo;
 
+    @Transactional(readOnly = true)
     public List<GradeStructureDto> get_all(){
         List<GradingStructure> gradingStructures = repo.findAll();
         if (CollectionUtils.isEmpty(gradingStructures)){
@@ -28,9 +33,10 @@ public class GradeStructureService {
         return gradingStructures.stream().map(this::convertToDto).toList();
     }
 
-    public GradeStructureDto get_structure(UUID uuid) throws BadRequestException {
+    @Transactional(readOnly = true)
+    public GradeStructureDto get_structure(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new BadRequestException("No subject structure found")));
+                .orElseThrow(() -> new RuntimeException("No subject structure found")));
     }
 
 
@@ -46,6 +52,7 @@ public class GradeStructureService {
                 .toList();
 
         return GradeStructureDto.builder()
+                .uuid(body.getUuid())
                 .grade(body.getGrade())
                 .gradingEntries(gradeEntryDtos)
                 .build();
@@ -65,36 +72,44 @@ public class GradeStructureService {
     @Transactional
     public void createGradeStructure(GradeStructureDto req){
         if(repo.existsByGrade(req.getGrade())){
-            throw new RuntimeException("A grade with this name exists");
+            throw new RuntimeException("A grade structure with this grade already exists");
         }
 
-        List<GradingEntry> gradingEntries = req.getGradingEntries().stream()
-                        .map(this::convertToGradeEntity)
-                                .toList();
+        if (req.getGradingEntries() == null || req.getGradingEntries().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Grading entries are required");
+        }
+        List<GradingEntry> entries = req.getGradingEntries().stream()
+                .map(this::convertToGradeEntity)
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        repo.save(
-                GradingStructure.builder()
-                        .grade(req.getGrade())
-                        .gradingEntries(gradingEntries)
-                        .build()
-        );
+        repo.save(GradingStructure.builder()
+                .grade(req.getGrade())
+                .gradingEntries(entries)
+                .build());
     }
 
     @Transactional
     public void updateGradeStructure(UUID uuid, GradeStructureDto req){
         GradingStructure existingGradeStructure = repo.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
+                .orElseThrow(() -> new RuntimeException("No grade structure with this uuid found"));
+        if (req.getGradingEntries() == null || req.getGradingEntries().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Grading entries are required");
+        }
+        List<GradingEntry> entries = req.getGradingEntries().stream()
+                .map(this::convertToGradeEntity)
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        List<GradingEntry> gradingEntries = req.getGradingEntries().stream()
-                .map(this::convertToGradeEntity).toList();
         existingGradeStructure.setGrade(req.getGrade());
-        existingGradeStructure.setGradingEntries(gradingEntries);
+        existingGradeStructure.getGradingEntries().clear();
+        existingGradeStructure.getGradingEntries().addAll(entries);
+
+        repo.save(existingGradeStructure);
     }
 
     @Transactional
     public void deleteGradeStructure(UUID uuid){
         GradingStructure existingGradeStructure = repo.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
+                .orElseThrow(() -> new RuntimeException("No grade structure with this uuid found"));
         repo.delete(existingGradeStructure);
     }
 }
