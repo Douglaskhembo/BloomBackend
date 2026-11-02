@@ -38,7 +38,4 @@ public class SchoolEvent {
 
     @Column(nullable = false)
     private boolean active;
-
-    //Attendance..pack..dailyAttendance..entity,markedAt,markedBy...link to staff...attendance status NUm present late absent excused halfDay
-    //attendanceDate .. stream, grade ..string relate to student m21
 }
