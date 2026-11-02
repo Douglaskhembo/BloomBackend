@@ -90,7 +90,7 @@ public class StudentService {
                     .uuid(gradeEntity.getUuid())
                     .name(gradeEntity.getName())
                     .capacity(gradeEntity.getCapacity())
-                    .isActive(gradeEntity.getIsActive())
+                    .active(gradeEntity.isActive())
                     .build();
         }
 

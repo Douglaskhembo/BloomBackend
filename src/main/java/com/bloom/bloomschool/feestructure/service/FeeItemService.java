@@ -44,7 +44,7 @@ public class FeeItemService {
                             .name(gradeEntity.getName())
                             .displayOrder(gradeEntity.getDisplayOrder())
                             .capacity(gradeEntity.getCapacity())
-                            .isActive(gradeEntity.getIsActive())
+                            .active(gradeEntity.isActive())
                             .streamName(gradeEntity.getStreamName())
                             .streamCapacity(gradeEntity.getStreamCapacity())
                             .streams(gradeEntity.getStreams())
