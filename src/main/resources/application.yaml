@@ -17,10 +17,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-app:
-  uploads:
-    document-folder: uploads/documents
-
 server:
   port: ${PORT:9090}
   # Respect X-Forwarded-* headers so Swagger "Try it out" uses https on the hosted URL
