@@ -1,13 +1,13 @@
 package com.bloom.bloomschool.gradeLevel.service;
 
-
-import com.bloom.bloomschool.gradeLevel.dto.GradeEntryDto;
-import com.bloom.bloomschool.gradeLevel.dto.GradeStructureDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeEntryRequestDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeEntryResponseDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeStructureRequestDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeStructureResponseDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradingEntry;
 import com.bloom.bloomschool.gradeLevel.entity.GradingStructure;
 import com.bloom.bloomschool.gradeLevel.repository.GradeStructureRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ public class GradeStructureService {
     private final GradeStructureRepository repo;
 
     @Transactional(readOnly = true)
-    public List<GradeStructureDto> get_all(){
+    public List<GradeStructureResponseDto> get_all(){
         List<GradingStructure> gradingStructures = repo.findAll();
         if (CollectionUtils.isEmpty(gradingStructures)){
             return List.of();
@@ -34,15 +34,15 @@ public class GradeStructureService {
     }
 
     @Transactional(readOnly = true)
-    public GradeStructureDto get_structure(UUID uuid){
+    public GradeStructureResponseDto get_structure(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No subject structure found")));
     }
 
 
-    private GradeStructureDto convertToDto(GradingStructure body){
-        List<GradeEntryDto> gradeEntryDtos =body.getGradingEntries().stream()
-                .map(dto -> GradeEntryDto.builder()
+    private GradeStructureResponseDto convertToDto(GradingStructure body){
+        List<GradeEntryResponseDto> gradeEntryDtos =body.getGradingEntries().stream()
+                .map(dto -> GradeEntryResponseDto.builder()
                         .label(dto.getLabel())
                         .maxScore(dto.getMaxScore())
                         .minScore(dto.getMinScore())
@@ -51,14 +51,14 @@ public class GradeStructureService {
                         .build())
                 .toList();
 
-        return GradeStructureDto.builder()
+        return GradeStructureResponseDto.builder()
                 .uuid(body.getUuid())
                 .grade(body.getGrade())
                 .gradingEntries(gradeEntryDtos)
                 .build();
     }
 
-    private GradingEntry convertToGradeEntity(GradeEntryDto body){
+    private GradingEntry convertToGradeEntity(GradeEntryRequestDto body){
 
         return GradingEntry.builder()
                 .label(body.getLabel())
@@ -70,7 +70,7 @@ public class GradeStructureService {
     }
 
     @Transactional
-    public void createGradeStructure(GradeStructureDto req){
+    public void createGradeStructure(GradeStructureRequestDto req){
         if(repo.existsByGrade(req.getGrade())){
             throw new RuntimeException("A grade structure with this grade already exists");
         }
@@ -89,7 +89,7 @@ public class GradeStructureService {
     }
 
     @Transactional
-    public void updateGradeStructure(UUID uuid, GradeStructureDto req){
+    public void updateGradeStructure(UUID uuid, GradeStructureRequestDto req){
         GradingStructure existingGradeStructure = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No grade structure with this uuid found"));
         if (req.getGradingEntries() == null || req.getGradingEntries().isEmpty()) {

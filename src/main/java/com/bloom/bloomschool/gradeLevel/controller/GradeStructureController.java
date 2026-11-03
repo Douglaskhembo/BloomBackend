@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.gradeLevel.controller;
 
-import com.bloom.bloomschool.gradeLevel.dto.GradeStructureDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeStructureRequestDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeStructureResponseDto;
 import com.bloom.bloomschool.gradeLevel.service.GradeStructureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,25 +19,25 @@ public class GradeStructureController {
     private final GradeStructureService service;
 
     @GetMapping("/all-grading-structures")
-    public ResponseEntity<List<GradeStructureDto>> get_all(){
+    public ResponseEntity<List<GradeStructureResponseDto>> get_all(){
         return ResponseEntity.ok(service.get_all());
     }
 
     @GetMapping("/grade-structure/{uuid}")
-    public ResponseEntity<GradeStructureDto> get(@PathVariable UUID uuid) {
+    public ResponseEntity<GradeStructureResponseDto> get(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.get_structure(uuid));
     }
 
     @PostMapping("/createGrade-structure")
-    public ResponseEntity<?> create(@RequestBody GradeStructureDto req){
+    public ResponseEntity<?> create(@RequestBody GradeStructureRequestDto req){
         service.createGradeStructure(req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/updateGrade-structure/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody GradeStructureDto req){
+    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody GradeStructureRequestDto req){
         service.updateGradeStructure(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);   // was ACCEPTED
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteGrade-structure/{uuid}")

@@ -16,4 +16,6 @@ public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
 
     boolean existsByNameAndTermAndYearAndSubjectUuidAndGradeUuidAndUuidNot(
             String name, String term, int year, UUID subjectUuid, UUID gradeUuid, UUID uuid);
+
+    boolean existsByUuid(UUID assesmentUuid);
 }

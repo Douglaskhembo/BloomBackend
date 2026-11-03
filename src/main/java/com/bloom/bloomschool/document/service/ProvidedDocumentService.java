@@ -1,7 +1,7 @@
 package com.bloom.bloomschool.document.service;
 
-import com.bloom.bloomschool.document.dto.DocumentTypeDto;
-import com.bloom.bloomschool.document.dto.ProvidedDocumentDto;
+import com.bloom.bloomschool.document.dto.DocumentTypeResponseDto;
+import com.bloom.bloomschool.document.dto.ProvidedDocumentResponseDto;
 import com.bloom.bloomschool.document.entity.DocumentType;
 import com.bloom.bloomschool.document.entity.ProvidedDocument;
 import com.bloom.bloomschool.document.enums.DocumentCategory;
@@ -12,11 +12,9 @@ import com.bloom.bloomschool.staff.repository.StaffRepository;
 import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
 import com.bloom.bloomschool.student.repository.AdmissionsRepository;
 import com.bloom.bloomschool.student.repository.StudentRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,16 +42,16 @@ public class ProvidedDocumentService {
     @Value("${app.uploads.document-folder:uploads/documents}")
     private String uploadFolder;
     @Transactional(readOnly = true)
-    public List<ProvidedDocumentDto> getOwner(UUID ownerUuid){
+    public List<ProvidedDocumentResponseDto> getOwner(UUID ownerUuid){
         List<ProvidedDocument> providedDocument = repo.findAllByOwnerUuid(ownerUuid);
 
         return providedDocument.stream().map(this::convertToDto).toList();
     }
 
-    private ProvidedDocumentDto convertToDto(ProvidedDocument body){
+    private ProvidedDocumentResponseDto convertToDto(ProvidedDocument body){
         DocumentType documentType = documentTypeRepository.findByUuid(body.getDocumentType().getUuid())
                 .orElseThrow(() -> new RuntimeException("Document type not found"));
-        DocumentTypeDto documentTypeDto = DocumentTypeDto.builder()
+        DocumentTypeResponseDto documentTypeDto = DocumentTypeResponseDto.builder()
                 .name(documentType.getName())
                 .description(documentType.getDescription())
                 .mandatory(documentType.isMandatory())
@@ -61,11 +59,11 @@ public class ProvidedDocumentService {
                 .documentCategory(documentType.getDocumentCategory())
                 .build();
 
-        return ProvidedDocumentDto.builder()
+        return ProvidedDocumentResponseDto.builder()
                 .uuid(body.getUuid())
                 .ownerType(body.getOwnerType())
                 .ownerUuid(body.getOwnerUuid())
-                .documentTypeDto(documentTypeDto)
+                .documentType(documentTypeDto)
                 .fileName(body.getFileName())
                 .filePath(body.getFilePath())
                 .fileSize(body.getFileSize())

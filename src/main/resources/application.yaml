@@ -2,6 +2,13 @@ spring:
   application:
     name: BloomSchool
 
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/bloom_school_db
+#    username: user1
+#    password: user1
+#    driver-class-name: org.postgresql.Driver
+
+#For Pull requests use this
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/bloom_test}
     username: ${DB_USERNAME:bloom}
@@ -43,3 +50,13 @@ management:
     web:
       exposure:
         include: health,info
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bloom_school_db
+    username: user1
+    password: user1
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update

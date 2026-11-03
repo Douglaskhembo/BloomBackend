@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.document.controller;
 
-import com.bloom.bloomschool.document.dto.DocumentTypeDto;
+import com.bloom.bloomschool.document.dto.DocumentTypeRequestDto;
+import com.bloom.bloomschool.document.dto.DocumentTypeResponseDto;
 import com.bloom.bloomschool.document.service.DocumentTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,22 +18,22 @@ public class DocumentTypeController {
     private final DocumentTypeService service;
 
     @GetMapping("/allDocumentTypes")
-    public ResponseEntity<List<DocumentTypeDto>> getAll() {
+    public ResponseEntity<List<DocumentTypeResponseDto>> getAll() {
         return ResponseEntity.ok(service.getAllDocuments());
     }
 
     @GetMapping("/documentType/{uuid}")
-    public ResponseEntity<DocumentTypeDto> getDocumentType(@PathVariable UUID uuid) {
+    public ResponseEntity<DocumentTypeResponseDto> getDocumentType(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getDocument(uuid));
     }
 
     @PostMapping("/createDocumentType")
-    public ResponseEntity<DocumentTypeDto> create(@RequestBody DocumentTypeDto req) {
+    public ResponseEntity<DocumentTypeResponseDto> create(@RequestBody DocumentTypeRequestDto req) {
         return ResponseEntity.ok(service.createDocument( req));
     }
 
     @PutMapping("/updateDocumentType/{uuid}")
-    public ResponseEntity<DocumentTypeDto> update(@PathVariable UUID uuid, @RequestBody DocumentTypeDto req) {
+    public ResponseEntity<DocumentTypeResponseDto> update(@PathVariable UUID uuid, @RequestBody DocumentTypeRequestDto req) {
         return ResponseEntity.ok(service.updateDocument(uuid, req));
     }
 
