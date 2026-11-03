@@ -49,20 +49,6 @@ public class RoleController {
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    // Assign User to Role (Role-Centric)
-    @PostMapping("/{roleUuid}/users/{userUuid}")
-    public ResponseEntity<?> addUserToRole(@PathVariable UUID roleUuid, @PathVariable UUID userUuid) {
-        roleService.addUserToRole(roleUuid, userUuid);
-        return ResponseEntity.ok().build();
-    }
-
-    // Remove User from Role
-    @DeleteMapping("/{roleUuid}/users/{userUuid}")
-    public ResponseEntity<?> removeUserFromRole(@PathVariable UUID roleUuid, @PathVariable UUID userUuid) {
-        roleService.removeUserFromRole(roleUuid, userUuid);
-        return ResponseEntity.noContent().build();
-    }
-
     // Delete Role
     @DeleteMapping("/{uuid}")
     public ResponseEntity<?> deleteRole(@PathVariable UUID uuid) {

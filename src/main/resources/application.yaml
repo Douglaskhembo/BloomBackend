@@ -11,8 +11,8 @@ spring:
 #For Pull requests use this
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/bloom_test}
-    username: ${DB_USERNAME:bloom}
-    password: ${DB_PASSWORD:bloom}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Mniowwb@2025}
     driver-class-name: org.postgresql.Driver
 
   jpa:
