@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.subject.controller;
 
-import com.bloom.bloomschool.subject.dto.SubjectDto;
+import com.bloom.bloomschool.subject.dto.SubjectRequestDto;
+import com.bloom.bloomschool.subject.dto.SubjectResponseDto;
 import com.bloom.bloomschool.subject.service.SubjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,23 +19,23 @@ public class SubjectController {
     private final SubjectService service;
 
     @GetMapping("/allSubjects")
-    public ResponseEntity<List<SubjectDto>> get_all_subjects() {
+    public ResponseEntity<List<SubjectResponseDto>> get_all_subjects() {
         return ResponseEntity.ok(service.get_all_subjects());
     }
 
     @GetMapping("/subject/{uuid}")
-    public ResponseEntity<SubjectDto> get_subject(@PathVariable UUID uuid) {
+    public ResponseEntity<SubjectResponseDto> get_subject(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.get_subject(uuid));
     }
 
     @PostMapping("/createSubject")
-    public ResponseEntity<?> create(@RequestBody SubjectDto req) {
+    public ResponseEntity<?> create(@RequestBody SubjectRequestDto req) {
         service.createSubject(req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/updateSubject/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody SubjectDto req) {
+    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody SubjectRequestDto req) {
         service.update(uuid, req);
         return new ResponseEntity<>(HttpStatus.OK);
     }

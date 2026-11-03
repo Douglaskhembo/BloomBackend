@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.feestructure.controller;
 
-import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeDto;
+import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeRequestDto;
+import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeResponseDto;
 import com.bloom.bloomschool.feestructure.service.StudentFeeChargeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,23 +18,23 @@ public class StudentFeeChargeController {
     private final StudentFeeChargeService service;
 
     @GetMapping("/get-all")
-    public ResponseEntity<List<StudentFeeChargeDto>> getAll(){
+    public ResponseEntity<List<StudentFeeChargeResponseDto>> getAll(){
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/get/{uuid}")
-    public ResponseEntity<StudentFeeChargeDto> getFeeItem(@PathVariable UUID uuid) {
+    public ResponseEntity<StudentFeeChargeResponseDto> getFeeItem(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getFeeCharge(uuid));
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createFeeItem(@RequestBody StudentFeeChargeDto body){
+    public ResponseEntity<?> createFeeItem(@RequestBody StudentFeeChargeRequestDto body){
         service.create(body);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/update/{uuid}")
-    public ResponseEntity<?> updateFeeItem(@PathVariable UUID uuid, @RequestBody StudentFeeChargeDto body) {
+    public ResponseEntity<?> updateFeeItem(@PathVariable UUID uuid, @RequestBody StudentFeeChargeRequestDto body) {
         service.update(uuid, body);
         return new ResponseEntity<>(HttpStatus.OK);
     }

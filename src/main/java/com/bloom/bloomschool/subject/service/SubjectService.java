@@ -1,13 +1,13 @@
 package com.bloom.bloomschool.subject.service;
 
-import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeResponseDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
-import com.bloom.bloomschool.subject.dto.SubjectDto;
+import com.bloom.bloomschool.subject.dto.SubjectRequestDto;
+import com.bloom.bloomschool.subject.dto.SubjectResponseDto;
 import com.bloom.bloomschool.subject.entity.SubjectEntity;
 import com.bloom.bloomschool.subject.repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ public class SubjectService {
     private final SubjectRepository repo;
     private final GradeRepository gradeRepo;
 
-    public List<SubjectDto> get_all_subjects(){
+    public List<SubjectResponseDto> get_all_subjects(){
         List<SubjectEntity> subjectEntities = repo.findAll();
         if (CollectionUtils.isEmpty(subjectEntities)) {
             return List.of();
@@ -32,33 +32,33 @@ public class SubjectService {
         return subjectEntities.stream().map(this::convertToDto).toList();
     }
 
-    public SubjectDto get_subject(UUID uuid){
+    public SubjectResponseDto get_subject(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No subject found")));
     }
 
-    private SubjectDto convertToDto(SubjectEntity subject){
-        List<GradeDto> gradeDtos = subject.getGrades().stream()
-                .map(grade -> GradeDto.builder()
+    private SubjectResponseDto convertToDto(SubjectEntity subject){
+        List<GradeResponseDto> gradeDtos = subject.getGrades().stream()
+                .map(grade -> GradeResponseDto.builder()
                         .name(grade.getName())
                         .displayOrder(grade.getDisplayOrder())
                         .capacity(grade.getCapacity())
-                        .active(grade.isActive())
+                        .isActive(grade.isActive())
                         .streamName(grade.getStreamName())
                         .streamCapacity(grade.getStreamCapacity())
                         .streams(grade.getStreams())
                         .build())
                 .toList();
-        return SubjectDto.builder()
+        return SubjectResponseDto.builder()
                 .uuid(subject.getUuid())
                 .name(subject.getName())
                 .subjectCode(subject.getSubjectCode())
-                .status(subject.getIsActive())
-                .gradeDtos(gradeDtos)
+                .isActive(subject.getIsActive())
+                .grades(gradeDtos)
                 .build();
     }
     @Transactional
-    public void createSubject(SubjectDto req){
+    public void createSubject(SubjectRequestDto req){
         if(repo.existsByName(req.getName())){
             throw new RuntimeException("A subject with this name exists");
         }
@@ -69,8 +69,8 @@ public class SubjectService {
         repo.save(SubjectEntity.builder()
                         .name(req.getName())
                         .subjectCode(req.getSubjectCode())
-                        .isActive(req.isStatus())
-                        .grades(convert(req.getGradesUuid()))
+                        .isActive(req.getIsActive())
+                        .grades(convert(req.getGradeUuids()))
                 .build());
 
     }
@@ -91,7 +91,7 @@ public class SubjectService {
 
 
     @Transactional
-    public void update(UUID uuid, SubjectDto req){
+    public void update(UUID uuid, SubjectRequestDto req){
         SubjectEntity existingSubject = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No subject with this uuid found"));
         if(repo.existsByNameAndUuidNot(req.getName(), uuid)){
@@ -104,7 +104,7 @@ public class SubjectService {
 
         existingSubject.setName(req.getName());
         existingSubject.setSubjectCode(req.getSubjectCode());
-        existingSubject.setGrades(convert(req.getGradesUuid()));
+        existingSubject.setGrades(convert(req.getGradeUuids()));
         repo.save(existingSubject);
     }
 

@@ -1,13 +1,15 @@
 package com.bloom.bloomschool.feestructure.service;
 
 
-import com.bloom.bloomschool.feestructure.dto.FeePaymentDto;
+import com.bloom.bloomschool.feestructure.dto.FeePaymentRequestDto;
+import com.bloom.bloomschool.feestructure.dto.FeePaymentResponseDto;
 import com.bloom.bloomschool.feestructure.entity.FeePayment;
 import com.bloom.bloomschool.feestructure.enumerations.FeePaymentMethod;
 import com.bloom.bloomschool.feestructure.enumerations.FeeVerificationStatus;
 import com.bloom.bloomschool.feestructure.repository.FeePaymentRepository;
 import com.bloom.bloomschool.setup.service.ServiceGenerator;
 import com.bloom.bloomschool.student.dto.StudentRequestDTO;
+import com.bloom.bloomschool.student.dto.StudentSummaryDto;
 import com.bloom.bloomschool.student.entity.Admissions;
 import com.bloom.bloomschool.student.entity.Student;
 import com.bloom.bloomschool.student.repository.AdmissionsRepository;
@@ -28,12 +30,12 @@ public class FeePaymentService{
     private final ServiceGenerator serviceGenerator;
     private final StudentRepository studentRepository;
     private final AdmissionsRepository admissionsRepository;
-    public List<FeePaymentDto> getAll(){
+    public List<FeePaymentResponseDto> getAll(){
         List<FeePayment> feePayments = repo.findAllByOrderByPaymentDateDesc();
         return feePayments.stream().map(this::convertToDto).toList();
     }
 
-    public FeePaymentDto getPayment(UUID studentUuid){
+    public FeePaymentResponseDto getPayment(UUID studentUuid){
         FeePayment feePayment = repo.findByStudent_UuidOrderByPaymentDateDesc(studentUuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fee payment not found"));
 
@@ -46,21 +48,17 @@ public class FeePaymentService{
         return sumConfirmedPayments;
     }
 
-    private FeePaymentDto convertToDto(FeePayment body){
+    private FeePaymentResponseDto convertToDto(FeePayment body){
         Student student = body.getStudent();
-        StudentRequestDTO studentRequestDTO = null;
+        StudentSummaryDto studentRequestDTO = null;
         if (student != null) {
-            studentRequestDTO = StudentRequestDTO.builder()
+            studentRequestDTO = StudentSummaryDto.builder()
                     .admissionNumber(student.getAdmissionNumber())
-                    .firstName(student.getFirstName())
-                    .lastName(student.getLastName())
-                    .studentEmail(student.getStudentEmail())
-                    .entryNumber(student.getEntryNumber())
-                    .dateOfBirth(student.getDateOfBirth())
+                    .fullName(student.getFirstName()+" "+student.getLastName())
                     .build();
         }
 
-        return FeePaymentDto.builder()
+        return FeePaymentResponseDto.builder()
                 .uuid(body.getUuid())
                 .grade(body.getGrade())
                 .stream(body.getStream())
@@ -75,12 +73,12 @@ public class FeePaymentService{
                 .chequeNo(body.getChequeNo())
                 .notes(body.getNotes())
                 .bankName(body.getBankName())
-                .studentRequestDTO(studentRequestDTO)
+                .student(studentRequestDTO)
                 .amount(body.getAmount())
                 .build();
     }
 
-    public void create(FeePaymentDto req){
+    public void create(FeePaymentRequestDto req){
         if(req.getStudentUuid() == null && req.getAdmissionUuid() == null){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fee payment must be attached to a student");
         }

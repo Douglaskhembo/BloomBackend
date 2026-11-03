@@ -5,13 +5,8 @@ import lombok.*;
 
 import java.util.UUID;
 
-
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter
-@Getter
-public class DocumentTypeDto {
+@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+public class DocumentTypeResponseDto {
     private UUID uuid;
     private String name;
     private String description;

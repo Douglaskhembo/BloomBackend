@@ -1,15 +1,14 @@
 package com.bloom.bloomschool.feestructure.service;
 
-import com.bloom.bloomschool.feestructure.dto.FeeItemDto;
-import com.bloom.bloomschool.feestructure.dto.FeeStructureDto;
-import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeDto;
+import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeRequestDto;
+import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeResponseDto;
 import com.bloom.bloomschool.feestructure.entity.FeeItemEntity;
 import com.bloom.bloomschool.feestructure.entity.FeeStructureEntity;
 import com.bloom.bloomschool.feestructure.entity.StudentFeeCharge;
 import com.bloom.bloomschool.feestructure.repository.FeeItemRepository;
 import com.bloom.bloomschool.feestructure.repository.FeeStructureRepository;
 import com.bloom.bloomschool.feestructure.repository.StudentFeeStructureRepository;
-import com.bloom.bloomschool.student.dto.StudentRequestDTO;
+import com.bloom.bloomschool.student.dto.StudentSummaryDto;
 import com.bloom.bloomschool.student.entity.Student;
 import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
 import com.bloom.bloomschool.student.repository.StudentRepository;
@@ -30,50 +29,18 @@ public class StudentFeeChargeService {
     private final FeeItemRepository feeItemRepository;
     private final FeeStructureRepository feeStructureRepository;
 
-    public List<StudentFeeChargeDto> getAll(){
+    public List<StudentFeeChargeResponseDto> getAll(){
         return repo.findAll().stream().map(this::convertToDto).toList();
 
     }
-    private StudentFeeChargeDto convertToDto(StudentFeeCharge body){
+    private StudentFeeChargeResponseDto convertToDto(StudentFeeCharge body){
         Student student = body.getStudent();
-        StudentRequestDTO studentRequestDTO = StudentRequestDTO.builder()
+        StudentSummaryDto studentRequestDTO = StudentSummaryDto.builder()
                 .admissionNumber(student.getAdmissionNumber())
-                .firstName(student.getFirstName())
-                .lastName(student.getLastName())
-                .studentEmail(student.getStudentEmail())
-                .entryNumber(student.getEntryNumber())
-                .dateOfBirth(student.getDateOfBirth())
+                .fullName(student.getFirstName()+" "+student.getLastName())
                 .build();
 
-        FeeStructureEntity feeStructureEntity = body.getFeeStructureEntity();
-        FeeStructureDto feeStructureDto = FeeStructureDto.builder()
-                .academicYear(feeStructureEntity.getAcademicYear())
-                .grade(feeStructureEntity.getGrade())
-                .term(feeStructureEntity.getTerm())
-                .status(feeStructureEntity.getStatus())
-                .version(feeStructureEntity.getVersion())
-                .comment(feeStructureEntity.getComment())
-                .rejectReason(feeStructureEntity.getRejectReason())
-                .feeStructureLines(feeStructureEntity.getFeeStructureLines())
-                .baseline(feeStructureEntity.getBaseline())
-                .build();
-
-        FeeItemEntity feeItemEntity = body.getFeeItemEntities();
-        FeeItemDto feeItemDto = FeeItemDto.builder()
-                .name(feeItemEntity.getName())
-                .description(feeItemEntity.getDescription())
-                .term(feeItemEntity.getTerm())
-                .amount(feeItemEntity.getAmount())
-                .termOneAmount(feeItemEntity.getTermOneAmount())
-                .termTwoAmount(feeItemEntity.getTermTwoAmount())
-                .termThreeAmount(feeItemEntity.getTermThreeAmount())
-                .mandatory(feeItemEntity.getMandatory())
-                .active(feeItemEntity.isActive())
-                .feeCategory(feeItemEntity.getFeeCategory())
-                .feeApplicability(feeItemEntity.getFeeApplicability())
-                .build();
-
-        return StudentFeeChargeDto.builder()
+        return StudentFeeChargeResponseDto.builder()
                 .uuid(body.getUuid())
                 .admissionNumber(body.getAdmissionNumber())
                 .grade(body.getGrade())
@@ -86,13 +53,13 @@ public class StudentFeeChargeService {
                 .amount(body.getAmount())
                 .dueDate(body.getDueDate())
                 .generatedAt(body.getGeneratedAt())
-                .feeStructureDto(feeStructureDto)
-                .studentRequestDTO(studentRequestDTO)
-                .feeItemDto(feeItemDto)
+                .feeItemUuid(body.getFeeItemEntities().getUuid())
+                .student(studentRequestDTO)
+                .feeStructureUuid(body.getFeeStructureEntity().getUuid())
                 .build();
     }
 
-    public StudentFeeChargeDto getFeeCharge(UUID uuid) {
+    public StudentFeeChargeResponseDto getFeeCharge(UUID uuid) {
         StudentFeeCharge studentFeeCharge = repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "No Student fee charge found"));
@@ -100,7 +67,7 @@ public class StudentFeeChargeService {
     }
 
     @Transactional
-    public void create(StudentFeeChargeDto req){
+    public void create(StudentFeeChargeRequestDto req){
         FeeItemEntity existingFeeItem = feeItemRepository.findByUuid(req.getFeeItemUuid())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Fee item found"));
         FeeStructureEntity existingFeeStructure = feeStructureRepository.findByUuid(req.getFeeStructureUuid())
@@ -127,7 +94,7 @@ public class StudentFeeChargeService {
     }
 
     @Transactional
-    public void update(UUID uuid, StudentFeeChargeDto req) {
+    public void update(UUID uuid, StudentFeeChargeRequestDto req) {
         FeeItemEntity existingFeeItem = feeItemRepository.findByUuid(req.getFeeItemUuid())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Fee item found"));
         FeeStructureEntity existingFeeStructure = feeStructureRepository.findByUuid(req.getFeeStructureUuid())

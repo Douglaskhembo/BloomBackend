@@ -1,6 +1,6 @@
 package com.bloom.bloomschool.document.controller;
 
-import com.bloom.bloomschool.document.dto.ProvidedDocumentDto;
+import com.bloom.bloomschool.document.dto.ProvidedDocumentResponseDto;
 import com.bloom.bloomschool.document.entity.DocumentType;
 import com.bloom.bloomschool.document.entity.ProvidedDocument;
 import com.bloom.bloomschool.document.enums.OwnerType;
@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.function.ServerRequest;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -27,7 +26,7 @@ public class ProvidedDocumentController {
     private final ProvidedDocumentService service;
 
     @GetMapping("/owner/{uuid}")
-    public ResponseEntity<List<ProvidedDocumentDto>> getOwner(@PathVariable UUID uuid) {
+    public ResponseEntity<List<ProvidedDocumentResponseDto>> getOwner(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getOwner(uuid));
     }
 

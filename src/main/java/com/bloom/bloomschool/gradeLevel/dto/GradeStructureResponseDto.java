@@ -5,13 +5,10 @@ import lombok.*;
 import java.util.List;
 import java.util.UUID;
 
-@Setter
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class GradeStructureDto {
+@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+public class GradeStructureResponseDto {
     private UUID uuid;
     private String grade;
-    private List<GradeEntryDto> gradingEntries;
+    private List<GradeEntryResponseDto> gradingEntries;
 }
+

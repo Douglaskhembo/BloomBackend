@@ -1,13 +1,13 @@
 package com.bloom.bloomschool.staff.service;
 
-import com.bloom.bloomschool.staff.dto.StaffDto;
+import com.bloom.bloomschool.staff.dto.StaffRequestDto;
+import com.bloom.bloomschool.staff.dto.StaffResponseDto;
 import com.bloom.bloomschool.staff.entity.StaffEntity;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
-import com.bloom.bloomschool.subject.dto.SubjectDto;
+import com.bloom.bloomschool.student.dto.SubjectSummaryDto;
 import com.bloom.bloomschool.subject.entity.SubjectEntity;
 import com.bloom.bloomschool.subject.repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,7 @@ public class StaffService{
     private final SubjectRepository subjectRepo;
 
     @Transactional
-    public List<StaffDto> getAll(){
+    public List<StaffResponseDto> getAll(){
         List<StaffEntity> staffEntity = repo.findAll();
         if (CollectionUtils.isEmpty(staffEntity)){
             return List.of();
@@ -38,20 +38,20 @@ public class StaffService{
     }
 
     @Transactional
-    public StaffDto getByUuid(UUID uuid) {
+    public StaffResponseDto getByUuid(UUID uuid) {
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No staff found")));
     }
 
-    private StaffDto convertToDto(StaffEntity body){
-        List<SubjectDto> subjectDto = body.getSubjects().stream()
-                .map(dto -> SubjectDto.builder()
+    private StaffResponseDto convertToDto(StaffEntity body){
+        List<SubjectSummaryDto> subjectDto = body.getSubjects().stream()
+                .map(dto -> SubjectSummaryDto.builder()
                         .name(dto.getName())
                         .subjectCode(dto.getSubjectCode())
-                        .status(dto.getIsActive())
+                        .isActive(dto.getIsActive())
                                 .build())
                 .toList();
-        return StaffDto.builder()
+        return StaffResponseDto.builder()
                 .uuid(body.getUuid())
                 .firstName(body.getFirstName())
                 .lastName(body.getLastName())
@@ -81,7 +81,7 @@ public class StaffService{
     }
 
     @Transactional
-    public void create(StaffDto req){
+    public void create(StaffRequestDto req){
         if (repo.existsByEmail(req.getEmail())){
             throw new RuntimeException("A Staff member with this email already exists");
         }
@@ -106,7 +106,7 @@ public class StaffService{
     }
 
     @Transactional
-    public void update( UUID uuid,StaffDto req){
+    public void update( UUID uuid,StaffRequestDto req){
         StaffEntity existingStaff = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No staff member found with this uuid"));
         
@@ -146,5 +146,6 @@ public class StaffService{
                 .orElseThrow(() -> new RuntimeException("No staff member found with this uuid"));
         repo.delete(existingStaff);
     }
+
 
 }

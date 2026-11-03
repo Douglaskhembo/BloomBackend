@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.feestructure.controller;
 
-import com.bloom.bloomschool.feestructure.dto.FeeStructureDto;
+import com.bloom.bloomschool.feestructure.dto.FeeStructureRequestDto;
+import com.bloom.bloomschool.feestructure.dto.FeeStructureResponseDto;
 import com.bloom.bloomschool.feestructure.service.FeeStructureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,23 +18,23 @@ public class FeeStructureController {
     private final FeeStructureService service;
 
     @GetMapping("/get-all")
-    public ResponseEntity<List<FeeStructureDto>> getAll(){
+    public ResponseEntity<List<FeeStructureResponseDto>> getAll(){
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/get/{uuid}")
-    public ResponseEntity<FeeStructureDto> getFeeStructure(@PathVariable UUID uuid){
+    public ResponseEntity<FeeStructureResponseDto> getFeeStructure(@PathVariable UUID uuid){
         return ResponseEntity.ok(service.getFeeStructure(uuid));
     }
 
     @PostMapping("/create-FeeStructure")
-    public ResponseEntity<?> createFeeStructure(@RequestBody FeeStructureDto body){
+    public ResponseEntity<?> createFeeStructure(@RequestBody FeeStructureRequestDto body){
         service.createFeeStructure(body);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/update-FeeStructure/{uuid}")
-    public ResponseEntity<?> updateFeeStructure(@PathVariable UUID uuid, @RequestBody FeeStructureDto body) {
+    public ResponseEntity<?> updateFeeStructure(@PathVariable UUID uuid, @RequestBody FeeStructureRequestDto body) {
         service.updateFeeStructure(uuid, body);
         return new ResponseEntity<>(HttpStatus.OK);
     }
