@@ -14,10 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityExistsException;
 
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -119,7 +119,7 @@ public class UserService {
     public void onboardStaff(UserRequestDTO req) {
 
         StaffEntity staff = staffRepo.findByUuid(req.getStaffUuid())
-                  .orElseThrow(() -> new ResourceNotFoundException("Staff member not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff member not found!"));
 
         String staffRef = req.getStaffUuid().toString();
 
@@ -179,14 +179,18 @@ public class UserService {
         if (request.getFirstName() != null) u.setFirstName(request.getFirstName());
         if (request.getPhoneNumber() != null) u.setPhoneNumber(request.getPhoneNumber());
 
-        StaffEntity staff = staffRepo.findByUuid(request.getStaffUuid())
-                .orElseThrow(()-> new ResourceNotFoundException("Staff not found!"));
-        String staffRef = request.getStaffUuid().toString();
-        if (userRepo.existsByProfileRef(staffRef) && !staffRef.equals(request.getProfileRef())){
-            throw new BadRequestException("User account already exists for this staff member");
+        if (request.getStaffUuid() != null) {
+            StaffEntity staff = staffRepo.findByUuid(request.getStaffUuid())
+                    .orElseThrow(()-> new ResourceNotFoundException("Staff not found!"));
+            String staffRef = request.getStaffUuid().toString();
+
+            Optional<User> existingUserWithStaff = userRepo.findByProfileRef(staffRef);
+            if (existingUserWithStaff.isPresent() && !existingUserWithStaff.get().getUserId().equals(u.getUserId())) {
+                throw new BadRequestException("User account already exists for this staff member");
+            }
+            u.setStaff(staff);
+            u.setProfileRef(staffRef);
         }
-        u.setStaff(staff);
-        u.setProfileRef(staffRef);
 
         if (request.getRoleUuids() != null){
             Set<Roles> newRoles = roleHelper(request.getRoleUuids());
@@ -213,8 +217,8 @@ public class UserService {
         User u = userRepo.findByUuid(uuid)
                 .orElseThrow(()-> new BadRequestException("Entity not found"));
 
-       u.setEnable2FA(!u.isEnable2FA());
-       userRepo.save(u);
+        u.setEnable2FA(!u.isEnable2FA());
+        userRepo.save(u);
     }
 
     // Delete User
@@ -274,7 +278,8 @@ public class UserService {
         }
         return permList;
     }
-//Grant permission
+
+    // Grant permission
     @Transactional
     public void grantUserPermission(PermissionsBean permBean) {
         if(permBean.getUserUuid() == null) throw new IllegalArgumentException("User uuid is required!");
@@ -365,6 +370,10 @@ public class UserService {
 
         Set<Roles> rolesToUnAssign = roleHelper(req.getRoleUuids());
 
+        Set<UUID> unassignedRoleUuids = rolesToUnAssign.stream()
+                .map(Roles::getUuid)
+                .collect(Collectors.toSet());
+
         for (Roles role : rolesToUnAssign){
             if (user.getRoles().contains(role)){
                 user.getRoles().remove(role);
@@ -373,13 +382,20 @@ public class UserService {
                     for (Modules module : role.getModules()) {
                         if (module.getPermissions() != null) {
                             for (Permissions permission : module.getPermissions()){
-                                UserPermissions uPerm = userPermRepo.findByUserIdAndPermissionId(
-                                        user.getUserId(),
-                                        permission.getPermissionsId()
-                                );
 
-                                if (uPerm != null) {
-                                    if (uPerm.getOverrideType() == null) {
+                                boolean stillGrantedByAnotherRole = user.getRoles().stream()
+                                        .filter(r -> !unassignedRoleUuids.contains(r.getUuid()))
+                                        .flatMap(r -> r.getModules() != null ? r.getModules().stream() : Stream.<Modules>empty())
+                                        .flatMap(m -> m.getPermissions() != null ? m.getPermissions().stream() : Stream.<Permissions>empty())
+                                        .anyMatch(p -> p.getPermissionsId().equals(permission.getPermissionsId()));
+
+                                if (!stillGrantedByAnotherRole) {
+                                    UserPermissions uPerm = userPermRepo.findByUserIdAndPermissionId(
+                                            user.getUserId(),
+                                            permission.getPermissionsId()
+                                    );
+
+                                    if (uPerm != null && uPerm.getOverrideType() == null) {
                                         userPermRepo.delete(uPerm);
                                     }
                                 }
@@ -392,6 +408,7 @@ public class UserService {
         userRepo.save(user);
     }
 
+    @Transactional
     public void mapRolesToModule(ModuleRoleRequestDTO req) {
         if (req.getRoleUuid() == null){
             throw new IllegalArgumentException("At least a role uuid must be provided");
