@@ -1,9 +1,8 @@
 package com.bloom.bloomschool.student.service;
 
-import com.bloom.bloomschool.document.enums.DocumentCategory;
-import com.bloom.bloomschool.document.service.DocumentTypeService;
 import com.bloom.bloomschool.document.service.ProvidedDocumentService;
 import com.bloom.bloomschool.feestructure.service.FeePaymentService;
+import com.bloom.bloomschool.gradeLevel.dto.GradeSummaryDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.service.GradeService;
 import com.bloom.bloomschool.student.entity.Admissions;
@@ -13,7 +12,7 @@ import com.bloom.bloomschool.document.enums.OwnerType;
 import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
 import com.bloom.bloomschool.student.dto.*;
 import com.bloom.bloomschool.student.entity.Student;
-import com.bloom.bloomschool.student.entity.StudentStatus;
+import com.bloom.bloomschool.student.enums.StudentStatus;
 import com.bloom.bloomschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,10 +23,8 @@ import java.util.List;
 import java.util.UUID;
 
 
-import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
 import com.bloom.bloomschool.setup.service.ServiceGenerator;
-import com.bloom.bloomschool.student.dto.AdmissionsDto;
 import com.bloom.bloomschool.student.repository.AdmissionsRepository;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -48,7 +45,7 @@ public class StudentService {
     private final ProvidedDocumentService providedDocumentService;
     private final GradeService gradeService;
     @Transactional
-    public void createAdmission(AdmissionsDto req){
+    public void createAdmission(AdmissionRequestDto req){
         GradeEntity grade = gradeRepo.findByUuid(req.getGradeUuid())
                 .orElseThrow(() -> new ResourceNotFoundException("Grade not found"));
         String applicationId = serviceGenerator.generateReference("APP");
@@ -73,30 +70,28 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdmissionsDto> getAllAdmissions(){
+    public List<AdmissionResponseDto> getAllAdmissions(){
         List<Admissions> admissions = admissionsRepo.findAll();
         return admissions.stream().map(this::convertToDto).toList();
     }
 
     @Transactional(readOnly = true)
-    public AdmissionsDto getAdmission(UUID uuid){
+    public AdmissionResponseDto getAdmission(UUID uuid){
         Admissions admissions = admissionsRepo.findByUuid(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Admission record not found"));
         return convertToDto(admissions);
     }
-    private AdmissionsDto convertToDto(Admissions body){
-        GradeDto gradeDto = null;
+    private AdmissionResponseDto convertToDto(Admissions body){
+        GradeSummaryDto gradeDto = null;
         if(body.getGradeEntity() != null){
             GradeEntity gradeEntity = body.getGradeEntity();
-            gradeDto = GradeDto.builder()
+            gradeDto = GradeSummaryDto.builder()
                     .uuid(gradeEntity.getUuid())
                     .name(gradeEntity.getName())
-                    .capacity(gradeEntity.getCapacity())
-                    .active(gradeEntity.isActive())
                     .build();
         }
 
-        return AdmissionsDto.builder()
+        return AdmissionResponseDto.builder()
                 .uuid(body.getUuid())
                 .applicationId(body.getApplicationId())
                 .firstName(body.getFirstName())
@@ -113,12 +108,12 @@ public class StudentService {
                 .parentRelationship(body.getParentRelationship())
                 .parentPhoneNumber(body.getParentPhoneNumber())
                 .parentEmail(body.getParentEmail())
-                .gradeDto(gradeDto)
+                .grade(gradeDto)
                 .build();
     }
 
     @Transactional
-    public void updateAdmission(UUID uuid, AdmissionsDto req){
+    public void updateAdmission(UUID uuid, AdmissionRequestDto req){
         Admissions existingAdmissions = admissionsRepo.findByUuid(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Admission record not found"));
 

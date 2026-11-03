@@ -1,9 +1,9 @@
 package com.bloom.bloomschool.staff.controller;
 
-import com.bloom.bloomschool.staff.dto.StaffDto;
+import com.bloom.bloomschool.staff.dto.StaffRequestDto;
+import com.bloom.bloomschool.staff.dto.StaffResponseDto;
 import com.bloom.bloomschool.staff.service.StaffService;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,23 +19,23 @@ public class StaffController {
     private final StaffService service;
 
     @GetMapping("/allstaff")
-    public ResponseEntity<List<StaffDto>> getAll(){
+    public ResponseEntity<List<StaffResponseDto>> getAll(){
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/staff/{uuid}")
-    public ResponseEntity<StaffDto> getByUuid(@PathVariable UUID uuid) {
+    public ResponseEntity<StaffResponseDto> getByUuid(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getByUuid(uuid));
     }
 
     @PostMapping("/createStaff")
-    public ResponseEntity<?> create(@RequestBody StaffDto req){
+    public ResponseEntity<?> create(@RequestBody StaffRequestDto req){
         service.create(req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/updateStaff/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody StaffDto req){
+    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody StaffRequestDto req){
         service.update(uuid, req);
         return new ResponseEntity<>(HttpStatus.OK);}
 

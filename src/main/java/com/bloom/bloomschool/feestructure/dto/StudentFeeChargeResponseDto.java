@@ -1,24 +1,15 @@
 package com.bloom.bloomschool.feestructure.dto;
 
-
-import com.bloom.bloomschool.feestructure.entity.FeeItemEntity;
-import com.bloom.bloomschool.feestructure.entity.FeeStructureEntity;
 import com.bloom.bloomschool.feestructure.enumerations.FeeCategory;
-import com.bloom.bloomschool.student.dto.StudentRequestDTO;
-import com.bloom.bloomschool.student.entity.Student;
-import jakarta.persistence.Enumerated;
+import com.bloom.bloomschool.student.dto.StudentSummaryDto;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter
-@Getter
-public class StudentFeeChargeDto {
+@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+public class StudentFeeChargeResponseDto {
     private UUID uuid;
     private String admissionNumber;
     private String grade;
@@ -31,11 +22,7 @@ public class StudentFeeChargeDto {
     private double amount;
     private LocalDate dueDate;
     private LocalDateTime generatedAt;
+    private StudentSummaryDto student;
     private UUID feeStructureUuid;
-    private UUID studentUuid;
     private UUID feeItemUuid;
-    private FeeStructureDto feeStructureDto;
-    private StudentRequestDTO studentRequestDTO;
-    private FeeItemDto feeItemDto;
-
 }

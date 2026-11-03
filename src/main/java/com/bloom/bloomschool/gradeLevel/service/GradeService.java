@@ -1,16 +1,14 @@
 package com.bloom.bloomschool.gradeLevel.service;
 
-import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeRequestDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeResponseDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
-import com.bloom.bloomschool.student.enums.ApplicationStage;
 import com.bloom.bloomschool.student.enums.StudentStatus;
 import com.bloom.bloomschool.student.repository.AdmissionsRepository;
 import com.bloom.bloomschool.student.repository.StudentRepository;
-import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -28,7 +26,7 @@ public class GradeService {
     private final StudentRepository studentRepo;
 
     @Transactional(readOnly = true)
-    public List<GradeDto> get_all_grades(){
+    public List<GradeResponseDto> get_all_grades(){
         List<GradeEntity> gradeEntity = repo.findAll();
         if(CollectionUtils.isEmpty(gradeEntity)){
             return List.of();
@@ -38,18 +36,18 @@ public class GradeService {
     }
 
     @Transactional(readOnly = true)
-    public GradeDto get_grade(UUID uuid) {
+    public GradeResponseDto get_grade(UUID uuid) {
         return  convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No grade found")));
     }
 
-    private GradeDto convertToDto(GradeEntity body){
-        return GradeDto.builder()
+    private GradeResponseDto convertToDto(GradeEntity body){
+        return GradeResponseDto.builder()
                 .uuid(body.getUuid())
                 .name(body.getName())
                 .displayOrder(body.getDisplayOrder())
                 .capacity(body.getCapacity())
-                .active(body.isActive())
+                .isActive(body.isActive())
                 .streamName(body.getStreamName())
                 .streamCapacity(body.getStreamCapacity())
                 .streams(body.getStreams())
@@ -57,7 +55,7 @@ public class GradeService {
                 .build();
     }
     @Transactional
-    public void createGrade(GradeDto req){
+    public void createGrade(GradeRequestDto req){
         if(repo.existsByName(req.getName())){
             throw new RuntimeException("A grade with this name exists");
         }
@@ -66,7 +64,7 @@ public class GradeService {
                 .name(req.getName())
                 .displayOrder(req.getDisplayOrder())
                 .capacity(req.getCapacity())
-                .active(req.isActive())
+                .active(req.getIsActive())
                 .streamName(req.getStreamName())
                 .streamCapacity(req.getStreamCapacity())
                 .streams(req.getStreams())
@@ -75,7 +73,7 @@ public class GradeService {
     }
 
     @Transactional
-    public void update(UUID uuid, GradeDto req){
+    public void update(UUID uuid, GradeRequestDto req){
         GradeEntity existingGrade = repo.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("No grade with this uuid found"));
         if(repo.existsByNameAndUuidNot(req.getName(), uuid)){
@@ -84,7 +82,7 @@ public class GradeService {
         existingGrade.setName(req.getName());
         existingGrade.setDisplayOrder(req.getDisplayOrder());
         existingGrade.setCapacity(req.getCapacity());
-        existingGrade.setActive(req.isActive());
+        existingGrade.setActive(req.getIsActive());
         existingGrade.setStreamName(req.getStreamName());
         existingGrade.setStreamCapacity(req.getStreamCapacity());
         existingGrade.setStreams(req.getStreams());

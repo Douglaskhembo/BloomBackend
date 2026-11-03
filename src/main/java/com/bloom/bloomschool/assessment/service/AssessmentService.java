@@ -1,26 +1,23 @@
 package com.bloom.bloomschool.assessment.service;
 
-import com.bloom.bloomschool.assessment.dto.AssessmentDto;
-import com.bloom.bloomschool.assessment.dto.AssessmentMarksDto;
-import com.bloom.bloomschool.assessment.dto.MarkEntryRequestDto;
+import com.bloom.bloomschool.assessment.dto.*;
 import com.bloom.bloomschool.assessment.entity.Assessment;
 import com.bloom.bloomschool.assessment.entity.AssessmentMarks;
 import com.bloom.bloomschool.assessment.repository.AssessmentMarkRepository;
 import com.bloom.bloomschool.assessment.repository.AssessmentRepository;
-import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeSummaryDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
-import com.bloom.bloomschool.staff.dto.StaffDto;
+import com.bloom.bloomschool.staff.dto.StaffSummaryDto;
 import com.bloom.bloomschool.staff.entity.StaffEntity;
 import com.bloom.bloomschool.staff.repository.StaffRepository;
-import com.bloom.bloomschool.student.dto.StudentRequestDTO;
+import com.bloom.bloomschool.student.dto.StudentSummaryDto;
+import com.bloom.bloomschool.student.dto.SubjectSummaryDto;
 import com.bloom.bloomschool.student.entity.Student;
 import com.bloom.bloomschool.student.repository.StudentRepository;
-import com.bloom.bloomschool.subject.dto.SubjectDto;
 import com.bloom.bloomschool.subject.entity.SubjectEntity;
 import com.bloom.bloomschool.subject.repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,24 +36,25 @@ public class AssessmentService {
     private final AssessmentMarkRepository assessmentMarkRepo;
     private final StudentRepository studentRepo;
     @Transactional(readOnly = true)
-    public List<AssessmentMarksDto> getMarks(){
+    public List<AssessmentMarkResponseDto> getMarks(){
         List<AssessmentMarks> assessmentMarks = assessmentMarkRepo.findAll();
         if(CollectionUtils.isEmpty(assessmentMarks)){return List.of();}
         return assessmentMarks.stream().map(this::convertMarksToDto).toList();
     }
 
-    private AssessmentMarksDto convertMarksToDto(AssessmentMarks body){
+    private AssessmentMarkResponseDto convertMarksToDto(AssessmentMarks body){
         Student student = body.getStudent();
-        StudentRequestDTO studentRequestDTO = StudentRequestDTO.builder()
-                .studentUuid(student.getUuid())
+        StudentSummaryDto studentRequestDTO = StudentSummaryDto.builder()
+                .uuid(student.getUuid())
                 .admissionNumber(student.getAdmissionNumber())
-                .studentName(student.getFirstName() + " " + student.getLastName())
+                .fullName(student.getFirstName() + " " + student.getLastName())
                 .build();
 
-        return AssessmentMarksDto.builder()
+        return AssessmentMarkResponseDto.builder()
                 .score(body.getScore())
-                .assessmentDtos(convertToDto(body.getAssessment()))
-                .studentRequestDTO(studentRequestDTO)
+                .assessmentUuid(body.getAssessment().getUuid())
+                .assessmentName(body.getAssessment().getName())
+                .student(studentRequestDTO)
                 .build();
     }
 
@@ -79,7 +77,7 @@ public class AssessmentService {
             entity.setAssessment(assessment);
             assessmentMarkRepo.save(entity);
         }
-    }
+
 
         for(MarkEntryRequestDto.Entry entry : req.getEntries()){
             Student student = studentRepo.findByUuid(entry.getStudentUuid())
@@ -88,7 +86,7 @@ public class AssessmentService {
                 throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Score is not valid");
             }
             AssessmentMarks mark = assessmentMarkRepo
-                    .findByAssessmentUuidAndStudentUuid(assessmentUuid, entry.getStudentUuid())
+                    .findByAssessmentUuidAndStudentUuid(assesmentUuid, entry.getStudentUuid())
                     .orElseGet(AssessmentMarks::new);
 
             mark.setScore(entry.getScore());
@@ -99,7 +97,7 @@ public class AssessmentService {
         }
     }
     @Transactional(readOnly = true)
-    public List<AssessmentDto> getAll(){
+    public List<AssessmentResponseDto> getAll(){
         List<Assessment> assessment = repo.findAll();
         if (CollectionUtils.isEmpty(assessment)){
             return List.of();
@@ -107,44 +105,33 @@ public class AssessmentService {
         return assessment.stream().map(this::convertToDto).toList();
     }
     @Transactional(readOnly = true)
-    public AssessmentDto getAssessment(UUID uuid){
+    public AssessmentResponseDto getAssessment(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "No Assessment found")));
     }
 
-    private AssessmentDto convertToDto(Assessment body){
+    private AssessmentResponseDto convertToDto(Assessment body){
         GradeEntity gradeEntity = body.getGrade();
-        GradeDto gradeDto = GradeDto.builder()
-                .name(gradeEntity.getName())
-                .displayOrder(gradeEntity.getDisplayOrder())
-                .capacity(gradeEntity.getCapacity())
-                .active(gradeEntity.isActive())
-                .streamName(gradeEntity.getStreamName())
-                .streamCapacity(gradeEntity.getStreamCapacity())
-                .streams(gradeEntity.getStreams()).build();
+        GradeSummaryDto gradeDto = GradeSummaryDto.builder()
+                .uuid(gradeEntity.getUuid())
+                .name(gradeEntity.getName()).build();
 
         SubjectEntity subjectEntity = body.getSubject();
-        SubjectDto subjectDto = SubjectDto.builder()
+        SubjectSummaryDto subjectDto = SubjectSummaryDto.builder()
                 .name(subjectEntity.getName())
                 .subjectCode(subjectEntity.getSubjectCode())
-                .status(subjectEntity.getIsActive())
+                .isActive(subjectEntity.getIsActive())
                 .build();
 
         StaffEntity staffEntity = body.getStaff();
-        StaffDto staffDto = StaffDto.builder()
-                .firstName(staffEntity.getFirstName())
-                .lastName(staffEntity.getLastName())
+        StaffSummaryDto staffDto = StaffSummaryDto.builder()
+                .uuid(staffEntity.getUuid())
+                .fullName(staffEntity.getFirstName()+" "+ staffEntity.getLastName())
                 .email(staffEntity.getEmail())
-                .phoneNumber(staffEntity.getPhoneNumber())
-                .gender(staffEntity.getGender())
-                .role(staffEntity.getRole())
-                .employmentType(staffEntity.getEmploymentType())
-                .isActive(staffEntity.getIsActive())
                 .build();
 
-        return AssessmentDto.builder()
-                .uuid(body.getUuid())
+        return AssessmentResponseDto.builder()
                 .name(body.getName())
                 .term(body.getTerm())
                 .maxScore(body.getMaxScore())
@@ -158,7 +145,7 @@ public class AssessmentService {
     }
 
     @Transactional
-    public void createAssessment(AssessmentDto req){
+    public void createAssessment(AssessmentRequestDto req){
         if (repo.existsByNameAndTermAndYearAndSubjectUuidAndGradeUuid(req.getName(), req.getTerm(), req.getYear(),
                 req.getSubjectUuid(), req.getGradeUuid())){
             throw new RuntimeException("An assessment with the same name, term, year, subject and grade already exists");
@@ -167,7 +154,7 @@ public class AssessmentService {
     }
 
     @Transactional
-    public void updateAssessment(UUID uuid, AssessmentDto req){
+    public void updateAssessment(UUID uuid, AssessmentRequestDto req){
         Assessment existingAssessment = repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));
 
@@ -199,7 +186,7 @@ public class AssessmentService {
 
         repo.save(existingAssessment);
     }
-    private Assessment convertToEntity(AssessmentDto body){
+    private Assessment convertToEntity(AssessmentRequestDto body){
         GradeEntity grade = gradeRepo.findByUuid(body.getGradeUuid())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grade not found"));
 

@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.feestructure.controller;
 
-import com.bloom.bloomschool.feestructure.dto.FeePaymentDto;
+import com.bloom.bloomschool.feestructure.dto.FeePaymentRequestDto;
+import com.bloom.bloomschool.feestructure.dto.FeePaymentResponseDto;
 import com.bloom.bloomschool.feestructure.service.FeePaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,12 +18,12 @@ public class FeePaymentController {
     private final FeePaymentService service;
 
     @GetMapping("/get-all")
-    public ResponseEntity<List<FeePaymentDto>> getAll(){
+    public ResponseEntity<List<FeePaymentResponseDto>> getAll(){
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/get/{uuid}")
-    public ResponseEntity<FeePaymentDto> getFeeItem(@PathVariable UUID uuid) {
+    public ResponseEntity<FeePaymentResponseDto> getFeeItem(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getPayment(uuid));
     }
 
@@ -32,7 +33,7 @@ public class FeePaymentController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createFeeItem(@RequestBody FeePaymentDto body){
+    public ResponseEntity<?> createFeeItem(@RequestBody FeePaymentRequestDto body){
         service.create(body);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }

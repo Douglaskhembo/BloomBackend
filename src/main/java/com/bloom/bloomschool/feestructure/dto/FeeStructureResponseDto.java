@@ -1,18 +1,13 @@
 package com.bloom.bloomschool.feestructure.dto;
 
 import com.bloom.bloomschool.feestructure.enumerations.FeeStructureStatus;
-import com.bloom.bloomschool.feestructure.entity.FeeStructureLine;
 import lombok.*;
 
 import java.util.List;
 import java.util.UUID;
 
-@Builder
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class FeeStructureDto {
+@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+public class FeeStructureResponseDto {
     private UUID uuid;
     private int academicYear;
     private String grade;
@@ -21,7 +16,6 @@ public class FeeStructureDto {
     private int version;
     private String comment;
     private String rejectReason;
-    private List<FeeStructureLine> feeStructureLines;
-    private List<FeeStructureLine> baseline;
-
+    private List<FeeStructureLineResponseDto> feeStructureLines;
+    private List<FeeStructureLineResponseDto> baseline;
 }

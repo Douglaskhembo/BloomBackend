@@ -1,9 +1,7 @@
 package com.bloom.bloomschool.assessment.controller;
 
 
-import com.bloom.bloomschool.assessment.dto.AssessmentDto;
-import com.bloom.bloomschool.assessment.dto.AssessmentMarksDto;
-import com.bloom.bloomschool.assessment.dto.MarkEntryRequestDto;
+import com.bloom.bloomschool.assessment.dto.*;
 import com.bloom.bloomschool.assessment.service.AssessmentService;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -21,22 +19,22 @@ public class AssessmentController {
     private final AssessmentService service;
 
     @GetMapping("/get-all")
-    public ResponseEntity<List<AssessmentDto>> getAll(){
+    public ResponseEntity<List<AssessmentResponseDto>> getAll(){
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/get-assessment/{uuid}")
-    public ResponseEntity<AssessmentDto> getAssessment(@PathVariable UUID uuid) throws BadRequestException{
+    public ResponseEntity<AssessmentResponseDto> getAssessment(@PathVariable UUID uuid) throws BadRequestException{
         return ResponseEntity.ok(service.getAssessment(uuid));
     }
 
     @GetMapping("/get-all-marks")
-    public ResponseEntity<List<AssessmentMarksDto>> getMarks(){
+    public ResponseEntity<List<AssessmentMarkResponseDto>> getMarks(){
         return ResponseEntity.ok(service.getMarks());
     }
 
     @PostMapping("/create-assessment")
-    public ResponseEntity<?> create(@RequestBody AssessmentDto req){
+    public ResponseEntity<?> create(@RequestBody AssessmentRequestDto req){
         service.createAssessment(req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
@@ -50,7 +48,7 @@ public class AssessmentController {
     }
 
     @PutMapping("/update-assessment/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AssessmentDto req){
+    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AssessmentRequestDto req){
         service.updateAssessment(uuid, req);
         return new ResponseEntity<>(HttpStatus.OK);
     }

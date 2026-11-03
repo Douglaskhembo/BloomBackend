@@ -1,8 +1,6 @@
 package com.bloom.bloomschool.student.dto;
 
-import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
-import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
-import com.bloom.bloomschool.student.entity.Student;
+import com.bloom.bloomschool.gradeLevel.dto.GradeSummaryDto;
 import com.bloom.bloomschool.student.enums.ApplicationStage;
 import com.bloom.bloomschool.student.enums.StudentType;
 import lombok.*;
@@ -10,12 +8,8 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter
-@Getter
-public class AdmissionsDto {
+@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+public class AdmissionResponseDto {
     private UUID uuid;
     private String applicationId;
     private String firstName;
@@ -25,7 +19,6 @@ public class AdmissionsDto {
     private String birthCertificateNumber;
     private String address;
     private String medicalNote;
-    private String grade;
     private String stream;
     private ApplicationStage applicationStage;
     private StudentType studentType;
@@ -33,6 +26,6 @@ public class AdmissionsDto {
     private String parentRelationship;
     private String parentPhoneNumber;
     private String parentEmail;
-    private UUID gradeUuid;
-    private GradeDto gradeDto;
+    private GradeSummaryDto grade;
+    private UUID studentUuid;
 }

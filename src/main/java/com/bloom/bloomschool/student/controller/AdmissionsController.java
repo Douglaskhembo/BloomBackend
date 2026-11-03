@@ -1,6 +1,7 @@
 package com.bloom.bloomschool.student.controller;
 
-import com.bloom.bloomschool.student.dto.AdmissionsDto;
+import com.bloom.bloomschool.student.dto.AdmissionRequestDto;
+import com.bloom.bloomschool.student.dto.AdmissionResponseDto;
 import com.bloom.bloomschool.student.enums.ApplicationStage;
 import com.bloom.bloomschool.student.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -19,23 +20,23 @@ public class AdmissionsController {
     private final StudentService service;
 
     @GetMapping("/allAdmissions")
-    public ResponseEntity<List<AdmissionsDto>> getAll() {
+    public ResponseEntity<List<AdmissionResponseDto>> getAll() {
         return ResponseEntity.ok(service.getAllAdmissions());
     }
 
     @GetMapping("/admission/{uuid}")
-    public ResponseEntity<AdmissionsDto> getAdmission(@PathVariable UUID uuid) {
+    public ResponseEntity<AdmissionResponseDto> getAdmission(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getAdmission(uuid));
     }
 
     @PostMapping("/createAdmission")
-    public ResponseEntity<?> create(@RequestBody AdmissionsDto req) {
+    public ResponseEntity<?> create(@RequestBody AdmissionRequestDto req) {
         service.createAdmission(req);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/updateAdmission/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AdmissionsDto req) {
+    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AdmissionRequestDto req) {
         service.updateAdmission(uuid, req);
         return new ResponseEntity<>(HttpStatus.OK);
     }

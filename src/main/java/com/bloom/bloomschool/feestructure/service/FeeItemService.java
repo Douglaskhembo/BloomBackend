@@ -1,22 +1,19 @@
 package com.bloom.bloomschool.feestructure.service;
 
-import com.bloom.bloomschool.feestructure.dto.FeeItemDto;
+import com.bloom.bloomschool.feestructure.dto.FeeItemRequestDto;
+import com.bloom.bloomschool.feestructure.dto.FeeItemResponseDto;
 import com.bloom.bloomschool.feestructure.entity.FeeItemEntity;
 import com.bloom.bloomschool.feestructure.repository.FeeItemRepository;
-import com.bloom.bloomschool.gradeLevel.dto.GradeDto;
+import com.bloom.bloomschool.gradeLevel.dto.GradeSummaryDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -26,33 +23,27 @@ public class FeeItemService {
     private final FeeItemRepository repo;
     private final GradeRepository gradeRepo;
 
-    public List<FeeItemDto> getAll(){
+    public List<FeeItemResponseDto> getAll(){
         return repo.findAll().stream().map(this::convertToDto).toList();
     }
 
-    public FeeItemDto getFeeItem(UUID uuid){
+    public FeeItemResponseDto getFeeItem(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "No fee item found")));
     }
-    private FeeItemDto convertToDto(FeeItemEntity body) {
-        Set<GradeDto> gradeDtos = new HashSet<>();
+    private FeeItemResponseDto convertToDto(FeeItemEntity body) {
+        List<GradeSummaryDto> gradeDtos = new ArrayList<>();
         if (body.getGradeLevel() != null) {
             gradeDtos = body.getGradeLevel().stream()
-                    .map(gradeEntity -> GradeDto.builder()
+                    .map(gradeEntity -> GradeSummaryDto.builder()
                             .uuid(gradeEntity.getUuid())
                             .name(gradeEntity.getName())
-                            .displayOrder(gradeEntity.getDisplayOrder())
-                            .capacity(gradeEntity.getCapacity())
-                            .active(gradeEntity.isActive())
-                            .streamName(gradeEntity.getStreamName())
-                            .streamCapacity(gradeEntity.getStreamCapacity())
-                            .streams(gradeEntity.getStreams())
                             .build())
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
         }
 
-        return FeeItemDto.builder()
+        return FeeItemResponseDto.builder()
                 .uuid(body.getUuid())
                 .name(body.getName())
                 .description(body.getDescription())
@@ -61,7 +52,7 @@ public class FeeItemService {
                 .termOneAmount(body.getTermOneAmount())
                 .termTwoAmount(body.getTermTwoAmount())
                 .termThreeAmount(body.getTermThreeAmount())
-                .gradeLevel(gradeDtos)
+                .grades(gradeDtos)
                 .mandatory(body.getMandatory())
                 .active(body.isActive())
                 .feeCategory(body.getFeeCategory())
@@ -83,7 +74,7 @@ public class FeeItemService {
         return new HashSet<>(found);
     }
     @Transactional
-    public void createFeeItem(FeeItemDto body){
+    public void createFeeItem(FeeItemRequestDto body){
         Set<GradeEntity> gradeEntity =resolveGrades(body.getGradeUuids());
 
         if (repo.existsByName(body.getName())) {
@@ -98,7 +89,7 @@ public class FeeItemService {
                 .termTwoAmount(body.getTermTwoAmount())
                 .termThreeAmount(body.getTermThreeAmount())
                 .gradeLevel(gradeEntity).mandatory(body.getMandatory())
-                .active(body.isActive()).feeCategory(body.getFeeCategory())
+                .active(body.getActive()).feeCategory(body.getFeeCategory())
                 .feeApplicability(body.getFeeApplicability())
                 .mandatory(body.getMandatory())
                 .build();
@@ -106,7 +97,7 @@ public class FeeItemService {
     }
 
     @Transactional
-    public void updateFeeItem(FeeItemDto body, UUID uuid) {
+    public void updateFeeItem(FeeItemRequestDto body, UUID uuid) {
         FeeItemEntity existingFeeItem = repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Fee item found"));
 
@@ -125,7 +116,7 @@ public class FeeItemService {
         existingFeeItem.setTermThreeAmount(body.getTermThreeAmount());
         existingFeeItem.setGradeLevel(gradeEntity);
         existingFeeItem.setMandatory(body.getMandatory());
-        existingFeeItem.setActive(body.isActive());
+        existingFeeItem.setActive(body.getActive());
         existingFeeItem.setFeeCategory(body.getFeeCategory());
         existingFeeItem.setFeeApplicability(body.getFeeApplicability());
         repo.save(existingFeeItem);
