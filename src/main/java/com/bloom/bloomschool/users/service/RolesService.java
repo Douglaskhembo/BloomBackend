@@ -68,28 +68,6 @@ public class RolesService {
         roleRepo.save(role);
     }
 
-    // Assign User to Role
-    @Transactional
-    public void addUserToRole(UUID roleUuid, UUID userUuid) {
-        Roles role = findEntity(roleUuid);
-        User user = userRepo.findByUuid(userUuid)
-                .orElseThrow(() -> new ResourceNotFoundException("User Not Found!!"));
-
-        user.getRoles().add(role);
-        userRepo.save(user);
-    }
-
-    // Remove User from Role
-    @Transactional
-    public void removeUserFromRole(UUID roleUuid, UUID userUuid) {
-        Roles role = findEntity(roleUuid);
-        User user = userRepo.findByUuid(userUuid)
-                .orElseThrow(() -> new ResourceNotFoundException("User Not Found!!"));
-
-        user.getRoles().remove(role);
-        userRepo.save(user);
-    }
-
     // Delete Role
     @Transactional
     public void deleteRole(UUID uuid) {
