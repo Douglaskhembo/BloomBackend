@@ -1,34 +1,38 @@
 package com.bloom.bloomschool.users.repository;
 
-import com.bloom.bloomschool.staff.entity.StaffEntity;
 import com.bloom.bloomschool.users.entity.User;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUuid(UUID uuid);
 
-    Optional<User> findByEmail(String email);
+    @Query(value = """
+            SELECT * FROM bloom_school_user u WHERE u.uuid = :uuid
+            """, nativeQuery = true)
+    Optional<User> findByUuid(@Param("uuid") UUID uuid);
 
-    Optional<User> findByUsername(String username);
+    @Query(value = """
+            SELECT * FROM bloom_school_user u WHERE u.email = :email
+            """, nativeQuery = true)
+    Optional<User> findByEmail(@Param("email") String email);
 
-    Optional<User> findByUsernameAndEmail(String username, String email);
+    @Query(value = "SELECT COUNT(*) > 0 FROM bloom_school_user u WHERE u.username = :username", nativeQuery = true)
+    boolean existsByUsername(@Param("username") String username);
 
-    boolean existsByUsername(String username);
-
-    boolean existsByUsernameAndEmail(String username, String email);
-
+    @Query(value = "SELECT COUNT(*) > 0 FROM bloom_school_user u WHERE u.email = :?1", nativeQuery = true)
     boolean existsByEmail(String email);
 
-    Optional<User> findByProfileRef(String profileRef);
+    @Query(value = """
+            SELECT * FROM bloom_school_user u WHERE u.profile_ref = :profileRef
+            """, nativeQuery = true)
+    Optional<User> findByProfileRef(@Param("profileRef") String profileRef);
 
+    @Query(value = "SELECT COUNT(*) > 0 FROM bloom_school_user u WHERE u.profile_ref = :?1", nativeQuery = true)
     boolean existsByProfileRef(String profileRef);
-
-    boolean existsByStaff(StaffEntity staff);
-
-
 }
