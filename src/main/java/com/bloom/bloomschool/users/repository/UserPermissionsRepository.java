@@ -15,9 +15,10 @@ import java.util.List;
 @Repository
 public interface UserPermissionsRepository extends JpaRepository<UserPermissions, Long> {
 
-    Optional<UserPermissions> findByUuid(UUID uuid);
-
-    Optional<UserPermissions> findByUserAndPermission(User user, Permissions permission);
+    @Query(value = """
+            SELECT * FROM bloom_school_user_permissions up WHERE up.uuid = :uuid
+            """, nativeQuery = true)
+    Optional<UserPermissions> findByUuid(@Param ("uuid") UUID uuid);
 
     @Query("SELECT up FROM UserPermissions up WHERE up.user.userId = :userId AND up.permission.permissionsId = :permissionsId")
     UserPermissions findByUserIdAndPermissionId(
