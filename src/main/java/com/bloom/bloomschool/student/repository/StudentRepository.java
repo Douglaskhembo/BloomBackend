@@ -13,13 +13,9 @@ import java.util.UUID;
 
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long>{
-    Optional<Student> findByUuid(UUID uuid);
 
-    Optional<Student> findByAdmissionNumber(String admissionNumber);
-
-    Optional<Student> findByStudentEmail(String studentEmail);
-
-    Optional<Student> findByEntryNumber(String entryNumber);
+    @Query(value = "SELECT * FROM bloom_school_student st WHERE st.uuid = :uuid", nativeQuery = true)
+    Optional<Student> findByUuid(@Param("uuid") UUID uuid);
 
     List<Student> findAll();
 
@@ -27,14 +23,16 @@ public interface StudentRepository extends JpaRepository<Student, Long>{
     int getStreamCapacity(@Param("gradeUuid") UUID gradeUuid,
                                   @Param("stream") String stream,
                                   @Param("status") StudentStatus studentStatus);
-    List<Student> findByStatus(StudentStatus status);
 
     @Query("SELECT COUNT(st) FROM Student st WHERE st.gradeEntity.uuid = :gradeUuid AND st.status = :status")
     int getGradeCapacity(@Param("gradeUuid") UUID gradeUuid,
                                  @Param("status") StudentStatus studentStatus);
-    boolean existsByUuid(UUID uuid);
-    boolean existsByAdmissionNumber(String admissionNumber);
-    boolean existsByEntryNumber(String entryNumber);
+
+    @Query(value = """
+            SELECT COUNT(*) > 0 FROM bloom_school_student st WHERE st.uuid = :uuid
+            """, nativeQuery = true)
+    boolean existsByUuid(@Param("uuid") UUID uuid);
+
 
 
 }

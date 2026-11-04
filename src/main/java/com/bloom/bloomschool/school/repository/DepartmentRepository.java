@@ -3,6 +3,7 @@ package com.bloom.bloomschool.school.repository;
 import com.bloom.bloomschool.school.entity.Department;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,8 +13,12 @@ import java.util.UUID;
 @Repository
 public interface DepartmentRepository extends JpaRepository<Department, Long> {
 
-    Optional<Department> findByUuid(UUID uuid);
+    @Query(value = """
+            SELECT * FROM bloom_school_department d WHERE d.uuid = :uuid
+            """, nativeQuery = true)
+    Optional<Department> findByUuid(@Param("uuid") UUID uuid);
 
+    @Query(value = "SELECT * FROM bloom_school_department", nativeQuery = true)
     List<Department> findAll();
 
     @Query("SELECT COUNT(d) > 0 FROM Department d WHERE d.departmentCode = ?1")
