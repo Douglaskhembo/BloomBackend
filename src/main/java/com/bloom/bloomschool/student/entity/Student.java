@@ -2,6 +2,7 @@ package com.bloom.bloomschool.student.entity;
 
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.student.enums.StudentStatus;
+import com.bloom.bloomschool.student.enums.StudentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;

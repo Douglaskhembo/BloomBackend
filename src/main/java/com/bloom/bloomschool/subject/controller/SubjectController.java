@@ -24,7 +24,7 @@ public class SubjectController {
     }
 
     @GetMapping("/subject/{uuid}")
-    public ResponseEntity<SubjectResponseDto> get_subject(@PathVariable UUID uuid) {
+    public ResponseEntity<List<SubjectResponseDto>> get_subject(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.get_subject(uuid));
     }
 

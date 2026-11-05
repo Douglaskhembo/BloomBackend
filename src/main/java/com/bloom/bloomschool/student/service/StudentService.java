@@ -236,7 +236,6 @@ public class StudentService {
         s.setFirstName(req.getFirstName());
         s.setLastName(req.getLastName());
         s.setStudentEmail(req.getStudentEmail());
-        s.setEntryNumber(req.getEntryNumber());
         s.setDateOfBirth(req.getDateOfBirth());
 
         studentRepo.save(s);
