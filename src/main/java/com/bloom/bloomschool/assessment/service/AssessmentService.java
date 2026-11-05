@@ -60,8 +60,8 @@ public class AssessmentService {
 
 
     @Transactional
-    public void saveMarks(UUID assesmentUuid, MarkEntryRequestDto req){
-        Assessment assessment = repo.findByUuid(assesmentUuid)
+    public void saveMarks(UUID assessmentUuid, MarkEntryRequestDto req){
+        Assessment assessment = repo.findByUuid(assessmentUuid)
                 .orElseThrow(() ->new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found"));
          int maxScore = assessment.getMaxScore();
 
@@ -86,7 +86,7 @@ public class AssessmentService {
                 throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Score is not valid");
             }
             AssessmentMarks mark = assessmentMarkRepo
-                    .findByAssessmentUuidAndStudentUuid(assesmentUuid, entry.getStudentUuid())
+                    .findByAssessmentUuidAndStudentUuid(assessmentUuid, entry.getStudentUuid())
                     .orElseGet(AssessmentMarks::new);
 
             mark.setScore(entry.getScore());
