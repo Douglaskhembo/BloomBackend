@@ -86,7 +86,7 @@ public class AssessmentService {
                 throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Score is not valid");
             }
             AssessmentMarks mark = assessmentMarkRepo
-                    .findByAssessmentUuidAndStudentUuid(assesmentUuid, entry.getStudentUuid())
+                    .findByAssessmentUuidAndStudentUuid(assessmentUuid, entry.getStudentUuid())
                     .orElseGet(AssessmentMarks::new);
 
             mark.setScore(entry.getScore());
