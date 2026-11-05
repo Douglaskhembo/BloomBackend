@@ -199,10 +199,25 @@ public class StudentService {
 
     private Student findEntity(UUID uuid) {
         return studentRepo.findByUuid(uuid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
     }
 
-    private StudentResponseDTO toResponse(Student s) {
+    public List<StudentResponseDTO> getAllStudents() {
+        return studentRepo.findAll().stream()
+                .map(s -> StudentResponseDTO.builder()
+                        .uuid(s.getUuid())
+                        .admissionNumber(s.getAdmissionNumber())
+                        .fullName(s.getFirstName() + " " + s.getLastName())
+                        .studentEmail(s.getStudentEmail())
+                        .entryNumber(s.getEntryNumber())
+                        .dateOfBirth(s.getDateOfBirth())
+                        .status(s.getStatus() != null ? s.getStatus().name() : "N/A")
+                        .build())
+                .toList();
+    }
+
+    public StudentResponseDTO getStudentByUuid(UUID uuid) {
+        Student s = findEntity(uuid);
         return StudentResponseDTO.builder()
                 .uuid(s.getUuid())
                 .admissionNumber(s.getAdmissionNumber())
@@ -210,27 +225,18 @@ public class StudentService {
                 .studentEmail(s.getStudentEmail())
                 .entryNumber(s.getEntryNumber())
                 .dateOfBirth(s.getDateOfBirth())
-                .status(s.getStatus() != null ? s.getStatus().name() : "N/A")
-                .grade(s.getGradeEntity() != null ? s.getGradeEntity().getName() : null)
-                .stream(s.getStream())
+                .status(s.getStatus().name())
                 .build();
     }
 
-    public List<StudentResponseDTO> getAllStudents() {
-        return studentRepo.findAll().stream().map(this::toResponse).toList();
-    }
-
-    public StudentResponseDTO getStudentByUuid(UUID uuid) {
-        return toResponse(findEntity(uuid));
-    }
 
     @Transactional
     public void updateStudent(UUID uuid, StudentRequestDTO req) {
         Student s = findEntity(uuid);
-
         s.setFirstName(req.getFirstName());
         s.setLastName(req.getLastName());
         s.setStudentEmail(req.getStudentEmail());
+        s.setEntryNumber(req.getEntryNumber());
         s.setDateOfBirth(req.getDateOfBirth());
 
         studentRepo.save(s);
