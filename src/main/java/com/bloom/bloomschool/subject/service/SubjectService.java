@@ -3,6 +3,7 @@ package com.bloom.bloomschool.subject.service;
 import com.bloom.bloomschool.gradeLevel.dto.GradeResponseDto;
 import com.bloom.bloomschool.gradeLevel.entity.GradeEntity;
 import com.bloom.bloomschool.gradeLevel.repository.GradeRepository;
+import com.bloom.bloomschool.student.exceptions.ResourceNotFoundException;
 import com.bloom.bloomschool.subject.dto.SubjectRequestDto;
 import com.bloom.bloomschool.subject.dto.SubjectResponseDto;
 import com.bloom.bloomschool.subject.entity.SubjectEntity;
@@ -11,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
@@ -25,16 +25,58 @@ public class SubjectService {
     private final GradeRepository gradeRepo;
 
     public List<SubjectResponseDto> get_all_subjects(){
-        List<SubjectEntity> subjectEntities = repo.findAll();
-        if (CollectionUtils.isEmpty(subjectEntities)) {
-            return List.of();
+        List<SubjectResponseDto> dto = new ArrayList<>();
+        List<Object[]> subjects = repo.findAllSubjects();
+        for(Object[] obj :subjects){
+            SubjectResponseDto subjectResponseDto = new SubjectResponseDto();
+            subjectResponseDto.setUuid(obj[0] != null ? UUID.fromString(obj[0].toString()) : null);
+            subjectResponseDto.setName((String)obj[1]);
+            subjectResponseDto.setSubjectCode((String)obj[2]);
+            subjectResponseDto.setIsActive((Boolean) obj[3]);
+            subjectResponseDto.setGrades(new ArrayList<>());
+            if(obj[4] != null){
+                GradeResponseDto g = new GradeResponseDto();
+                g.setUuid((UUID)obj[4]);
+                g.setName((String) obj[5]);
+                g.setDisplayOrder(obj[6] == null ? 0 : ((int) obj[6]));
+                g.setCapacity(obj[7] == null ? 0 : ((int) obj[7]));
+                g.setActive(obj[8] != null && (Boolean) obj[8]);
+                g.setStreams(obj[9] == null ? 0 : ((int) obj[9]));
+                subjectResponseDto.getGrades().add(g);
+            }
+
+            dto.add(subjectResponseDto);
         }
-        return subjectEntities.stream().map(this::convertToDto).toList();
+        return dto;
     }
 
-    public SubjectResponseDto get_subject(UUID uuid){
-        return convertToDto(repo.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("No subject found")));
+    public List<SubjectResponseDto> get_subject(UUID uuid){
+        SubjectEntity subject =repo.findByUuid(uuid)
+                .orElseThrow(() -> new ResourceNotFoundException("Subject not found"));
+
+        List<SubjectResponseDto> dto = new ArrayList<>();
+        List<Object[]> subjects = repo.findSubjectByUuid(subject.getUuid());
+        for(Object[] obj :subjects){
+            SubjectResponseDto subjectResponseDto = new SubjectResponseDto();
+            subjectResponseDto.setUuid(obj[0] != null ? UUID.fromString(obj[0].toString()) : null);
+            subjectResponseDto.setName((String)obj[1]);
+            subjectResponseDto.setSubjectCode((String)obj[2]);
+            subjectResponseDto.setIsActive((Boolean) obj[3]);
+            subjectResponseDto.setGrades(new ArrayList<>());
+            if(obj[4] != null){
+                GradeResponseDto g = new GradeResponseDto();
+                g.setUuid((UUID)obj[4]);
+                g.setName((String) obj[5]);
+                g.setDisplayOrder(obj[6] == null ? 0 : ((int) obj[6]));
+                g.setCapacity(obj[7] == null ? 0 : ((int) obj[7]));
+                g.setActive(obj[8] != null && (Boolean) obj[8]);
+                g.setStreams(obj[9] == null ? 0 : ((int) obj[9]));
+                subjectResponseDto.getGrades().add(g);
+            }
+
+            dto.add(subjectResponseDto);
+        }
+        return dto;
     }
 
     private SubjectResponseDto convertToDto(SubjectEntity subject){
