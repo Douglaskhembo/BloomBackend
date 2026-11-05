@@ -23,7 +23,7 @@ public interface SubjectRepository extends JpaRepository<SubjectEntity, UUID> {
     boolean existsBySubjectCodeAndUuidNot(String subjectCode, UUID uuid);
     @Query(value = """
     SELECT s.uuid, s.name, s.subject_code, s.is_active,
-           g.uuid, g.name, g.display_order, g.capacity, g.is_active, g.streams
+           g.uuid, g.name, g.display_order, g.capacity, g.active, g.streams
     FROM bloom_school_subject s
     LEFT JOIN bloom_subject_grade_levels sg ON sg.subject_uuid = s.uuid
     LEFT JOIN bloom_school_grade g ON g.uuid = sg.grade_uuid
@@ -32,7 +32,7 @@ public interface SubjectRepository extends JpaRepository<SubjectEntity, UUID> {
 
     @Query(value = """
     SELECT s.uuid, s.name, s.subject_code, s.is_active,
-           g.uuid, g.name, g.display_order, g.capacity, g.is_active, g.streams
+           g.uuid, g.name, g.display_order, g.capacity, g.active, g.streams
     FROM bloom_school_subject s
     LEFT JOIN bloom_subject_grade_levels sg ON sg.subject_uuid = s.uuid
     LEFT JOIN bloom_school_grade g ON g.uuid = sg.grade_uuid
