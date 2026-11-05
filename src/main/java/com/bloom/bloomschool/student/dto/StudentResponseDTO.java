@@ -19,4 +19,6 @@ public class StudentResponseDTO {
     private LocalDate dateOfBirth;
     private String status;
     private List<DailyAttendanceResponseDTO> attendances;
+    private String grade;
+    private String stream;
 }

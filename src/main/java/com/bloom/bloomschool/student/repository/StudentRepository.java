@@ -38,6 +38,7 @@ public interface StudentRepository extends JpaRepository<Student, Long>{
 
     boolean existsByEntryNumber(String entryNumber);
 
+    boolean existsByEntryNumberAndUuidNot(String entryNumber, UUID uuid);
 
     @Query("SELECT s.document_type_uuid FROM Student s WHERE s.uuid =:StudentUuid")
     List<UUID> getDocumentUuids(@Param("StudentUuid") UUID studentUuid);
