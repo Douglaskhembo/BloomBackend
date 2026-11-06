@@ -36,7 +36,6 @@ public class  GradeEntity {
     @CollectionTable(name = "bloom_school_grade_streams",
     joinColumns = @JoinColumn(name = "grade_level_id"))
     @OrderColumn(name = "stream_order")
-    @Column(nullable = false)
     @Builder.Default
     private List<String> streamName = new ArrayList<>();
 
@@ -44,11 +43,10 @@ public class  GradeEntity {
     @CollectionTable(name = "bloom_school_stream_capacity",
     joinColumns = @JoinColumn(name = "grade_level_id"))
     @OrderColumn(name = "stream_order")
-    @Column(nullable = false, name = "capacity")
+    @Column(name = "capacity")
     @Builder.Default
     private List<Integer> streamCapacity = new ArrayList<>();
 
-    @Column(nullable = false)
     private int streams;
 
 }
