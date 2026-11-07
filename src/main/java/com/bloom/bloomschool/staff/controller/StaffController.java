@@ -23,7 +23,7 @@ public class StaffController {
         return ResponseEntity.ok(service.getAll());
     }
 
-    @GetMapping("/staff/{uuid}")
+    @GetMapping("/{uuid}")
     public ResponseEntity<StaffResponseDto> getByUuid(@PathVariable UUID uuid) {
         return ResponseEntity.ok(service.getByUuid(uuid));
     }
