@@ -10,7 +10,7 @@ public class GradeResponseDto {
     private UUID uuid;
     private String name;
     private int displayOrder;
-    private int capacity;
+    private Integer capacity;
     private boolean isActive;
     private List<String> streamName;
     private List<Integer> streamCapacity;

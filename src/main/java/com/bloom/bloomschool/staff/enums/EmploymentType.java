@@ -1,4 +1,4 @@
-package com.bloom.bloomschool.staff;
+package com.bloom.bloomschool.staff.enums;
 
 public enum EmploymentType {
     PERMANENT,
