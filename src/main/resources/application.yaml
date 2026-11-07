@@ -2,18 +2,18 @@ spring:
   application:
     name: BloomSchool
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/bloom_school_db
-    username: user1
-    password: user1
-    driver-class-name: org.postgresql.Driver
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/bloom_school_db
+#    username: user1
+#    password: user1
+#    driver-class-name: org.postgresql.Driver
 
 #For Pull requests use this
-#  datasource:
-#    url: ${DB_URL:jdbc:postgresql://localhost:5432/bloom_test}
-#    username: ${DB_USERNAME:postgres}
-#    password: ${DB_PASSWORD:Mniowwb@2025}
-#    driver-class-name: org.postgresql.Driver
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/bloom_test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Mniowwb@2025}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
