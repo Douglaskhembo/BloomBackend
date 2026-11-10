@@ -46,7 +46,7 @@ public class SubjectController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping("/deleteAdmission/{uuid}")
+    @DeleteMapping("/deleteSubject/{uuid}")
     public ResponseEntity<?> deleteSubject(@PathVariable UUID uuid) {
         service.deleteSubject(uuid);
         return ResponseEntity.noContent().build();
