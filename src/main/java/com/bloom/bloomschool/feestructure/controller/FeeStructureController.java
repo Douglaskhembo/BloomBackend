@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.feestructure.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.feestructure.dto.FeeStructureRequestDto;
 import com.bloom.bloomschool.feestructure.dto.FeeStructureResponseDto;
 import com.bloom.bloomschool.feestructure.service.FeeStructureService;
@@ -17,30 +18,31 @@ import java.util.UUID;
 public class FeeStructureController {
     private final FeeStructureService service;
 
-    @GetMapping("/get-all")
-    public ResponseEntity<List<FeeStructureResponseDto>> getAll(){
-        return ResponseEntity.ok(service.getAll());
+    @GetMapping("/get-all-FeeStructures")
+    public ResponseEntity<ApiResponse<List<FeeStructureResponseDto>>> getAll(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAll()));
     }
 
-    @GetMapping("/get/{uuid}")
-    public ResponseEntity<FeeStructureResponseDto> getFeeStructure(@PathVariable UUID uuid){
-        return ResponseEntity.ok(service.getFeeStructure(uuid));
+    @GetMapping("/get-fee-structure/{uuid}")
+    public ResponseEntity<ApiResponse<FeeStructureResponseDto>> getFeeStructure(@PathVariable UUID uuid){
+        return ResponseEntity.ok(ApiResponse.ok(service.getFeeStructure(uuid)));
     }
 
     @PostMapping("/create-FeeStructure")
-    public ResponseEntity<?> createFeeStructure(@RequestBody FeeStructureRequestDto body){
+    public ResponseEntity<ApiResponse<?>> createFeeStructure(@RequestBody FeeStructureRequestDto body){
         service.createFeeStructure(body);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Fee structure created"));
     }
 
     @PutMapping("/update-FeeStructure/{uuid}")
-    public ResponseEntity<?> updateFeeStructure(@PathVariable UUID uuid, @RequestBody FeeStructureRequestDto body) {
+    public ResponseEntity<ApiResponse<?>> updateFeeStructure(@PathVariable UUID uuid, @RequestBody FeeStructureRequestDto body) {
         service.updateFeeStructure(uuid, body);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Fee structure updated"));
     }
-    @DeleteMapping("/deleteAdmission-FeeStructure/{uuid}")
-    public ResponseEntity<?> deleteFeeStructure(@PathVariable UUID uuid){
+
+    @DeleteMapping("/delete-FeeStructure/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteFeeStructure(@PathVariable UUID uuid){
         service.deleteFeeStructure(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Fee structure deleted"));
     }
 }
