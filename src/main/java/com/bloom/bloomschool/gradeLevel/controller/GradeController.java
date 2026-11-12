@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.gradeLevel.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.gradeLevel.dto.GradeRequestDto;
 import com.bloom.bloomschool.gradeLevel.dto.GradeResponseDto;
 import com.bloom.bloomschool.gradeLevel.service.GradeService;
@@ -17,38 +18,37 @@ import java.util.UUID;
 public class GradeController {
     private final GradeService service;
 
-    @GetMapping("/allGrades")
-    public ResponseEntity<List<GradeResponseDto>> get_all_grades(){
-        return ResponseEntity.ok(service.get_all_grades());
+    @GetMapping("/get-all-grades")
+    public ResponseEntity<ApiResponse<List<GradeResponseDto>>> getAllGrades(){
+        return ResponseEntity.ok(ApiResponse.ok(service.get_all_grades()));
     }
 
-    @GetMapping("/grade/{uuid}")
-    public ResponseEntity<GradeResponseDto> get_grade(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.get_grade(uuid));
+    @GetMapping("/get-grade/{uuid}")
+    public ResponseEntity<ApiResponse<GradeResponseDto>> getGrade(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.get_grade(uuid)));
     }
 
-    @PostMapping("/createGrade")
-    public ResponseEntity<?> create(@RequestBody GradeRequestDto req){
-        System.out.println("Data>>>>>" +req);
+    @PostMapping("/create-grade")
+    public ResponseEntity<ApiResponse<?>> createGrade(@RequestBody GradeRequestDto req){
         service.createGrade(req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Grade created"));
     }
 
-    @PutMapping("/updateGrade/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody GradeRequestDto req){
+    @PutMapping("/update-grade/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateGrade(@PathVariable UUID uuid, @RequestBody GradeRequestDto req){
         service.update(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Grade updated"));
     }
 
-    @PatchMapping("/toggleStatus/{uuid}")
-    public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid){
+    @PatchMapping("/toggle-grade/{uuid}")
+    public ResponseEntity<ApiResponse<?>> toggleGrade(@PathVariable UUID uuid){
         service.toggleStatus(uuid);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Grade status updated"));
     }
 
-    @DeleteMapping("/deleteGrade/{uuid}")
-    public ResponseEntity<?> deleteGrade(@PathVariable UUID uuid){
+    @DeleteMapping("/delete-grade/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteGrade(@PathVariable UUID uuid){
         service.deleteGrade(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Grade deleted"));
     }
 }

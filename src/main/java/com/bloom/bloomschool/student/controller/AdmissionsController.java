@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.student.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.student.dto.AdmissionRequestDto;
 import com.bloom.bloomschool.student.dto.AdmissionResponseDto;
 import com.bloom.bloomschool.student.enums.ApplicationStage;
@@ -19,40 +20,39 @@ import java.util.UUID;
 public class AdmissionsController {
     private final StudentService service;
 
-    @GetMapping("/allAdmissions")
-    public ResponseEntity<List<AdmissionResponseDto>> getAll() {
-        return ResponseEntity.ok(service.getAllAdmissions());
+    @GetMapping("/get-all-admissions")
+    public ResponseEntity<ApiResponse<List<AdmissionResponseDto>>> getAllAdmissions() {
+        return ResponseEntity.ok(ApiResponse.ok(service.getAllAdmissions()));
     }
 
-    @GetMapping("/admission/{uuid}")
-    public ResponseEntity<AdmissionResponseDto> getAdmission(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.getAdmission(uuid));
+    @GetMapping("/get-admission/{uuid}")
+    public ResponseEntity<ApiResponse<AdmissionResponseDto>> getAdmission(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getAdmission(uuid)));
     }
 
-    @PostMapping("/createAdmission")
-    public ResponseEntity<?> create(@RequestBody AdmissionRequestDto req) {
+    @PostMapping("/create-admission")
+    public ResponseEntity<ApiResponse<?>> createAdmission(@RequestBody AdmissionRequestDto req) {
         service.createAdmission(req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Admission created"));
     }
 
-    @PutMapping("/updateAdmission/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AdmissionRequestDto req) {
+    @PutMapping("/update-admission/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateAdmission(@PathVariable UUID uuid, @RequestBody AdmissionRequestDto req) {
         service.updateAdmission(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Admission updated"));
     }
 
-
-    @DeleteMapping("/deleteAdmission/{uuid}")
-    public ResponseEntity<?> deleteAdmission(@PathVariable UUID uuid) {
+    @DeleteMapping("/delete-admission/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteAdmission(@PathVariable UUID uuid) {
         service.deleteAdmission(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Admission deleted"));
     }
 
-    @PatchMapping("/updateAdmissionStatus/{uuid}")
-    public ResponseEntity<?> updateAdmissionStatus(@PathVariable UUID uuid,
-                                                   @RequestParam ApplicationStage stage,
-                                                   @RequestParam(required = false) LocalDate joinDate){
+    @PatchMapping("/update-admission-status/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateAdmissionStatus(@PathVariable UUID uuid,
+                                                                @RequestParam ApplicationStage stage,
+                                                                @RequestParam(required = false) LocalDate joinDate) {
         service.updateAdmissionStage(uuid, stage, joinDate);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Admission status updated"));
     }
 }

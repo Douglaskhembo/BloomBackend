@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.feestructure.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeRequestDto;
 import com.bloom.bloomschool.feestructure.dto.StudentFeeChargeResponseDto;
 import com.bloom.bloomschool.feestructure.service.StudentFeeChargeService;
@@ -17,31 +18,31 @@ import java.util.UUID;
 public class StudentFeeChargeController {
     private final StudentFeeChargeService service;
 
-    @GetMapping("/get-all")
-    public ResponseEntity<List<StudentFeeChargeResponseDto>> getAll(){
-        return ResponseEntity.ok(service.getAll());
+    @GetMapping("/get-all-student-fee-charges")
+    public ResponseEntity<ApiResponse<List<StudentFeeChargeResponseDto>>> getAllStudentFeeCharges(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAll()));
     }
 
-    @GetMapping("/get/{uuid}")
-    public ResponseEntity<StudentFeeChargeResponseDto> getFeeItem(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.getFeeCharge(uuid));
+    @GetMapping("/get-student-fee-charge/{uuid}")
+    public ResponseEntity<ApiResponse<StudentFeeChargeResponseDto>> getStudentFeeCharge(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getFeeCharge(uuid)));
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createFeeItem(@RequestBody StudentFeeChargeRequestDto body){
+    @PostMapping("/create-student-fee-charge")
+    public ResponseEntity<ApiResponse<?>> createStudentFeeCharge(@RequestBody StudentFeeChargeRequestDto body){
         service.create(body);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Student fee charge created"));
     }
 
-    @PutMapping("/update/{uuid}")
-    public ResponseEntity<?> updateFeeItem(@PathVariable UUID uuid, @RequestBody StudentFeeChargeRequestDto body) {
+    @PutMapping("/update-student-fee-charge/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateStudentFeeCharge(@PathVariable UUID uuid, @RequestBody StudentFeeChargeRequestDto body) {
         service.update(uuid, body);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Student fee charge updated"));
     }
 
-    @DeleteMapping("/deleteAdmission/{uuid}")
-    public ResponseEntity<?> deleteFeeItem(@PathVariable UUID uuid){
+    @DeleteMapping("/delete-student-fee-charge/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteStudentFeeCharge(@PathVariable UUID uuid){
         service.delete(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Student fee charge deleted"));
     }
 }

@@ -1,5 +1,7 @@
 package com.bloom.bloomschool.document.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
+import com.bloom.bloomschool.document.dto.DocumentTypeResponseDto;
 import com.bloom.bloomschool.document.dto.ProvidedDocumentResponseDto;
 import com.bloom.bloomschool.document.entity.DocumentType;
 import com.bloom.bloomschool.document.entity.ProvidedDocument;
@@ -20,52 +22,53 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/providedDocuments")
+@RequestMapping("/api/v1/providedDocument")
 @RequiredArgsConstructor
 public class ProvidedDocumentController {
     private final ProvidedDocumentService service;
 
-    @GetMapping("/owner/{uuid}")
-    public ResponseEntity<List<ProvidedDocumentResponseDto>> getOwner(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.getOwner(uuid));
+    @GetMapping("/get-provided-documents-by-owner/{uuid}")
+    public ResponseEntity<ApiResponse<List<ProvidedDocumentResponseDto>>> getProvidedDocumentsByOwner(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getOwner(uuid)));
     }
 
-    @GetMapping("/missingMandatory")
-    public ResponseEntity<List<DocumentType>> getMissingMandatory(
+    @GetMapping("/get-missing-mandatory-document-types")
+    public ResponseEntity<ApiResponse<List<DocumentTypeResponseDto>>> getMissingMandatoryDocumentTypes(
             @RequestParam OwnerType ownerType,
             @RequestParam UUID ownerUuid) {
-        return ResponseEntity.ok(service.getMissingMandatory(ownerType, ownerUuid));
+        return ResponseEntity.ok(ApiResponse.ok(service.getMissingMandatoryDtos(ownerType, ownerUuid)));
     }
 
-    @PostMapping(value = "/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadDocument(@RequestParam OwnerType ownerType,
-                                            @RequestParam UUID ownerUuid,
-                                            @RequestParam UUID documentTypeUuid,
-                                            @RequestPart("file") MultipartFile file) {
-        service.uploadDocument(ownerType,  ownerUuid, documentTypeUuid, file);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    @PostMapping(value = "/upload-provided-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProvidedDocumentResponseDto>> uploadProvidedDocument(
+            @RequestParam OwnerType ownerType,
+            @RequestParam UUID ownerUuid,
+            @RequestParam UUID documentTypeUuid,
+            @RequestPart("file") MultipartFile file) {
+        ProvidedDocumentResponseDto created = service.uploadDocument(ownerType, ownerUuid, documentTypeUuid, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Document uploaded", created));
     }
 
-    @GetMapping("/downloadDocument/{uuid}")
-    public void downloadDocument(@PathVariable UUID uuid, HttpServletResponse response) {
+    @GetMapping("/download-provided-document/{uuid}")
+    public void downloadProvidedDocument(@PathVariable UUID uuid, HttpServletResponse response) {
         ProvidedDocument providedDocument = service.getByDocumentUuid(uuid);
         byte[] bytes = service.downloadDocument(uuid);
         response.setContentType(providedDocument.getContentType() != null
-                ? providedDocument.getContentType() :MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                ? providedDocument.getContentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE);
 
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\""+providedDocument.getFileName()+"\"" );
+                "attachment; filename=\"" + providedDocument.getFileName() + "\"");
         response.setContentLength(bytes.length);
-        try{
+        try {
             response.getOutputStream().write(bytes);
-        }catch (IOException e){
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    @DeleteMapping("/deleteDocument/{uuid}")
-    public ResponseEntity<?> deleteDocument(@PathVariable UUID uuid) {
+    @DeleteMapping("/delete-provided-document/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteProvidedDocument(@PathVariable UUID uuid) {
         service.deleteDocument(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Document deleted"));
     }
 }

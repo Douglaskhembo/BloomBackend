@@ -23,10 +23,16 @@ public class FeeItemService {
     private final FeeItemRepository repo;
     private final GradeRepository gradeRepo;
 
-    public List<FeeItemResponseDto> getAll(){
+    public List<FeeItemResponseDto> getAllFeeItems(){
         return repo.findAll().stream().map(this::convertToDto).toList();
     }
 
+    public List<FeeItemResponseDto> getFeeItemByGrade(String grade){
+        return repo.findAll().stream()
+                .filter(item -> item.getGradeLevel().isEmpty()
+                        || item.getGradeLevel().stream().anyMatch(g -> g.getName().equals(grade)))
+                .map(this::convertToDto).toList();
+    }
     public FeeItemResponseDto getFeeItem(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -74,7 +80,7 @@ public class FeeItemService {
         return new HashSet<>(found);
     }
     @Transactional
-    public void createFeeItem(FeeItemRequestDto body){
+    public FeeItemResponseDto createFeeItem(FeeItemRequestDto body){
         Set<GradeEntity> gradeEntity =resolveGrades(body.getGradeUuids());
 
         if (repo.existsByName(body.getName())) {
@@ -93,11 +99,12 @@ public class FeeItemService {
                 .feeApplicability(body.getFeeApplicability())
                 .mandatory(body.getMandatory())
                 .build();
-        repo.save(feeItemEntity);
+        FeeItemEntity saved = repo.save(feeItemEntity);
+        return convertToDto(saved);
     }
 
     @Transactional
-    public void updateFeeItem(FeeItemRequestDto body, UUID uuid) {
+    public FeeItemResponseDto updateFeeItem(FeeItemRequestDto body, UUID uuid) {
         FeeItemEntity existingFeeItem = repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Fee item found"));
 
@@ -119,7 +126,8 @@ public class FeeItemService {
         existingFeeItem.setActive(body.getActive());
         existingFeeItem.setFeeCategory(body.getFeeCategory());
         existingFeeItem.setFeeApplicability(body.getFeeApplicability());
-        repo.save(existingFeeItem);
+        FeeItemEntity saved = repo.save(existingFeeItem);
+        return convertToDto(saved);
     }
 
     @Transactional

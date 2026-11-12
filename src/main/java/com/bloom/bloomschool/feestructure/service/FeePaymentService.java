@@ -30,17 +30,12 @@ public class FeePaymentService{
     private final ServiceGenerator serviceGenerator;
     private final StudentRepository studentRepository;
     private final AdmissionsRepository admissionsRepository;
+
     public List<FeePaymentResponseDto> getAll(){
         List<FeePayment> feePayments = repo.findAllByOrderByPaymentDateDesc();
         return feePayments.stream().map(this::convertToDto).toList();
     }
 
-    public FeePaymentResponseDto getPayment(UUID studentUuid){
-        FeePayment feePayment = repo.findByStudent_UuidOrderByPaymentDateDesc(studentUuid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fee payment not found"));
-
-        return convertToDto(feePayment);
-    }
 
     public Double getBalance(UUID studentUuid){
         //get-balance(from student uuid)
@@ -141,5 +136,30 @@ public class FeePaymentService{
 
     public boolean hasConfirmedPayment(UUID uuid){
         return repo.existsByAdmissionsUuidAndVerificationStatus(uuid, FeeVerificationStatus.CONFIRMED);
+    }
+
+    public List<FeePaymentResponseDto> getPendingVerifications(UUID studentUuid){
+        List<FeePayment> feePayments = repo.getPendingFeePayments(studentUuid);
+        return feePayments.stream().map(this::convertToDto).toList();
+    }
+
+    public void verifyPayment(UUID uuid){
+        FeePayment existingPayment = repo.findByUuid(uuid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fee payment not found"));
+        if (existingPayment.getVerificationStatus() != FeeVerificationStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Payment already processed");
+        }
+        existingPayment.setVerificationStatus(FeeVerificationStatus.CONFIRMED);
+        repo.save(existingPayment);
+    }
+
+    public void rejectPayment(UUID uuid){
+        FeePayment existingPayment = repo.findByUuid(uuid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fee payment not found"));
+        if (existingPayment.getVerificationStatus() != FeeVerificationStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Payment already processed");
+        }
+        existingPayment.setVerificationStatus(FeeVerificationStatus.REJECTED);
+        repo.save(existingPayment);
     }
 }

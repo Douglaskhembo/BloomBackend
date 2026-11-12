@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.gradeLevel.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.gradeLevel.dto.GradeStructureRequestDto;
 import com.bloom.bloomschool.gradeLevel.dto.GradeStructureResponseDto;
 import com.bloom.bloomschool.gradeLevel.service.GradeStructureService;
@@ -12,37 +13,37 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/gradingStructure")
+@RequestMapping("/api/v1/grade-structure")
 @RequiredArgsConstructor
 public class GradeStructureController {
 
     private final GradeStructureService service;
 
-    @GetMapping("/all-grading-structures")
-    public ResponseEntity<List<GradeStructureResponseDto>> get_all(){
-        return ResponseEntity.ok(service.get_all());
+    @GetMapping("/get-all-grade-structures")
+    public ResponseEntity<ApiResponse<List<GradeStructureResponseDto>>> getAllGradeStructures(){
+        return ResponseEntity.ok(ApiResponse.ok(service.get_all()));
     }
 
-    @GetMapping("/grade-structure/{uuid}")
-    public ResponseEntity<GradeStructureResponseDto> get(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.get_structure(uuid));
+    @GetMapping("/get-grade-structure/{uuid}")
+    public ResponseEntity<ApiResponse<GradeStructureResponseDto>> getGradeStructure(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.get_structure(uuid)));
     }
 
-    @PostMapping("/createGrade-structure")
-    public ResponseEntity<?> create(@RequestBody GradeStructureRequestDto req){
+    @PostMapping("/create-grade-structure")
+    public ResponseEntity<ApiResponse<?>> createGradeStructure(@RequestBody GradeStructureRequestDto req){
         service.createGradeStructure(req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Grade structure created"));
     }
 
-    @PutMapping("/updateGrade-structure/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody GradeStructureRequestDto req){
+    @PutMapping("/update-grade-structure/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateGradeStructure(@PathVariable UUID uuid, @RequestBody GradeStructureRequestDto req){
         service.updateGradeStructure(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Grade structure updated"));
     }
 
-    @DeleteMapping("/deleteGrade-structure/{uuid}")
-    public ResponseEntity<?> deleteGrade(@PathVariable UUID uuid){
+    @DeleteMapping("/delete-grade-structure/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteGradeStructure(@PathVariable UUID uuid){
         service.deleteGradeStructure(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Grade structure deleted"));
     }
 }

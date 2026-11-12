@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.feestructure.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.feestructure.dto.FeeItemRequestDto;
 import com.bloom.bloomschool.feestructure.dto.FeeItemResponseDto;
 import com.bloom.bloomschool.feestructure.service.FeeItemService;
@@ -17,37 +18,40 @@ import java.util.UUID;
 public class FeeItemController {
     private final FeeItemService service;
 
-    @GetMapping("/get-all")
-    public ResponseEntity<List<FeeItemResponseDto>> getAll(){
-        return ResponseEntity.ok(service.getAll());
+    @GetMapping("/items")
+    public ResponseEntity<ApiResponse<?>> getFeeItems(@RequestParam(required = false) String grade){
+        if(grade != null){
+            return ResponseEntity.ok(ApiResponse.ok(service.getFeeItemByGrade(grade)));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(service.getAllFeeItems()));
     }
 
-    @GetMapping("/get/{uuid}")
-    public ResponseEntity<FeeItemResponseDto> getFeeItem(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.getFeeItem(uuid));
+    @GetMapping("/get-fee-item/{uuid}")
+    public ResponseEntity<ApiResponse<FeeItemResponseDto>> getFeeItem(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getFeeItem(uuid)));
     }
 
     @PostMapping("/create-FeeItem")
-    public ResponseEntity<?> createFeeItem(@RequestBody FeeItemRequestDto body){
+    public ResponseEntity<ApiResponse<?>> createFeeItem(@RequestBody FeeItemRequestDto body){
         service.createFeeItem(body);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Fee item created"));
     }
 
     @PutMapping("/update-FeeItem/{uuid}")
-    public ResponseEntity<?> updateFeeItem(@PathVariable UUID uuid, @RequestBody FeeItemRequestDto body) {
+    public ResponseEntity<ApiResponse<?>> updateFeeItem(@PathVariable UUID uuid, @RequestBody FeeItemRequestDto body) {
         service.updateFeeItem(body, uuid);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Fee item updated"));
     }
 
     @PatchMapping("/toggle-status/{uuid}")
-    public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid){
+    public ResponseEntity<ApiResponse<?>> toggleStatus(@PathVariable UUID uuid){
         service.toggleFeeItemStatus(uuid);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Fee item status updated"));
     }
 
     @DeleteMapping("/deleteAdmission-FeeItem/{uuid}")
-    public ResponseEntity<?> deleteFeeItem(@PathVariable UUID uuid){
+    public ResponseEntity<ApiResponse<?>> deleteFeeItem(@PathVariable UUID uuid){
         service.deleteFeeItem(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Fee item deleted"));
     }
 }

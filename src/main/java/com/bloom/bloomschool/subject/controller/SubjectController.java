@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.subject.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.subject.dto.SubjectRequestDto;
 import com.bloom.bloomschool.subject.dto.SubjectResponseDto;
 import com.bloom.bloomschool.subject.service.SubjectService;
@@ -18,37 +19,37 @@ public class SubjectController {
 
     private final SubjectService service;
 
-    @GetMapping("/allSubjects")
-    public ResponseEntity<List<SubjectResponseDto>> get_all_subjects() {
-        return ResponseEntity.ok(service.get_all_subjects());
+    @GetMapping("/get-all-subjects")
+    public ResponseEntity<ApiResponse<List<SubjectResponseDto>>> getAllSubjects() {
+        return ResponseEntity.ok(ApiResponse.ok(service.get_all_subjects()));
     }
 
-    @GetMapping("/subject/{uuid}")
-    public ResponseEntity<List<SubjectResponseDto>> get_subject(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.get_subject(uuid));
+    @GetMapping("/get-subject/{uuid}")
+    public ResponseEntity<ApiResponse<List<SubjectResponseDto>>> getSubject(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.get_subject(uuid)));
     }
 
-    @PostMapping("/createSubject")
-    public ResponseEntity<?> create(@RequestBody SubjectRequestDto req) {
+    @PostMapping("/create-subject")
+    public ResponseEntity<ApiResponse<?>> createSubject(@RequestBody SubjectRequestDto req) {
         service.createSubject(req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Subject created"));
     }
 
-    @PutMapping("/updateSubject/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody SubjectRequestDto req) {
+    @PutMapping("/update-subject/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateSubject(@PathVariable UUID uuid, @RequestBody SubjectRequestDto req) {
         service.update(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Subject updated"));
     }
 
-    @PatchMapping("/toggleStatus/{uuid}")
-    public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid) {
+    @PatchMapping("/toggle-subject/{uuid}")
+    public ResponseEntity<ApiResponse<?>> toggleSubject(@PathVariable UUID uuid) {
         service.toggleStatus(uuid);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Subject status updated"));
     }
 
-    @DeleteMapping("/deleteSubject/{uuid}")
-    public ResponseEntity<?> deleteSubject(@PathVariable UUID uuid) {
+    @DeleteMapping("/delete-subject/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteSubject(@PathVariable UUID uuid) {
         service.deleteSubject(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Subject deleted"));
     }
 }

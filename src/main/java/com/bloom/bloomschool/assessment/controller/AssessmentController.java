@@ -3,8 +3,8 @@ package com.bloom.bloomschool.assessment.controller;
 
 import com.bloom.bloomschool.assessment.dto.*;
 import com.bloom.bloomschool.assessment.service.AssessmentService;
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,46 +18,44 @@ import java.util.UUID;
 public class AssessmentController {
     private final AssessmentService service;
 
-    @GetMapping("/get-all")
-    public ResponseEntity<List<AssessmentResponseDto>> getAll(){
-        return ResponseEntity.ok(service.getAll());
+    @GetMapping("/get-all-assessments")
+    public ResponseEntity<ApiResponse<List<AssessmentResponseDto>>> getAllAssessments(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAll()));
     }
 
     @GetMapping("/get-assessment/{uuid}")
-    public ResponseEntity<AssessmentResponseDto> getAssessment(@PathVariable UUID uuid) throws BadRequestException{
-        return ResponseEntity.ok(service.getAssessment(uuid));
+    public ResponseEntity<ApiResponse<AssessmentResponseDto>> getAssessment(@PathVariable UUID uuid){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAssessment(uuid)));
     }
 
-    @GetMapping("/get-all-marks")
-    public ResponseEntity<List<AssessmentMarkResponseDto>> getMarks(){
-        return ResponseEntity.ok(service.getMarks());
+    @GetMapping("/get-all-assessment-marks")
+    public ResponseEntity<ApiResponse<List<AssessmentMarkResponseDto>>> getAllAssessmentMarks(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getMarks()));
     }
 
     @PostMapping("/create-assessment")
-    public ResponseEntity<?> create(@RequestBody AssessmentRequestDto req){
+    public ResponseEntity<ApiResponse<?>> createAssessment(@RequestBody AssessmentRequestDto req){
         service.createAssessment(req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Assessment created"));
     }
 
-    @PostMapping("/create-assessment-marks/{uuid}")     // <-- added leading slash
-    public ResponseEntity<?> createMarks(
-            @PathVariable UUID uuid,
+    @PostMapping("/create-assessment-marks/{assessmentUuid}")
+    public ResponseEntity<ApiResponse<?>> createAssessmentMarks(
+            @PathVariable UUID assessmentUuid,
             @RequestBody MarkEntryRequestDto req){
-        service.saveMarks(uuid, req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        service.saveMarks(assessmentUuid, req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Assessment marks created"));
     }
 
     @PutMapping("/update-assessment/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody AssessmentRequestDto req){
+    public ResponseEntity<ApiResponse<?>> updateAssessment(@PathVariable UUID uuid, @RequestBody AssessmentRequestDto req){
         service.updateAssessment(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Assessment updated"));
     }
 
-    @DeleteMapping("/deleteAdmission-assessment/{uuid}")
-    public ResponseEntity<?> delete(@PathVariable UUID uuid){
+    @DeleteMapping("/delete-assessment/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteAssessment(@PathVariable UUID uuid){
         service.deleteAssessment(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Assessment deleted"));
     }
-
-
 }
