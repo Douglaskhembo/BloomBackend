@@ -49,23 +49,12 @@ public class ProvidedDocumentService {
     }
 
     private ProvidedDocumentResponseDto convertToDto(ProvidedDocument body){
-        DocumentType documentType = documentTypeRepository.findByUuid(body.getDocumentType().getUuid())
-                .orElseThrow(() -> new RuntimeException("Document type not found"));
-        DocumentTypeResponseDto documentTypeDto = DocumentTypeResponseDto.builder()
-                .name(documentType.getName())
-                .description(documentType.getDescription())
-                .mandatory(documentType.isMandatory())
-                .active(documentType.isActive())
-                .documentCategory(documentType.getDocumentCategory())
-                .build();
-
         return ProvidedDocumentResponseDto.builder()
                 .uuid(body.getUuid())
                 .ownerType(body.getOwnerType())
                 .ownerUuid(body.getOwnerUuid())
-                .documentType(documentTypeDto)
+                .documentType(toDocumentTypeDto(body.getDocumentType()))
                 .fileName(body.getFileName())
-                .filePath(body.getFilePath())
                 .fileSize(body.getFileSize())
                 .uploadDate(body.getUploadDate())
                 .contentType(body.getContentType())
@@ -85,18 +74,35 @@ public class ProvidedDocumentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<DocumentTypeResponseDto> getMissingMandatoryDtos(OwnerType ownerType, UUID ownerUuid){
+        return getMissingMandatory(ownerType, ownerUuid).stream()
+                .map(this::toDocumentTypeDto)
+                .toList();
+    }
+
+    private DocumentTypeResponseDto toDocumentTypeDto(DocumentType dt){
+        return DocumentTypeResponseDto.builder()
+                .name(dt.getName())
+                .description(dt.getDescription())
+                .mandatory(dt.isMandatory())
+                .active(dt.isActive())
+                .documentCategory(dt.getDocumentCategory())
+                .build();
+    }
+
     private List<ProvidedDocument> getByOwner(OwnerType ownerType, UUID ownerUuid) {
         return repo.getByOwner(ownerType, ownerUuid);
     }
 
     @Transactional
-    public void uploadDocument(OwnerType ownerType, UUID ownerUuid, UUID documentTypeUuid, MultipartFile file){
+    public ProvidedDocumentResponseDto uploadDocument(OwnerType ownerType, UUID ownerUuid, UUID documentTypeUuid, MultipartFile file){
         if (file == null || file.isEmpty()){
-            throw new RuntimeException("File cannot be empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File cannot be empty");
         }
 
         DocumentType documentType = documentTypeRepository.findByUuid(documentTypeUuid)
-                        .orElseThrow(() -> new RuntimeException("Document type not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Document type not found"));
 
         boolean ownerExists = ownerType == OwnerType.STAFF
                 ? staffRepo.findByUuid(ownerUuid).isPresent()
@@ -121,7 +127,7 @@ public class ProvidedDocumentService {
             Path target = Paths.get(folder, storedName);
             Files.write(target, file.getBytes());
 
-        repo.save(ProvidedDocument.builder()
+        return convertToDto(repo.save(ProvidedDocument.builder()
                 .ownerType(ownerType)
                 .ownerUuid(ownerUuid)
                 .documentType(documentType)
@@ -130,7 +136,7 @@ public class ProvidedDocumentService {
                 .fileSize(file.getSize())
                 .uploadDate(LocalDateTime.now())
                 .contentType(file.getContentType())
-                .build());
+                .build()));
 
         }catch(IOException e){
             throw new UncheckedIOException("Failed to store uploaded document: " + e.getMessage(), e);

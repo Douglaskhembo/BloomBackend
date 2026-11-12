@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.staff.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.staff.dto.StaffRequestDto;
 import com.bloom.bloomschool.staff.dto.StaffResponseDto;
 import com.bloom.bloomschool.staff.service.StaffService;
@@ -18,37 +19,37 @@ public class StaffController {
 
     private final StaffService service;
 
-    @GetMapping("/allstaff")
-    public ResponseEntity<List<StaffResponseDto>> getAll(){
-        return ResponseEntity.ok(service.getAll());
+    @GetMapping("/get-all-staff")
+    public ResponseEntity<ApiResponse<List<StaffResponseDto>>> getAllStaff(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAll()));
     }
 
-    @GetMapping("/{uuid}")
-    public ResponseEntity<StaffResponseDto> getByUuid(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.getByUuid(uuid));
+    @GetMapping("/get-staff/{uuid}")
+    public ResponseEntity<ApiResponse<StaffResponseDto>> getStaff(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getByUuid(uuid)));
     }
 
-    @PostMapping("/createStaff")
-    public ResponseEntity<?> create(@RequestBody StaffRequestDto req){
+    @PostMapping("/create-staff")
+    public ResponseEntity<ApiResponse<?>> createStaff(@RequestBody StaffRequestDto req){
         service.create(req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Staff created"));
     }
 
-    @PutMapping("/updateStaff/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody StaffRequestDto req){
+    @PutMapping("/update-staff/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateStaff(@PathVariable UUID uuid, @RequestBody StaffRequestDto req){
         service.update(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);}
+        return ResponseEntity.ok(ApiResponse.ok("Staff updated"));
+    }
 
-    @PatchMapping("/toggle-status/{uuid}")
-    public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid) {
+    @PatchMapping("/toggle-staff/{uuid}")
+    public ResponseEntity<ApiResponse<?>> toggleStaff(@PathVariable UUID uuid) {
         service.toggleStatus(uuid);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Staff status updated"));
     }
 
-    @DeleteMapping("/deleteStaff/{uuid}")
-    public ResponseEntity<Void> deleteStaff(@PathVariable UUID uuid) {
+    @DeleteMapping("/delete-staff/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteStaff(@PathVariable UUID uuid) {
         service.deleteStaff(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Staff deleted"));
     }
-
 }

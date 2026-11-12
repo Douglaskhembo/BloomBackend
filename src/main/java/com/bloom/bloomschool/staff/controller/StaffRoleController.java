@@ -1,5 +1,6 @@
 package com.bloom.bloomschool.staff.controller;
 
+import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.staff.dto.StaffRoleRequestDto;
 import com.bloom.bloomschool.staff.dto.StaffRoleResponseDto;
 import com.bloom.bloomschool.staff.service.StaffRoleService;
@@ -18,37 +19,37 @@ public class StaffRoleController {
 
     private final StaffRoleService service;
 
-    @GetMapping("/allroles")
-    public ResponseEntity<List<StaffRoleResponseDto>> getAll(){
-        return ResponseEntity.ok(service.getAllRoles());
+    @GetMapping("/get-all-staff-roles")
+    public ResponseEntity<ApiResponse<List<StaffRoleResponseDto>>> getAllStaffRoles(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAllRoles()));
     }
 
-    @GetMapping("/{uuid}")
-    public ResponseEntity<StaffRoleResponseDto> getByUuid(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.getStaffRole(uuid));
+    @GetMapping("/get-staff-role/{uuid}")
+    public ResponseEntity<ApiResponse<StaffRoleResponseDto>> getStaffRole(@PathVariable UUID uuid) {
+        return ResponseEntity.ok(ApiResponse.ok(service.getStaffRole(uuid)));
     }
 
-    @PostMapping("/createStaffRole")
-    public ResponseEntity<?> create(@RequestBody StaffRoleRequestDto req){
+    @PostMapping("/create-staff-role")
+    public ResponseEntity<ApiResponse<?>> createStaffRole(@RequestBody StaffRoleRequestDto req){
         service.createStaffRole(req);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Staff role created"));
     }
 
-    @PutMapping("/updateStaffRole/{uuid}")
-    public ResponseEntity<?> update(@PathVariable UUID uuid, @RequestBody StaffRoleRequestDto req){
+    @PutMapping("/update-staff-role/{uuid}")
+    public ResponseEntity<ApiResponse<?>> updateStaffRole(@PathVariable UUID uuid, @RequestBody StaffRoleRequestDto req){
         service.updateStaffRole(uuid, req);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Staff role updated"));
     }
 
-    @PatchMapping("/toggle-status/{uuid}")
-    public ResponseEntity<?> toggleStatus(@PathVariable UUID uuid) {
+    @PatchMapping("/toggle-staff-role/{uuid}")
+    public ResponseEntity<ApiResponse<?>> toggleStaffRole(@PathVariable UUID uuid) {
         service.toggleStaffRoleStatus(uuid);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.ok("Staff role status updated"));
     }
 
-    @DeleteMapping("/deleteStaffRole/{uuid}")
-    public ResponseEntity<Void> deleteStaffRole(@PathVariable UUID uuid) {
+    @DeleteMapping("/delete-staff-role/{uuid}")
+    public ResponseEntity<ApiResponse<?>> deleteStaffRole(@PathVariable UUID uuid) {
         service.deleteStaffRole(uuid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.ok("Staff role deleted"));
     }
 }
