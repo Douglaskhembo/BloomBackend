@@ -4,6 +4,7 @@ import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.feestructure.dto.FeePaymentRequestDto;
 import com.bloom.bloomschool.feestructure.dto.FeePaymentResponseDto;
 import com.bloom.bloomschool.feestructure.service.FeePaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,20 +41,18 @@ public class FeePaymentController {
         return ResponseEntity.ok(ApiResponse.ok("Payment deleted"));
     }
 
-    @GetMapping("/payments/pending-verification/{studentUuid}")
-    public ResponseEntity<ApiResponse<List<FeePaymentResponseDto>>> getPendingPayments(@PathVariable UUID studentUuid) {
-        return ResponseEntity.ok(ApiResponse.ok(service.getPendingVerifications(studentUuid)));
+    @GetMapping("/payments/pending-verification/")
+    public ResponseEntity<ApiResponse<List<FeePaymentResponseDto>>> getPendingPayments() {
+        return ResponseEntity.ok(ApiResponse.ok(service.getPendingVerifications()));
     }
 
     @PatchMapping("/payment/verify-payment/{uuid}")
     public ResponseEntity<ApiResponse<?>> verifyFeePayment(@PathVariable UUID uuid) {
-        service.verifyPayment(uuid);
-        return ResponseEntity.ok(ApiResponse.ok("Payment verified"));
+        return ResponseEntity.ok(ApiResponse.ok("Payment verified", service.verifyPayment(uuid)));
     }
 
     @PatchMapping("/payment/reject-payment/{uuid}")
-    public ResponseEntity<ApiResponse<?>> rejectFeePayment(@PathVariable UUID uuid) {
-        service.rejectPayment(uuid);
-        return ResponseEntity.ok(ApiResponse.ok("Payment rejected"));
+    public ResponseEntity<ApiResponse<?>> rejectFeePayment(@PathVariable UUID uuid,@Valid @RequestBody String reason) {
+        return ResponseEntity.ok(ApiResponse.ok("Payment rejected", service.rejectPayment(uuid, reason)));
     }
 }

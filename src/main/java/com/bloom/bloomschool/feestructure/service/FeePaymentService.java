@@ -14,6 +14,7 @@ import com.bloom.bloomschool.student.entity.Admissions;
 import com.bloom.bloomschool.student.entity.Student;
 import com.bloom.bloomschool.student.repository.AdmissionsRepository;
 import com.bloom.bloomschool.student.repository.StudentRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -138,28 +139,34 @@ public class FeePaymentService{
         return repo.existsByAdmissionsUuidAndVerificationStatus(uuid, FeeVerificationStatus.CONFIRMED);
     }
 
-    public List<FeePaymentResponseDto> getPendingVerifications(UUID studentUuid){
-        List<FeePayment> feePayments = repo.getPendingFeePayments(studentUuid);
+    public List<FeePaymentResponseDto> getPendingVerifications(){
+        List<FeePayment> feePayments = repo.getPendingFeePayments();
         return feePayments.stream().map(this::convertToDto).toList();
     }
 
-    public void verifyPayment(UUID uuid){
+    public FeePayment verifyPayment(UUID uuid){
         FeePayment existingPayment = repo.findByUuid(uuid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fee payment not found"));
-        if (existingPayment.getVerificationStatus() != FeeVerificationStatus.CONFIRMED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Payment already processed");
+                .orElseThrow(() -> new EntityNotFoundException("Fee payment not found"));
+
+        if (existingPayment.getVerificationStatus() != FeeVerificationStatus.PENDING) {
+            throw new IllegalArgumentException("Only payments pending verification can be verified");
         }
         existingPayment.setVerificationStatus(FeeVerificationStatus.CONFIRMED);
-        repo.save(existingPayment);
+        existingPayment.setVerifiedAt(LocalDateTime.now());
+        return repo.save(existingPayment);
+
     }
 
-    public void rejectPayment(UUID uuid){
+    public FeePayment rejectPayment(UUID uuid, String reason){
         FeePayment existingPayment = repo.findByUuid(uuid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fee payment not found"));
-        if (existingPayment.getVerificationStatus() != FeeVerificationStatus.CONFIRMED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Payment already processed");
+                .orElseThrow(() -> new EntityNotFoundException("Fee payment not found"));
+
+        if (existingPayment.getVerificationStatus() != FeeVerificationStatus.PENDING) {
+            throw new IllegalArgumentException("Only payments pending verification can be rejected");
         }
         existingPayment.setVerificationStatus(FeeVerificationStatus.REJECTED);
-        repo.save(existingPayment);
+        existingPayment.setVerifiedAt(LocalDateTime.now());
+        existingPayment.setRejectReason(reason);
+        return repo.save(existingPayment);
     }
 }

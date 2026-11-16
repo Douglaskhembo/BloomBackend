@@ -4,6 +4,8 @@ import com.bloom.bloomschool.feestructure.enumerations.FeeStructureStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,6 +56,8 @@ public class FeeStructureEntity {
     )
     private List<FeeStructureLine> baseline = new ArrayList<>();
 
-
-
+    private LocalDateTime submittedAt;
+    private LocalDateTime reviewedAt;
+    private LocalDateTime updatedAt;
+    private LocalDate dueDate;
 }

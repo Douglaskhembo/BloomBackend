@@ -66,4 +66,6 @@ public class FeePayment{
     @JoinColumn(name = "admission_id")
     private Admissions admissions;
 
+    private LocalDateTime verifiedAt;
+
 }

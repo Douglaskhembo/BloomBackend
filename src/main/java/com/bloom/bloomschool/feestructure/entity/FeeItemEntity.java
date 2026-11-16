@@ -28,7 +28,8 @@ public class FeeItemEntity {
 
     private String description;
 
-    private String term;
+    @Builder.Default
+    private String term="Per Term";
 
     private Double amount;
 
@@ -47,6 +48,7 @@ public class FeeItemEntity {
 
     private Boolean mandatory;
 
+    @Builder.Default
     private boolean active = true;
 
     @Enumerated(EnumType.STRING)

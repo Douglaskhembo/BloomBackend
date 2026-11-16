@@ -1,6 +1,6 @@
 package com.bloom.bloomschool.feestructure.entity;
 
-import jakarta.persistence.Embeddable;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.UUID;

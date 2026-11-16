@@ -34,6 +34,8 @@ public interface FeePaymentRepository extends JpaRepository<FeePayment, UUID> {
 
     @Query("SELECT fp FROM FeePayment fp WHERE " +
             "fp.verificationStatus = com.bloom.bloomschool.feestructure.enumerations.FeeVerificationStatus.PENDING " +
-            "AND fp.student.uuid = :studentUuid")
-    List<FeePayment> getPendingFeePayments(@Param("studentUuid") UUID studentUuid);
+            "AND fp.paymentSource = com.bloom.bloomschool.feestructure.enumerations.FeePaymentSource.MANUAL")
+    List<FeePayment> getPendingFeePayments();
+
+
 }

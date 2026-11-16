@@ -4,7 +4,9 @@ package com.bloom.bloomschool.feestructure.dto;
 import com.bloom.bloomschool.feestructure.enumerations.FeeStructureStatus;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class FeeStructureRequestDto {
@@ -16,5 +18,7 @@ public class FeeStructureRequestDto {
     private String comment;
     private String rejectReason;
     private List<FeeStructureLineRequestDto> feeStructureLines;
+    private LocalDate dueDate;
+    private UUID reworkUuid;
 }
 

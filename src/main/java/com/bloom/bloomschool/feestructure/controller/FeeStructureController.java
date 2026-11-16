@@ -1,8 +1,10 @@
 package com.bloom.bloomschool.feestructure.controller;
 
 import com.bloom.bloomschool.common.dto.ApiResponse;
+import com.bloom.bloomschool.feestructure.dto.FeeStructureDecisionRequest;
 import com.bloom.bloomschool.feestructure.dto.FeeStructureRequestDto;
 import com.bloom.bloomschool.feestructure.dto.FeeStructureResponseDto;
+import com.bloom.bloomschool.feestructure.entity.FeeStructureEntity;
 import com.bloom.bloomschool.feestructure.service.FeeStructureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,9 +20,9 @@ import java.util.UUID;
 public class FeeStructureController {
     private final FeeStructureService service;
 
-    @GetMapping("/get-all-FeeStructures")
-    public ResponseEntity<ApiResponse<List<FeeStructureResponseDto>>> getAll(){
-        return ResponseEntity.ok(ApiResponse.ok(service.getAll()));
+    @GetMapping("/get-all-feeStructures")
+    public ResponseEntity<ApiResponse<List<FeeStructureResponseDto>>> getStructures(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAllFeeStructures()));
     }
 
     @GetMapping("/get-fee-structure/{uuid}")
@@ -28,21 +30,41 @@ public class FeeStructureController {
         return ResponseEntity.ok(ApiResponse.ok(service.getFeeStructure(uuid)));
     }
 
-    @PostMapping("/create-FeeStructure")
+    @PostMapping("/feeStructure/submit")
     public ResponseEntity<ApiResponse<?>> createFeeStructure(@RequestBody FeeStructureRequestDto body){
-        service.createFeeStructure(body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Fee structure created"));
-    }
-
-    @PutMapping("/update-FeeStructure/{uuid}")
-    public ResponseEntity<ApiResponse<?>> updateFeeStructure(@PathVariable UUID uuid, @RequestBody FeeStructureRequestDto body) {
-        service.updateFeeStructure(uuid, body);
-        return ResponseEntity.ok(ApiResponse.ok("Fee structure updated"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Submitted for approval", service.submitForApproval(body)));
     }
 
     @DeleteMapping("/delete-FeeStructure/{uuid}")
     public ResponseEntity<ApiResponse<?>> deleteFeeStructure(@PathVariable UUID uuid){
         service.deleteFeeStructure(uuid);
+
         return ResponseEntity.ok(ApiResponse.ok("Fee structure deleted"));
+    }
+
+    @GetMapping("/structure/audit")
+    public ResponseEntity<ApiResponse<List<FeeStructureResponseDto>>> getFeeStructureDescOrder(){
+        return ResponseEntity.ok(ApiResponse.ok(service.getAllFeeStructuresDescOrder()));
+    }
+
+    @PostMapping("/structure/draft")
+    public ResponseEntity<ApiResponse<FeeStructureEntity>> saveDraft(@RequestBody FeeStructureRequestDto body){
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Draft Saved", service.saveDraft(body)));
+    }
+
+    @PatchMapping("/structure/approve/{feeStructureUuid}")
+    public ResponseEntity<ApiResponse<?>> approveFeeStructure(@PathVariable UUID feeStructureUuid){
+        service.approveFeeStructure(feeStructureUuid);
+        return ResponseEntity.ok(ApiResponse.ok("Fee structure approved"));
+    }
+
+    @PatchMapping("/structure/reject/{feeStructureUuid}")
+    public ResponseEntity<ApiResponse<?>> rejectFeeStructure(@PathVariable UUID feeStructureUuid,
+                                                             @RequestBody FeeStructureDecisionRequest request){
+        if(request == null){
+            throw new IllegalArgumentException("Reject reason must be valid");
+        }
+        service.rejectFeeStructure(feeStructureUuid, request);
+        return ResponseEntity.ok(ApiResponse.ok("Fee structure rejected"));
     }
 }
