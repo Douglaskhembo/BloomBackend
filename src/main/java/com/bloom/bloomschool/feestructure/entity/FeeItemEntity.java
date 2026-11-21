@@ -39,6 +39,7 @@ public class FeeItemEntity {
 
     private Double termThreeAmount;
 
+    @Builder.Default
     @ManyToMany
     @JoinTable(
             name = "bloom_school_Grade_feeItem",

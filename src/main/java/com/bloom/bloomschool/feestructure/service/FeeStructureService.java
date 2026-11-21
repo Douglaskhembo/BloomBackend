@@ -28,13 +28,17 @@ import java.util.stream.Collectors;
 public class FeeStructureService {
     private final FeeStructureRepository repo;
     private final FeeItemRepository feeItemRepo;
+
+    @Transactional(readOnly = true)
     public List<FeeStructureResponseDto> getAllFeeStructures(){
         return repo.findAll().stream().map(this::convertToDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<FeeStructureResponseDto> getAllFeeStructuresDescOrder(){
         return repo.findAll(Sort.by(Sort.Direction.DESC, "submittedAt")).stream().map(this::convertToDto).toList();
     }
+    @Transactional(readOnly = true)
     public FeeStructureResponseDto getFeeStructure(UUID uuid) {
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -61,52 +65,67 @@ public class FeeStructureService {
                 .comment(body.getComment())
                 .rejectReason(body.getRejectReason())
                 .feeStructureLines(feeStructureLineResponseDtos)
-                .baseline(feeStructureLineResponseDtos)
+                .baseline(body.getBaseline().stream().map(this::convertFeeStructureLinesToDto).toList())
                 .build();
     }
 
     @Transactional
     public FeeStructureEntity submitForApproval(FeeStructureRequestDto body){
-        if (body.getReworkUuid() != null) {
-            FeeStructureEntity feeStructure = repo.findByUuid(body.getReworkUuid())
+        boolean isRework = body.getReworkUuid() != null;
+        FeeStructureEntity feeStructure;
+        if (isRework){
+            feeStructure = repo.findByUuid(body.getReworkUuid())
                     .orElseThrow(() -> new EntityNotFoundException("Fee structure not found"));
-            if (feeStructure.getStatus() != FeeStructureStatus.REJECTED) {
-                throw new IllegalArgumentException("Only rejected fee structure can be reworked");
+
+            if (feeStructure.getStatus() != FeeStructureStatus.REJECTED && feeStructure.getStatus() != FeeStructureStatus.DRAFT) {
+                throw new IllegalArgumentException("Only drafts/ rejected fee structure can be reworked");
             }
-            feeStructure.setFeeStructureLines(new ArrayList<>(convertLine(body.getFeeStructureLines())));
-            feeStructure.setBaseline(new ArrayList<>(convertBaseLine(body.getGrade(), body.getTerm())));
+
+            feeStructure.setFeeStructureLines(convertLine(body.getFeeStructureLines()));
+            feeStructure.setBaseline(convertBaseLine(body.getGrade(), body.getTerm()));
             feeStructure.setComment(body.getComment());
             feeStructure.setRejectReason(null);
             feeStructure.setStatus(FeeStructureStatus.PENDING);
-            return repo.save(feeStructure);
+            feeStructure.setSubmittedAt(LocalDateTime.now());
+            feeStructure.setUpdatedAt(LocalDateTime.now());
+            feeStructure.setDueDate(body.getDueDate());
         }
+        else{
+            if (repo.countByAcademicYearAndGradeAndTermAndStatus(body.getAcademicYear(),body.getGrade(), body.getTerm(), FeeStructureStatus.PENDING) > 0){
+                throw new IllegalArgumentException(body.getGrade() + " . " +body.getTerm() + " already has feeStructure pending approval");
+            }
+            feeStructure = FeeStructureEntity.builder()
+                    .academicYear(body.getAcademicYear())
+                    .grade(body.getGrade())
+                    .term(body.getTerm())
+                    .version(nextVersion(body.getAcademicYear(), body.getGrade(), body.getTerm()))
+                    .status(FeeStructureStatus.PENDING)
+                    .feeStructureLines(convertLine(body.getFeeStructureLines()))
+                    .baseline(convertBaseLine(body.getGrade(), body.getTerm()))
+                    .dueDate(body.getDueDate())
+                    .submittedAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
 
-        if (repo.existsByAcademicYearAndGradeAndTerm(
-                body.getAcademicYear(), body.getGrade(), body.getTerm())) {
-            throw new RuntimeException(
-                    "A fee structure for this academic year, grade and term already exists");
         }
-
-        return repo.save(FeeStructureEntity.builder()
-                .academicYear(body.getAcademicYear())
-                .grade(body.getGrade())
-                .term(body.getTerm())
-                .status(FeeStructureStatus.PENDING)
-                .comment(body.getComment())
-                .feeStructureLines(new ArrayList<>(convertLine(body.getFeeStructureLines())))
-                .baseline(new ArrayList<>(convertBaseLine(body.getGrade(), body.getTerm())))
-                .build());
+        return repo.save(feeStructure);
     }
 
+    private int nextVersion(int academicYear, String grade, String term){
+        return (int) repo.countByAcademicYearAndGradeAndTermAndStatus(
+                academicYear, grade, term, FeeStructureStatus.APPROVED) + 1;
+    }
     private List<FeeStructureLine> convertLine(List<FeeStructureLineRequestDto> body){
+        if (body == null) return new ArrayList<>();
         return body.stream().map(this::convertFeeStructureLineToEntity).toList();
     }
 
     private List<FeeStructureLine> convertBaseLine(String grade, String term){
-        return mergeWithCurrentItems(
-                repo.findFirstByGradeAndTermStatusOrderByReviewedAtDesc(grade, term, FeeStructureStatus.APPROVED), term
-        );
-
+        List<FeeStructureLine> existing = repo
+                .findFirstByGradeAndTermAndStatusOrderByReviewedAtDesc(grade, term, FeeStructureStatus.APPROVED)
+                .map(FeeStructureEntity::getFeeStructureLines)
+                .orElse(new ArrayList<>());
+        return mergeWithCurrentItems(existing, term);
     }
 
     private List<FeeStructureLine> mergeWithCurrentItems(List<FeeStructureLine> existing, String term) {
@@ -160,14 +179,10 @@ public class FeeStructureService {
 
     @Transactional
     public FeeStructureEntity saveDraft(FeeStructureRequestDto body){
-        if (repo.existsByAcademicYearAndGradeAndTerm(
-                body.getAcademicYear(), body.getGrade(), body.getTerm())) {
-            throw new RuntimeException(
-                    "A fee structure for this academic year, grade and term already exists");
+        if (repo.countByAcademicYearAndGradeAndTermAndStatus(
+                body.getAcademicYear(), body.getGrade(), body.getTerm(), FeeStructureStatus.DRAFT) > 0) {
+            throw new RuntimeException("A fee structure for this academic year, grade and term already exists");
         }
-
-        List<FeeStructureLine> lines = body.getFeeStructureLines()
-                .stream().map(this::convertFeeStructureLineToEntity).toList();
 
         return repo.save(FeeStructureEntity.builder()
                 .academicYear(body.getAcademicYear())
@@ -175,9 +190,11 @@ public class FeeStructureService {
                 .term(body.getTerm())
                 .status(FeeStructureStatus.DRAFT)
                 .comment(body.getComment())
-                .feeStructureLines(new ArrayList<>(lines))
-                .baseline(new ArrayList<>(lines))
+                .feeStructureLines(convertLine(body.getFeeStructureLines()))
+                .baseline(convertBaseLine(body.getGrade(), body.getTerm()))
                 .submittedAt(LocalDateTime.now())
+                .version(nextVersion(body.getAcademicYear(), body.getGrade(), body.getTerm()))
+                .dueDate(body.getDueDate())
                 .build());
     }
 
@@ -186,8 +203,8 @@ public class FeeStructureService {
         FeeStructureEntity existingFeeStructure = repo.findByUuid(feeStructureUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Fee Structure not found"));
 
-        if(existingFeeStructure.getStatus() != FeeStructureStatus.PENDING && existingFeeStructure.getStatus() != FeeStructureStatus.DRAFT){
-            throw  new RuntimeException("Fee structure status already processed");
+        if(existingFeeStructure.getStatus() != FeeStructureStatus.PENDING){
+            throw  new RuntimeException("Only Fee structure pending approval can be approved");
         }
 
         existingFeeStructure.setStatus(FeeStructureStatus.APPROVED);
@@ -201,8 +218,8 @@ public class FeeStructureService {
         FeeStructureEntity existingFeeStructure = repo.findByUuid(feeStructureUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Fee Structure not found"));
 
-        if(existingFeeStructure.getStatus() != FeeStructureStatus.PENDING && existingFeeStructure.getStatus() != FeeStructureStatus.DRAFT){
-            throw  new RuntimeException("Fee structure status already processed");
+        if(existingFeeStructure.getStatus() != FeeStructureStatus.PENDING){
+            throw  new RuntimeException("Only Fee structure pending approval can be rejected");
         }
 
         existingFeeStructure.setStatus(FeeStructureStatus.REJECTED);

@@ -4,6 +4,8 @@ import com.bloom.bloomschool.feestructure.entity.FeeStructureEntity;
 import com.bloom.bloomschool.feestructure.entity.FeeStructureLine;
 import com.bloom.bloomschool.feestructure.enumerations.FeeStructureStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,5 +19,8 @@ public interface FeeStructureRepository extends JpaRepository<FeeStructureEntity
     boolean existsByAcademicYearAndGradeAndTerm(int academicYear, String grade, String term);
     boolean existsByAcademicYearAndGradeAndTermAndUuidNot(int academicYear, String grade, String term, UUID uuid);
 
-    List<FeeStructureLine> findFirstByGradeAndTermStatusOrderByReviewedAtDesc(String grade, String term, FeeStructureStatus feeStructureStatus);
+    long countByAcademicYearAndGradeAndTermAndStatus(int academicYear, String grade, String term, FeeStructureStatus status);
+
+    Optional<FeeStructureEntity> findFirstByGradeAndTermAndStatusOrderByReviewedAtDesc(
+            String grade, String term, FeeStructureStatus status);
 }

@@ -68,3 +68,4 @@ public class FeeStructureController {
         return ResponseEntity.ok(ApiResponse.ok("Fee structure rejected"));
     }
 }
+

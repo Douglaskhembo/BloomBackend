@@ -23,16 +23,19 @@ public class FeeItemService {
     private final FeeItemRepository repo;
     private final GradeRepository gradeRepo;
 
+    @Transactional(readOnly = true)
     public List<FeeItemResponseDto> getAllFeeItems(){
         return repo.findAll().stream().map(this::convertToDto).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<FeeItemResponseDto> getFeeItemByGrade(String grade){
         return repo.findAll().stream()
                 .filter(item -> item.getGradeLevel().isEmpty()
                         || item.getGradeLevel().stream().anyMatch(g -> g.getName().equals(grade)))
                 .map(this::convertToDto).toList();
     }
+    @Transactional(readOnly = true)
     public FeeItemResponseDto getFeeItem(UUID uuid){
         return convertToDto(repo.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -89,13 +92,14 @@ public class FeeItemService {
         FeeItemEntity feeItemEntity = FeeItemEntity.builder()
                 .name(body.getName())
                 .description(body.getDescription())
-                .term(body.getTerm())
+                .term(body.getTerm() != null ? body.getTerm() : "Per Term")
+                .active(body.getActive() == null || body.getActive())
                 .amount(body.getAmount())
                 .termOneAmount(body.getTermOneAmount())
                 .termTwoAmount(body.getTermTwoAmount())
                 .termThreeAmount(body.getTermThreeAmount())
                 .gradeLevel(gradeEntity).mandatory(body.getMandatory())
-                .active(body.getActive()).feeCategory(body.getFeeCategory())
+                .feeCategory(body.getFeeCategory())
                 .feeApplicability(body.getFeeApplicability())
                 .mandatory(body.getMandatory())
                 .build();
@@ -116,14 +120,14 @@ public class FeeItemService {
 
         existingFeeItem.setName(body.getName());
         existingFeeItem.setDescription(body.getDescription());
-        existingFeeItem.setTerm(body.getTerm());
+        existingFeeItem.setTerm(body.getTerm() != null ? body.getTerm() : "Per Term");
         existingFeeItem.setAmount(body.getAmount());
         existingFeeItem.setTermOneAmount(body.getTermOneAmount());
         existingFeeItem.setTermTwoAmount(body.getTermTwoAmount());
         existingFeeItem.setTermThreeAmount(body.getTermThreeAmount());
         existingFeeItem.setGradeLevel(gradeEntity);
         existingFeeItem.setMandatory(body.getMandatory());
-        existingFeeItem.setActive(body.getActive());
+        existingFeeItem.setActive(body.getActive() == null || body.getActive());
         existingFeeItem.setFeeCategory(body.getFeeCategory());
         existingFeeItem.setFeeApplicability(body.getFeeApplicability());
         FeeItemEntity saved = repo.save(existingFeeItem);

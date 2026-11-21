@@ -3,6 +3,7 @@ package com.bloom.bloomschool.feestructure.controller;
 import com.bloom.bloomschool.common.dto.ApiResponse;
 import com.bloom.bloomschool.feestructure.dto.FeePaymentRequestDto;
 import com.bloom.bloomschool.feestructure.dto.FeePaymentResponseDto;
+import com.bloom.bloomschool.feestructure.dto.FeeStructureDecisionRequest;
 import com.bloom.bloomschool.feestructure.service.FeePaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class FeePaymentController {
     }
 
     @PatchMapping("/payment/reject-payment/{uuid}")
-    public ResponseEntity<ApiResponse<?>> rejectFeePayment(@PathVariable UUID uuid,@Valid @RequestBody String reason) {
-        return ResponseEntity.ok(ApiResponse.ok("Payment rejected", service.rejectPayment(uuid, reason)));
+    public ResponseEntity<ApiResponse<?>> rejectFeePayment(@PathVariable UUID uuid,@RequestBody FeeStructureDecisionRequest body) {
+        return ResponseEntity.ok(ApiResponse.ok("Payment rejected", service.rejectPayment(uuid, body.getReason())));
     }
 }

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -86,7 +87,7 @@ public class StudentFeeChargeService {
                 .feeCategory(req.getFeeCategory())
                 .amount(req.getAmount())
                 .dueDate(req.getDueDate())
-                .generatedAt(req.getGeneratedAt())
+                .generatedAt(req.getGeneratedAt() != null ? req.getGeneratedAt() : LocalDateTime.now())
                 .feeStructureEntity(existingFeeStructure)
                 .student(student)
                 .feeItemEntities(existingFeeItem).build();

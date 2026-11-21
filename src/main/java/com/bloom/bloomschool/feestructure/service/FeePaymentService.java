@@ -71,6 +71,8 @@ public class FeePaymentService{
                 .bankName(body.getBankName())
                 .student(studentRequestDTO)
                 .amount(body.getAmount())
+                .receiptNo(body.getReceiptNo())
+                .admissionUuid(body.getAdmissions() != null ? body.getAdmissions().getUuid() : null)
                 .build();
     }
 
@@ -144,7 +146,7 @@ public class FeePaymentService{
         return feePayments.stream().map(this::convertToDto).toList();
     }
 
-    public FeePayment verifyPayment(UUID uuid){
+    public FeePaymentResponseDto verifyPayment(UUID uuid){
         FeePayment existingPayment = repo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Fee payment not found"));
 
@@ -153,11 +155,10 @@ public class FeePaymentService{
         }
         existingPayment.setVerificationStatus(FeeVerificationStatus.CONFIRMED);
         existingPayment.setVerifiedAt(LocalDateTime.now());
-        return repo.save(existingPayment);
-
+        return convertToDto(repo.save(existingPayment));
     }
 
-    public FeePayment rejectPayment(UUID uuid, String reason){
+    public FeePaymentResponseDto rejectPayment(UUID uuid, String reason){
         FeePayment existingPayment = repo.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Fee payment not found"));
 
@@ -167,6 +168,5 @@ public class FeePaymentService{
         existingPayment.setVerificationStatus(FeeVerificationStatus.REJECTED);
         existingPayment.setVerifiedAt(LocalDateTime.now());
         existingPayment.setRejectReason(reason);
-        return repo.save(existingPayment);
-    }
+        return convertToDto(repo.save(existingPayment));    }
 }

@@ -16,8 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "bloom_school_fee_Structure",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"academic_year","grade","term"}))
+@Table(name = "bloom_school_fee_Structure")
 public class FeeStructureEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
